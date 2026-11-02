@@ -1,0 +1,33 @@
+{
+  "name": "@smart-city/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@smart-city/shared": "workspace:*",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "next": "16.4.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@smart-city/config": "workspace:*",
+    "@tailwindcss/turbopack": "^4.3.3",
+    "@types/node": "^24",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.4.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3"
+  }
+}

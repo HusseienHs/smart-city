@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 10 blocks dependency install scripts by default. Only allow-list what we need.
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

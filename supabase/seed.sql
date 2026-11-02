@@ -1,0 +1,6 @@
+-- Local development seed data.
+-- Runs automatically on `supabase db reset` (local only — never against production).
+--
+-- Intentionally empty in Phase 1: the schema arrives with the first migration in Phase 2.
+-- All seed rows must be clearly fictional (e.g. "Demo Municipality") so they are never
+-- mistaken for real municipal data.

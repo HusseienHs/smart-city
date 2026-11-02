@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/*
+ * Brand tokens – mirror of packages/shared/src/design-tokens.ts (keep in sync).
+ * Components use logical utilities (ms-/me-/ps-/pe-/start-/end-) so layouts flip
+ * automatically between RTL (Hebrew, Arabic) and LTR (English).
+ */
+:root {
+  --background: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #eff1f5;
+  --border: #e2e5eb;
+  --foreground: #12151c;
+  --muted: #6b7280;
+  --primary: #0b5fff;
+  --primary-pressed: #0049d6;
+  --primary-soft: #eef4ff;
+  --danger: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0c10;
+    --surface: #12151c;
+    --surface-muted: #1f2430;
+    --border: #1f2430;
+    --foreground: #f7f8fa;
+    --muted: #9aa1ae;
+    --primary: #3d7fff;
+    --primary-pressed: #0b5fff;
+    --primary-soft: #0b1a3a;
+    --danger: #f87171;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

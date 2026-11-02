@@ -1,0 +1,86 @@
+/**
+ * English is the source-of-truth shape for messages: every other locale must provide
+ * exactly the same keys (enforced at compile time by the `Messages` type).
+ */
+export const en = {
+  app: {
+    name: 'Smart City',
+    tagline: 'Your city, in your pocket',
+  },
+  common: {
+    loading: 'Loading…',
+    retry: 'Try again',
+    errorTitle: 'Something went wrong',
+    emptyTitle: 'Nothing here yet',
+    comingSoon: 'Coming soon',
+  },
+  mobileTabs: {
+    home: 'Home',
+    explore: 'Explore',
+    report: 'Report',
+    events: 'Events',
+    profile: 'Profile',
+  },
+  mobileScreens: {
+    homeSubtitle: 'Updates, alerts and services for your neighborhood',
+    homeEmpty: 'Your personalized city feed will appear here',
+    exploreSubtitle: 'Parks, facilities, closures and reports near you',
+    exploreEmpty: 'The city map is coming soon',
+    reportSubtitle: 'Report an issue to your municipality in seconds',
+    reportEmpty: 'Report submission is coming soon',
+    eventsSubtitle: 'Concerts, festivals and community activities',
+    eventsEmpty: 'Upcoming events will appear here',
+    profileSubtitle: 'Your account, municipality and preferences',
+    profileEmpty: 'Sign-in is coming soon',
+  },
+  backend: {
+    connected: 'Backend configured',
+    notConfigured: 'Backend not configured – running in offline preview mode',
+  },
+  adminNav: {
+    overview: 'Overview',
+    reports: 'Reports',
+    map: 'Map',
+    departments: 'Departments',
+    employees: 'Employees',
+    announcements: 'Announcements',
+    events: 'Events',
+    analytics: 'Analytics',
+    settings: 'Settings',
+  },
+  adminOverview: {
+    subtitle: 'Municipality operations at a glance',
+    totalReports: 'Total reports',
+    pendingReports: 'Pending reports',
+    resolvedReports: 'Resolved reports',
+    avgResolutionTime: 'Avg. resolution time',
+    noData: 'No data yet – metrics appear once reports are received',
+    statusWorkflow: 'Report status workflow',
+  },
+  reportCategory: {
+    pothole: 'Pothole',
+    streetlight: 'Broken streetlight',
+    garbage: 'Garbage',
+    water_leak: 'Water leak',
+    sidewalk: 'Damaged sidewalk',
+    road: 'Road problem',
+    public_infrastructure: 'Public infrastructure',
+    noise: 'Noise complaint',
+    other: 'Other',
+  },
+  reportStatus: {
+    submitted: 'Submitted',
+    under_review: 'Under review',
+    assigned: 'Assigned',
+    in_progress: 'In progress',
+    resolved: 'Resolved',
+    closed: 'Closed',
+    rejected: 'Rejected',
+  },
+  reportPriority: {
+    low: 'Low',
+    normal: 'Normal',
+    high: 'High',
+    urgent: 'Urgent',
+  },
+};

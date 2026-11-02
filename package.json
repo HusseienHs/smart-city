@@ -1,0 +1,26 @@
+{
+  "name": "smart-city",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart City – all-in-one digital platform connecting citizens with their municipalities.",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev:mobile": "pnpm --filter @smart-city/mobile start",
+    "dev:admin": "pnpm --filter @smart-city/admin dev",
+    "build:admin": "pnpm --filter @smart-city/admin build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "extends": "@smart-city/config/typescript/base.json",
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

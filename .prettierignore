@@ -1,0 +1,12 @@
+node_modules
+pnpm-lock.yaml
+.next
+.expo
+dist
+build
+coverage
+apps/mobile/ios
+apps/mobile/android
+apps/admin/next-env.d.ts
+apps/mobile/expo-env.d.ts
+**/AGENTS.md

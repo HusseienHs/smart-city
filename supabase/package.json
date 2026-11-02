@@ -1,0 +1,23 @@
+{
+  "name": "@smart-city/supabase",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Database migrations, RLS policies and security tests for the Smart City backend.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.14",
+    "@electric-sql/pglite-postgis": "0.2.14",
+    "@smart-city/config": "workspace:*",
+    "@smart-city/shared": "workspace:*",
+    "@types/node": "^24",
+    "eslint": "^9.39.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

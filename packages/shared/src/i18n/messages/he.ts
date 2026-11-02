@@ -75,6 +75,24 @@ export const he: Messages = {
     closed: 'סגור',
     rejected: 'נדחה',
   },
+  reportRejectionReason: {
+    duplicate: 'כפילות של דיווח קיים',
+    not_municipal_responsibility: 'לא באחריות הרשות',
+    insufficient_information: 'אין מספיק מידע',
+    not_found_on_site: 'לא נמצא בשטח',
+    spam_or_abuse: 'ספאם או שימוש לרעה',
+    other: 'אחר',
+  },
+  reportVisibility: {
+    public: 'ציבורי – תושבים אחרים יראו את המפגע (ללא הפרטים שלך)',
+    private: 'פרטי – רק את/ה והרשות',
+  },
+  staffRole: {
+    employee: 'עובד/ת',
+    intake_dispatcher: 'מוקדן/ית קליטה',
+    department_manager: 'מנהל/ת מחלקה',
+    municipality_admin: 'מנהל/ת מערכת ברשות',
+  },
   reportPriority: {
     low: 'נמוכה',
     normal: 'רגילה',

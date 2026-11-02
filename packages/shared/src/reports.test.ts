@@ -4,12 +4,13 @@ import {
   REPORT_STATUSES,
   REPORT_STATUS_TRANSITIONS,
   canTransitionReportStatus,
+  defaultReportVisibility,
   isOpenReportStatus,
   isTerminalReportStatus,
   isValidTrackingNumber,
   normalizeTrackingNumber,
 } from './reports';
-import { STAFF_ROLES } from './roles';
+import { MUNICIPAL_STAFF_ROLES } from './roles';
 
 describe('report status transitions', () => {
   it('only references known statuses', () => {
@@ -43,10 +44,26 @@ describe('report status transitions', () => {
     }
   });
 
-  it('allows every staff role to follow valid edges', () => {
-    for (const role of STAFF_ROLES) {
+  it('allows every municipal staff role to follow valid edges', () => {
+    for (const role of MUNICIPAL_STAFF_ROLES) {
       expect(canTransitionReportStatus('submitted', 'under_review', role)).toBe(true);
     }
+  });
+
+  it('limits dispatchers to triage statuses', () => {
+    expect(canTransitionReportStatus('submitted', 'rejected', 'intake_dispatcher')).toBe(true);
+    expect(canTransitionReportStatus('under_review', 'in_progress', 'intake_dispatcher')).toBe(
+      false,
+    );
+  });
+
+  it('never lets a platform operator change a status', () => {
+    expect(canTransitionReportStatus('in_progress', 'resolved', 'platform_admin')).toBe(false);
+  });
+
+  it('defaults sensitive categories to private', () => {
+    expect(defaultReportVisibility('noise')).toBe('private');
+    expect(defaultReportVisibility('pothole')).toBe('public');
   });
 
   it('classifies open statuses', () => {

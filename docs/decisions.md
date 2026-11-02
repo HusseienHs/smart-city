@@ -45,9 +45,35 @@ Frontends use shared helpers (e.g. `canTransitionReportStatus`) purely for UX.
 **Revisit:** Encrypt the session at rest (AES key in SecureStore, ciphertext in AsyncStorage)
 before production launch.
 
-### D-007 · Open decisions (owner input needed)
+### D-007 · Hosting: Frankfurt, development only, synthetic data (2026-11-02)
 
-- **Hosting region / data residency** for municipal and citizen data (Supabase has no Israel region; check municipal procurement and privacy requirements).
-- **Map provider:** Google Maps vs Mapbox (cost, Hebrew/Arabic labels, offline tiles).
-- **App identifiers:** iOS bundle ID / Android package name — permanent after store release.
-- **Repository license** and visibility.
+**Decision:** A hosted Supabase project in Frankfurt (eu-central-1) is used **for development
+only, with synthetic test data**. No real citizen information is stored anywhere until data
+residency, Israeli privacy requirements (Privacy Protection Law and its regulations) and
+municipal contractual requirements have been reviewed.
+**Consequence:** All seed data is fictional and labeled as such. Production hosting is an open
+decision.
+
+### D-008 · Map provider stays abstract (2026-11-02)
+
+**Decision:** No map provider is chosen yet. The data layer stores plain WGS84 coordinates
+(PostGIS `geography`), and the apps talk to a provider-neutral map interface with Google Maps
+and Mapbox adapters selected by `*_MAP_PROVIDER`. A comparison (cost, Hebrew/Arabic labels,
+RTL, offline tiles, terms for storing geocoding results) comes before the choice.
+
+### D-009 · App identifier deferred (2026-11-02)
+
+**Decision:** iOS bundle ID / Android package name stay unset until the product name and
+branding are final. They are permanent once published, so none is invented as a placeholder.
+
+### D-010 · Hosted development database, no local Docker (2026-11-02)
+
+**Decision:** Development uses the hosted Supabase project (`supabase link` + `supabase db
+push`); developers don't need Docker. Migrations stay plain SQL under `supabase/migrations`,
+so the local stack (`supabase start`) keeps working for anyone who has Docker, and CI runs
+it (GitHub Actions has Docker).
+
+### Open
+
+- Production hosting region and data-processing agreements.
+- Repository license and visibility.

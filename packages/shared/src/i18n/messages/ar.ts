@@ -75,6 +75,24 @@ export const ar: Messages = {
     closed: 'مغلق',
     rejected: 'مرفوض',
   },
+  reportRejectionReason: {
+    duplicate: 'بلاغ مكرر لبلاغ قائم',
+    not_municipal_responsibility: 'ليس من مسؤولية البلدية',
+    insufficient_information: 'معلومات غير كافية',
+    not_found_on_site: 'لم يُعثر عليه في الموقع',
+    spam_or_abuse: 'رسائل مزعجة أو إساءة استخدام',
+    other: 'أخرى',
+  },
+  reportVisibility: {
+    public: 'عام – يمكن للسكان الآخرين رؤية المشكلة (بدون بياناتك)',
+    private: 'خاص – أنت والبلدية فقط',
+  },
+  staffRole: {
+    employee: 'موظف',
+    intake_dispatcher: 'موظف استقبال وتوزيع',
+    department_manager: 'مدير قسم',
+    municipality_admin: 'مسؤول البلدية',
+  },
   reportPriority: {
     low: 'منخفضة',
     normal: 'عادية',

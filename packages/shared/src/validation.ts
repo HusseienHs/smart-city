@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 import { SUPPORTED_LOCALES } from './locales';
-import { REPORT_CATEGORIES, REPORT_PRIORITIES, REPORT_STATUSES } from './reports';
+import {
+  REPORT_CATEGORIES,
+  REPORT_PRIORITIES,
+  REPORT_REJECTION_REASONS,
+  REPORT_STATUSES,
+  REPORT_VISIBILITIES,
+  STATUSES_REQUIRING_PUBLIC_NOTE,
+} from './reports';
 
 /** Upper bound for photos attached to a single report. */
 export const MAX_REPORT_PHOTOS = 5;
@@ -30,6 +37,8 @@ export const createReportSchema = z.object({
   location: coordinatesSchema,
   /** Human-readable address from reverse geocoding or user input. */
   address: z.string().trim().max(300).optional(),
+  /** Omitted → category default (sensitive categories default to private). */
+  visibility: z.enum(REPORT_VISIBILITIES).optional(),
 });
 export type CreateReportInput = z.infer<typeof createReportSchema>;
 
@@ -38,12 +47,48 @@ export const reportPhotoSchema = z.object({
   sizeBytes: z.number().int().positive().max(MAX_REPORT_PHOTO_BYTES),
 });
 
-export const updateReportStatusSchema = z.object({
-  reportId: z.uuid(),
-  status: z.enum(REPORT_STATUSES),
-  /** Required context for citizens when a report is rejected or resolved. */
-  note: z.string().trim().max(1000).optional(),
-});
+/**
+ * Mirrors the checks in `public.update_report_status` so forms can show errors early.
+ * The database re-validates everything.
+ */
+export const updateReportStatusSchema = z
+  .object({
+    reportId: z.uuid(),
+    status: z.enum(REPORT_STATUSES),
+    note: z.string().trim().max(2000).optional(),
+    noteIsPublic: z.boolean().default(true),
+    rejectionReason: z.enum(REPORT_REJECTION_REASONS).optional(),
+    duplicateOfId: z.uuid().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const requiresPublicNote = (STATUSES_REQUIRING_PUBLIC_NOTE as readonly string[]).includes(
+      value.status,
+    );
+    if (requiresPublicNote && (!value.note || value.note.length < 5 || !value.noteIsPublic)) {
+      ctx.addIssue({ code: 'custom', path: ['note'], message: 'A public note is required' });
+    }
+    if (value.status === 'rejected' && !value.rejectionReason) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['rejectionReason'],
+        message: 'A rejection reason is required',
+      });
+    }
+    if (value.status !== 'rejected' && value.rejectionReason) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['rejectionReason'],
+        message: 'Only rejected reports have a rejection reason',
+      });
+    }
+    if (value.rejectionReason === 'duplicate' && !value.duplicateOfId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['duplicateOfId'],
+        message: 'Select the original report',
+      });
+    }
+  });
 export type UpdateReportStatusInput = z.infer<typeof updateReportStatusSchema>;
 
 export const assignReportSchema = z

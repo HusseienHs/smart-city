@@ -77,6 +77,24 @@ export const en = {
     closed: 'Closed',
     rejected: 'Rejected',
   },
+  reportRejectionReason: {
+    duplicate: 'Duplicate of an existing report',
+    not_municipal_responsibility: 'Not the municipality’s responsibility',
+    insufficient_information: 'Not enough information',
+    not_found_on_site: 'Not found on site',
+    spam_or_abuse: 'Spam or abuse',
+    other: 'Other',
+  },
+  reportVisibility: {
+    public: 'Public – other residents can see this issue (without your details)',
+    private: 'Private – only you and the municipality',
+  },
+  staffRole: {
+    employee: 'Employee',
+    intake_dispatcher: 'Intake dispatcher',
+    department_manager: 'Department manager',
+    municipality_admin: 'Municipality admin',
+  },
   reportPriority: {
     low: 'Low',
     normal: 'Normal',

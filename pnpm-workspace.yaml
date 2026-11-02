@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - supabase
 
 # pnpm 10 blocks dependency install scripts by default. Only allow-list what we need.
 ignoredBuiltDependencies:

@@ -1,4 +1,4 @@
-import { isStaffRole, type UserRole } from './roles';
+import { isMunicipalStaffRole, type UserRole } from './roles';
 
 export const REPORT_CATEGORIES = [
   'pothole',
@@ -27,6 +27,41 @@ export type ReportStatus = (typeof REPORT_STATUSES)[number];
 export const REPORT_PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
 export type ReportPriority = (typeof REPORT_PRIORITIES)[number];
 
+export const REPORT_VISIBILITIES = ['public', 'private'] as const;
+export type ReportVisibility = (typeof REPORT_VISIBILITIES)[number];
+
+/** Categories that default to private visibility. The citizen can still choose. */
+export const SENSITIVE_REPORT_CATEGORIES = ['noise'] as const satisfies readonly ReportCategory[];
+
+export function defaultReportVisibility(category: ReportCategory): ReportVisibility {
+  return (SENSITIVE_REPORT_CATEGORIES as readonly ReportCategory[]).includes(category)
+    ? 'private'
+    : 'public';
+}
+
+/** Mandatory when a report is rejected. Mirrors `public.report_rejection_reason`. */
+export const REPORT_REJECTION_REASONS = [
+  'duplicate',
+  'not_municipal_responsibility',
+  'insufficient_information',
+  'not_found_on_site',
+  'spam_or_abuse',
+  'other',
+] as const;
+export type ReportRejectionReason = (typeof REPORT_REJECTION_REASONS)[number];
+
+/** Statuses that require a public note explaining the outcome to the citizen. */
+export const STATUSES_REQUIRING_PUBLIC_NOTE = [
+  'resolved',
+  'rejected',
+] as const satisfies readonly ReportStatus[];
+
+/** The only statuses an intake dispatcher may set (triage, not handling). */
+export const DISPATCHER_ALLOWED_STATUSES = [
+  'under_review',
+  'rejected',
+] as const satisfies readonly ReportStatus[];
+
 /**
  * Allowed status transitions. A report may only move along these edges.
  * `resolved` can be reopened to `in_progress` (e.g. a citizen disputes the fix);
@@ -53,16 +88,23 @@ export function getNextReportStatuses(status: ReportStatus): readonly ReportStat
 }
 
 /**
- * Whether `role` may move a report from `from` to `to`.
- * Only municipality staff can change statuses — a citizen can never mark
- * their own (or anyone's) report as resolved.
+ * Whether `role` may move a report from `from` to `to`, for UI purposes. Mirrors
+ * `public.update_report_status`, which is the real enforcement point.
+ * Only municipal staff can change statuses — a citizen (or a platform operator) can never
+ * mark a report as resolved. Dispatchers may only triage.
  */
 export function canTransitionReportStatus(
   from: ReportStatus,
   to: ReportStatus,
   role: UserRole,
 ): boolean {
-  if (!isStaffRole(role)) return false;
+  if (!isMunicipalStaffRole(role)) return false;
+  if (
+    role === 'intake_dispatcher' &&
+    !(DISPATCHER_ALLOWED_STATUSES as readonly ReportStatus[]).includes(to)
+  ) {
+    return false;
+  }
   return REPORT_STATUS_TRANSITIONS[from].includes(to);
 }
 

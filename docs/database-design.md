@@ -197,16 +197,71 @@ each one (3, 1 and 6 failing tests).
 
 ## 9. Before applying to the hosted project (checklist)
 
+Every hosted action below (connecting, running queries, pushing) needs the project owner's
+explicit approval. Work through the steps in order.
+
+### 9.0 Stop rule
+
+> **If any compatibility, security or verification check fails, STOP.** Do not continue the
+> deployment, and do not try to work around the failure on the hosted project.
+> Fix problems with a **new migration**, tested locally (`pnpm check`). **Never edit a
+> migration that has already been applied** to any shared environment. Then restart this
+> checklist from 9.1.
+
+### 9.1 Pre-deployment checks (read-only, before any push)
+
 1. Confirm the dev project holds no real data (D-007).
-2. `supabase link --project-ref <dev-project>` (CLI; no Docker needed), then
-   `supabase db push --dry-run` and review the output.
-3. `supabase db push`, followed by `supabase db push --include-seed` only on the dev project.
-4. Run the Security Advisor and Performance Advisor in the dashboard; expect no RLS or
-   `search_path` findings.
-5. Verify the shim assumptions on the hosted project: default privileges were revoked as
-   expected (re-run the privilege queries from `schema-guards` via the SQL editor), the
-   `postgres` role can read `storage.objects` inside `add_report_attachment`, and
-   `notifications` is in the `supabase_realtime` publication.
+2. In the dashboard SQL editor, run this read-only query. It changes nothing:
+
+   ```sql
+   begin transaction read only;
+
+   select
+     current_setting('server_version_num')::int as server_version_num,
+     version() as server_version,
+     (select rolbypassrls from pg_roles where rolname = 'postgres') as postgres_bypasses_rls,
+     exists (
+       select 1 from pg_publication where pubname = 'supabase_realtime'
+     ) as realtime_publication_exists;
+
+   rollback;
+   ```
+
+3. Compare with the expected values. **Any mismatch → STOP (9.0).**
+
+   | Column                        | Expected                                  | Why it matters                                                                                                                              |
+   | ----------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `server_version_num`          | `≥ 150000` (Supabase currently runs 17.x) | `ON DELETE SET NULL (assignee_id)` needs Postgres 15+; tests run on 18                                                                      |
+   | `postgres_bypasses_rls`       | `true`                                    | `add_report_attachment` (owned by `postgres`) must read `storage.objects` to confirm an upload exists                                       |
+   | `realtime_publication_exists` | `true`                                    | The notifications migration adds `notifications` to it; if it's missing, the step is skipped silently and in-app notifications won't stream |
+
+### 9.2 Migration preview and push (schema only, no seed data)
+
+Neither command below may include `--include-seed`. Seed data is a separate approval (9.4).
+
+1. `supabase link --project-ref <dev-project>` (CLI; no Docker needed).
+2. `supabase db push --dry-run`. Review the output: it must list exactly the six committed
+   migrations and nothing else. **Anything unexpected → STOP.**
+3. `supabase db push`, only after the dry-run has been reviewed and approved.
+
+### 9.3 Post-deployment verification
+
+1. Run the Security Advisor and Performance Advisor in the dashboard. Expect no RLS or
+   `search_path` findings. **Any security finding → STOP.**
+2. Verify the remaining shim assumptions on the hosted project:
+   - Supabase's default privileges were revoked as expected: re-run the privilege queries
+     from `schema-guards.test.ts` in the SQL editor.
+   - `notifications` is in the `supabase_realtime` publication.
+
+### 9.4 Seed data (separate, explicit approval)
+
+The fictional demo seed (`supabase/seed.sql`) is **never** applied as part of the migration
+preview or push. Only after 9.1–9.3 have passed, ask the owner for **explicit approval**
+before running:
+
+```bash
+supabase db push --include-seed   # dev project only — never production
+```
 
 ## 10. Next steps
 

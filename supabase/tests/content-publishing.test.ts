@@ -148,4 +148,134 @@ describe('content publishing', () => {
     ).map((row) => row.id);
     expect(staffView).toEqual(expect.arrayContaining([draftId, publishedId]));
   });
+  describe('dispatchers and author privacy (F8, F9)', () => {
+    it('does not let intake dispatchers create drafts', async () => {
+      for (const departmentId of [null, ids.deptAX]) {
+        expect(
+          await world.db.fails(
+            user(ids.dispatcherA),
+            `insert into public.announcements (municipality_id, department_id, title, body)
+             values ($1, $2, '{"he": "x"}', '{"he": "y"}')`,
+            [ids.muniA, departmentId],
+          ),
+        ).toMatch(DENIED);
+      }
+    });
+
+    it('never exposes author user ids publicly', async () => {
+      const id = await draft(user(ids.adminA), null);
+      await publish(user(ids.adminA), id);
+      for (const actor of [anon, user(ids.citizenA1), user(ids.adminA)]) {
+        for (const column of ['created_by', 'published_by']) {
+          expect(
+            await world.db.fails(
+              actor,
+              `select ${column} from public.announcements where id = $1`,
+              [id],
+            ),
+          ).toMatch(DENIED);
+        }
+      }
+      const [row] = await world.db.as<Record<string, unknown>>(
+        anon,
+        `select id, title, status, published_at from public.announcements where id = $1`,
+        [id],
+      );
+      expect(row).toMatchObject({ id, status: 'published' });
+    });
+  });
+
+  describe('content images (F3)', () => {
+    const image = (announcementId: string, n = 1) =>
+      `${ids.muniA}/announcements/${announcementId}/${String(n).padStart(8, '0')}-1111-4222-8333-444455556666.jpg`;
+    const put = (actor: Actor, bucket: string, path: string) =>
+      world.db.as(actor, `insert into storage.objects (bucket_id, name) values ($1, $2)`, [
+        bucket,
+        path,
+      ]);
+    const failPut = (actor: Actor, bucket: string, path: string) =>
+      world.db.fails(actor, `insert into storage.objects (bucket_id, name) values ($1, $2)`, [
+        bucket,
+        path,
+      ]);
+    const remove = (actor: Actor, bucket: string, path: string) =>
+      world.db.as(
+        actor,
+        `delete from storage.objects where bucket_id = $1 and name = $2 returning name`,
+        [bucket, path],
+      );
+    const setImage = (actor: Actor, id: string, path: string) =>
+      world.db.as(actor, `update public.announcements set image_path = $2 where id = $1`, [
+        id,
+        path,
+      ]);
+
+    it('keeps draft images in a private bucket, visible to municipality staff only', async () => {
+      const id = await draft(user(ids.employeeAX), ids.deptAX);
+      await put(user(ids.employeeAX), 'content-drafts', image(id));
+
+      const readDraft = (actor: Actor) =>
+        world.db.as(
+          actor,
+          `select name from storage.objects where bucket_id = 'content-drafts' and name = $1`,
+          [image(id)],
+        );
+      expect(await readDraft(user(ids.managerAY))).toHaveLength(1);
+      for (const actor of [anon, user(ids.citizenA1), user(ids.adminB)]) {
+        expect(await readDraft(actor)).toHaveLength(0);
+      }
+      const [bucket] = await world.db.query<{ public: boolean }>(
+        `select public from storage.buckets where id = 'content-drafts'`,
+      );
+      expect(bucket!.public).toBe(false);
+
+      // Non-editors cannot add draft images.
+      expect(await failPut(user(ids.employeeAY), 'content-drafts', image(id, 2))).toMatch(DENIED);
+      expect(await failPut(user(ids.dispatcherA), 'content-drafts', image(id, 3))).toMatch(DENIED);
+    });
+
+    it('publishes an image only after publication, only by a publisher, only at its image_path', async () => {
+      const id = await draft(user(ids.employeeAX), ids.deptAX);
+      await put(user(ids.employeeAX), 'content-drafts', image(id));
+      await setImage(user(ids.employeeAX), id, image(id));
+
+      // Still a draft: nobody can put it in the public bucket.
+      expect(await failPut(user(ids.managerAX), 'public-content', image(id))).toMatch(DENIED);
+
+      await publish(user(ids.managerAX), id);
+      expect(await failPut(user(ids.employeeAX), 'public-content', image(id))).toMatch(DENIED); // not a publisher
+      expect(await failPut(user(ids.managerAY), 'public-content', image(id))).toMatch(DENIED); // other dept
+      expect(await failPut(user(ids.managerAX), 'public-content', image(id, 9))).toMatch(DENIED); // not image_path
+      await put(user(ids.managerAX), 'public-content', image(id));
+    });
+
+    it('lets only authorized publishers delete public images', async () => {
+      const id = await draft(user(ids.employeeAX), ids.deptAX);
+      await setImage(user(ids.employeeAX), id, image(id));
+      await publish(user(ids.managerAX), id);
+      await put(user(ids.managerAX), 'public-content', image(id));
+
+      for (const actor of [
+        user(ids.employeeAX),
+        user(ids.dispatcherA),
+        user(ids.managerAY),
+        user(ids.adminB),
+      ]) {
+        expect(await remove(actor, 'public-content', image(id))).toHaveLength(0);
+      }
+      expect(await remove(user(ids.adminA), 'public-content', image(id))).toHaveLength(1);
+    });
+
+    it('rejects image paths that do not belong to the announcement', async () => {
+      const id = await draft(user(ids.employeeAX), ids.deptAX);
+      const other = await draft(user(ids.employeeAX), ids.deptAX);
+      expect(
+        await world.db.fails(
+          user(ids.employeeAX),
+          `update public.announcements set image_path = $2 where id = $1`,
+          [id, image(other)],
+        ),
+      ).toMatch(/check constraint/i);
+    });
+  });
 });

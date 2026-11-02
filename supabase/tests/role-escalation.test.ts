@@ -16,40 +16,49 @@ describe('role escalation', () => {
       )
     )[0];
 
-  it('stops employees and managers from changing staff records', async () => {
-    for (const actor of [ids.employeeAX, ids.managerAX, ids.dispatcherA]) {
-      const updated = await world.db.as(
-        user(actor),
-        `update public.employees set role = 'municipality_admin' where user_id = $1 returning id`,
-        [actor],
-      );
-      expect(updated).toHaveLength(0);
+  it('stops everyone — including admins — from creating memberships directly', async () => {
+    for (const actor of [
+      ids.employeeAX,
+      ids.managerAX,
+      ids.dispatcherA,
+      ids.adminA,
+      ids.citizenA1,
+    ]) {
       expect(
         await world.db.fails(
           user(actor),
           `insert into public.employees (user_id, municipality_id, role) values ($1, $2, 'municipality_admin')`,
-          [ids.citizenA1, ids.muniA],
+          [actor, ids.muniA],
+        ),
+      ).toMatch(DENIED);
+    }
+  });
+
+  it('stops non-admins from changing roles or departments', async () => {
+    for (const actor of [ids.employeeAX, ids.managerAX, ids.dispatcherA]) {
+      expect(
+        await world.db.fails(
+          user(actor),
+          `update public.employees set role = 'municipality_admin' where id = $1`,
+          [employeeIds.employeeAX],
+        ),
+      ).toMatch(DENIED);
+      expect(
+        await world.db.fails(
+          user(actor),
+          `select public.set_employee_role($1, 'municipality_admin', null)`,
+          [employeeIds.employeeAX],
         ),
       ).toMatch(DENIED);
     }
     expect(await roleOf(employeeIds.employeeAX)).toEqual({ role: 'employee', is_active: true });
   });
 
-  it('stops citizens from creating staff memberships', async () => {
-    expect(
-      await world.db.fails(
-        user(ids.citizenA1),
-        `insert into public.employees (user_id, municipality_id, role) values ($1, $2, 'municipality_admin')`,
-        [ids.citizenA1, ids.muniA],
-      ),
-    ).toMatch(DENIED);
-  });
-
   it('stops an admin from changing their own role or deactivating themselves', async () => {
     expect(
       await world.db.fails(
         user(ids.adminA),
-        `update public.employees set role = 'employee', department_id = $2 where id = $1`,
+        `select public.set_employee_role($1, 'employee', $2)`,
         [employeeIds.adminA, ids.deptAX],
       ),
     ).toMatch(/your own role/i);
@@ -59,24 +68,14 @@ describe('role escalation', () => {
         `update public.employees set is_active = false where id = $1`,
         [employeeIds.adminA],
       ),
-    ).toMatch(/your own role/i);
+    ).toMatch(/your own status/i);
   });
 
-  it('stops an admin from granting themselves a role in another municipality', async () => {
-    expect(
-      await world.db.fails(
-        user(ids.adminA),
-        `insert into public.employees (user_id, municipality_id, role) values ($1, $2, 'municipality_admin')`,
-        [ids.adminA, ids.muniB],
-      ),
-    ).toMatch(DENIED);
-  });
-
-  it('lets an admin promote a colleague, and audits it', async () => {
+  it('lets an admin promote a colleague through set_employee_role, and audits it', async () => {
     await world.db.as(
       user(ids.adminA),
-      `update public.employees set role = 'department_manager' where id = $1`,
-      [employeeIds.employeeAX],
+      `select public.set_employee_role($1, 'department_manager', $2)`,
+      [employeeIds.employeeAX, ids.deptAX],
     );
     expect(await roleOf(employeeIds.employeeAX)).toEqual({
       role: 'department_manager',
@@ -92,6 +91,16 @@ describe('role escalation', () => {
     );
     expect(audit!.actor_id).toBe(ids.adminA);
     expect(audit!.details.after.role).toBe('department_manager');
+  });
+
+  it("does not let B's admin change A's staff", async () => {
+    expect(
+      await world.db.fails(
+        user(ids.adminB),
+        `select public.set_employee_role($1, 'municipality_admin', null)`,
+        [employeeIds.employeeAX],
+      ),
+    ).toMatch(DENIED);
   });
 
   it('always leaves the municipality with an active admin', async () => {
@@ -115,7 +124,7 @@ describe('role escalation', () => {
         `update public.employees set is_active = false where id = $1`,
         [employeeIds.adminA],
       ),
-    ).toMatch(/your own role/i);
+    ).toMatch(/your own status/i);
 
     const [{ admins }] = (await world.db.query<{ admins: number }>(
       `select count(*)::int as admins from public.employees

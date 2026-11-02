@@ -28,6 +28,7 @@ create table auth.users (
   email text unique,
   raw_user_meta_data jsonb not null default '{}'::jsonb,
   raw_app_meta_data jsonb not null default '{}'::jsonb,
+  email_confirmed_at timestamptz,
   created_at timestamptz not null default now()
 );
 

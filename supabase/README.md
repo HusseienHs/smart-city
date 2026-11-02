@@ -32,9 +32,9 @@ Hosted development uses **synthetic data only** (D-007). Follow the checklist in
 ```bash
 pnpm dlx supabase login
 pnpm dlx supabase link --project-ref <dev-project-ref>
-pnpm dlx supabase db push --dry-run
-pnpm dlx supabase db push
-pnpm dlx supabase db push --include-seed     # dev project only
+pnpm dlx supabase db push --remote --dry-run   # CLI v3: --remote targets the linked project
+pnpm dlx supabase db push --remote             # only after the dry-run is approved
+pnpm dlx supabase db push --remote --include-seed   # dev project only, separate approval (§9.4)
 pnpm dlx supabase gen types typescript --linked > packages/shared/src/database.types.ts
 ```
 
@@ -47,6 +47,10 @@ anyone who has Docker, and in CI.
 - Every new table enables RLS and revokes Supabase's default grants in the same migration.
 - Every new `SECURITY DEFINER` function sets `search_path = ''`, and revokes `EXECUTE` from
   `public`/`anon` unless it's meant for them.
+- Every new function in `private` must have PUBLIC's `EXECUTE` revoked; grant
+  `authenticated` only if an RLS policy or check constraint calls it.
+- Tables with identifying columns use column-level `SELECT` grants; never expose user ids
+  of citizens to staff.
 - Every policy change ships with tests. `schema-guards.test.ts` fails if a table lacks RLS,
   a grant is broader than the allowlist, or a function has a mutable `search_path`.
 - Seed and test data must be obviously fictional (`example.invalid` / `example.test`

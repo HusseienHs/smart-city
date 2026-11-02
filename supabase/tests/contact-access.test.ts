@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { user } from './support/db';
-import { ids } from './support/fixtures';
+import { employeeIds, ids } from './support/fixtures';
 import { DENIED, useWorld } from './support/world';
 
 /** Phone numbers: optional, never public, only for handlers of the report, always audited. */
@@ -58,17 +58,105 @@ describe('reporter contact details', () => {
         0,
       );
     }
-    // Staff can see colleagues' names, but never citizen profiles.
-    expect(
-      await world.db.as(user(ids.adminA), `select * from public.profiles where id = $1`, [
-        ids.citizenA1,
-      ]),
-    ).toHaveLength(0);
-    expect(
-      await world.db.as(user(ids.adminA), `select full_name from public.profiles where id = $1`, [
-        ids.employeeAX,
-      ]),
-    ).toEqual([{ full_name: 'Employee AX' }]);
+    // Nobody reads anyone else's profile — not citizens', not colleagues' (F1, F4).
+    for (const target of [ids.citizenA1, ids.employeeAX]) {
+      expect(
+        await world.db.as(user(ids.adminA), `select * from public.profiles where id = $1`, [
+          target,
+        ]),
+      ).toHaveLength(0);
+    }
+  });
+
+  it("doesn't let staff read reporter ids directly (F1)", async () => {
+    for (const actor of [ids.adminA, ids.employeeAX, ids.dispatcherA]) {
+      expect(await world.db.fails(user(actor), `select reporter_id from public.reports`)).toMatch(
+        DENIED,
+      );
+      expect(await world.db.fails(user(actor), `select * from public.reports`)).toMatch(DENIED);
+      expect(
+        await world.db.fails(user(actor), `select author_id from public.report_comments`),
+      ).toMatch(DENIED);
+      expect(
+        await world.db.fails(user(actor), `select changed_by from public.report_status_history`),
+      ).toMatch(DENIED);
+      expect(
+        await world.db.fails(user(actor), `select uploaded_by from public.report_attachments`),
+      ).toMatch(DENIED);
+    }
+  });
+
+  it('attributes report activity to employees or "the reporter", never to a user id (F1)', async () => {
+    await world.db.as(user(ids.citizenA2), `select public.add_report_comment($1, 'Any update?')`, [
+      world.reports.assignedXA,
+    ]);
+    await world.db.as(
+      user(ids.employeeAX),
+      `select public.add_report_comment($1, 'Crew scheduled', false)`,
+      [world.reports.assignedXA],
+    );
+    const comments = await world.db.as<{
+      author_employee_id: string | null;
+      from_reporter: boolean;
+    }>(
+      user(ids.adminA),
+      `select author_employee_id, from_reporter from public.report_comments
+       where report_id = $1 order by created_at`,
+      [world.reports.assignedXA],
+    );
+    expect(comments).toEqual([
+      { author_employee_id: null, from_reporter: true },
+      { author_employee_id: employeeIds.employeeAX, from_reporter: false },
+    ]);
+
+    const history = await world.db.as<{ to_status: string; changed_by_employee_id: string | null }>(
+      user(ids.adminA),
+      `select to_status, changed_by_employee_id from public.report_status_history
+       where report_id = $1 order by created_at`,
+      [world.reports.assignedXA],
+    );
+    expect(history).toEqual([
+      { to_status: 'submitted', changed_by_employee_id: null },
+      { to_status: 'assigned', changed_by_employee_id: employeeIds.adminA },
+    ]);
+  });
+
+  describe('colleague names (F4)', () => {
+    it('returns names of active staff only, with no personal profile fields', async () => {
+      const colleagues = await world.db.as<Record<string, unknown>>(
+        user(ids.employeeAX),
+        `select * from public.get_colleagues($1)`,
+        [ids.muniA],
+      );
+      expect(Object.keys(colleagues[0]!).sort()).toEqual(
+        ['department_id', 'employee_id', 'full_name', 'job_title', 'role'].sort(),
+      );
+      const names = colleagues.map((row) => row.full_name);
+      expect(names).toContain('Employee AX');
+      expect(names).toContain('Dispatcher A');
+      expect(names).not.toContain('Former Employee AX'); // inactive
+      expect(names).not.toContain('Citizen A One');
+      expect(names).not.toContain('Admin B');
+    });
+
+    it('returns nothing to citizens, former staff or other municipalities', async () => {
+      for (const actor of [ids.citizenA1, ids.formerEmployeeAX, ids.adminB, ids.platformAdmin]) {
+        expect(
+          await world.db.as(user(actor), `select * from public.get_colleagues($1)`, [ids.muniA]),
+        ).toHaveLength(0);
+      }
+    });
+
+    it('hides inactive memberships from non-admin colleagues', async () => {
+      const visible = (
+        await world.db.as<{ id: string }>(user(ids.employeeAX), `select id from public.employees`)
+      ).map((row) => row.id);
+      expect(visible).not.toContain(employeeIds.formerEmployeeAX);
+      const adminView = (
+        await world.db.as<{ id: string }>(user(ids.adminA), `select id from public.employees`)
+      ).map((row) => row.id);
+      expect(adminView).toContain(employeeIds.formerEmployeeAX);
+    });
   });
 
   it('lets citizens manage only their own phone number, and report without one', async () => {

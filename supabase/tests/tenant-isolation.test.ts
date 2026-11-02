@@ -18,8 +18,8 @@ describe('cross-municipality isolation', () => {
     'report_confirmations',
     'report_followers',
     'employees',
-    'audit_logs',
     'notifications',
+    'staff_invitations',
   ];
 
   it.each(tenantTables)("B's admin and staff see none of A's rows in %s", async (table) => {
@@ -121,12 +121,16 @@ describe('cross-municipality isolation', () => {
     expect(updatedMunicipality).toHaveLength(0);
   });
 
-  it("A's admin sees A's audit log and not B's", async () => {
+  it("A's admin reads A's audit log and is denied B's", async () => {
     const rows = await world.db.as<{ municipality_id: string }>(
       user(ids.adminA),
-      `select distinct municipality_id from public.audit_logs`,
+      `select distinct municipality_id from public.get_audit_log($1)`,
+      [ids.muniA],
     );
     expect(rows.map((row) => row.municipality_id)).toEqual([ids.muniA]);
+    expect(
+      await world.db.fails(user(ids.adminA), `select * from public.get_audit_log($1)`, [ids.muniB]),
+    ).toMatch(DENIED);
   });
 
   it("a citizen of B never receives A's reports through citizen functions", async () => {

@@ -2,10 +2,14 @@
 -- Municipal content: announcements (the template for events, closures etc. in Phase 3).
 --
 -- Publishing rules:
---   * Any active staff member can create drafts (non-admins only for their own department).
+--   * Department employees and managers create drafts for their own department;
+--     municipality admins draft anything. Intake dispatchers cannot draft.
 --   * municipality_admin can publish all content of their municipality.
 --   * department_manager can publish content belonging to their department.
 --   * Status changes happen only through publish/archive RPCs, which are audited.
+--   * Images: drafts use the private `content-drafts` bucket; a publisher copies the image
+--     (`image_path`) to the public bucket only after publishing (see storage migration).
+--   * Author ids (created_by / published_by) are never exposed through the API.
 -- =============================================================================
 
 create table public.announcements (
@@ -16,6 +20,9 @@ create table public.announcements (
   title jsonb not null check (private.is_localized_text(title)),
   body jsonb not null check (private.is_localized_text(body)),
   severity public.announcement_severity not null default 'info',
+  -- Relative object path, identical in `content-drafts` and (once published) `public-content`:
+  -- {municipality_id}/announcements/{announcement_id}/{uuid}.{ext}
+  image_path text,
   status public.content_status not null default 'draft',
   expires_at timestamptz,
   created_by uuid references public.profiles (id) on delete set null,
@@ -25,7 +32,12 @@ create table public.announcements (
   updated_at timestamptz not null default now(),
   foreign key (department_id, municipality_id) references public.departments (id, municipality_id),
   foreign key (neighborhood_id, municipality_id) references public.neighborhoods (id, municipality_id),
-  check ((status = 'draft') = (published_at is null))
+  check ((status = 'draft') = (published_at is null)),
+  check (
+    image_path is null
+    or image_path ~ ('^' || municipality_id::text || '/announcements/' || id::text
+                     || '/[0-9a-f-]{36}\.(jpg|jpeg|png|webp)$')
+  )
 );
 
 create index announcements_municipality_status_idx
@@ -52,7 +64,7 @@ as $$
   ), false);
 $$;
 
--- Can the caller draft content for this department?
+-- Can the caller draft content for this department? Dispatchers never can.
 create function private.can_draft_content(p_municipality_id uuid, p_department_id uuid)
 returns boolean
 language sql
@@ -62,13 +74,20 @@ set search_path = ''
 as $$
   select coalesce((
     select e.role = 'municipality_admin'
-        or (p_department_id is not null and p_department_id = e.department_id)
+        or (e.role in ('employee', 'department_manager')
+            and p_department_id is not null and p_department_id = e.department_id)
     from public.employees e
     where e.user_id = (select auth.uid())
       and e.municipality_id = p_municipality_id
       and e.is_active
   ), false);
 $$;
+
+-- Called by RLS policies (as the querying role).
+grant execute on function
+  private.can_publish_content(uuid, uuid),
+  private.can_draft_content(uuid, uuid)
+to authenticated;
 
 -- Defaults on insert: creator is the caller; drafts only.
 create function private.prepare_announcement()
@@ -112,10 +131,15 @@ create trigger audit_published_announcement_edit after update on public.announce
 alter table public.announcements enable row level security;
 revoke all on public.announcements from anon, authenticated;
 
-grant select on public.announcements to anon, authenticated;
-grant insert (municipality_id, department_id, neighborhood_id, title, body, severity, expires_at)
+-- created_by / published_by are deliberately not readable (F8). Clients list columns.
+grant select (id, municipality_id, department_id, neighborhood_id, title, body, severity, image_path,
+              status, expires_at, published_at, created_at, updated_at)
+  on public.announcements to anon, authenticated;
+grant insert (municipality_id, department_id, neighborhood_id, title, body, severity, image_path,
+              expires_at)
   on public.announcements to authenticated;
-grant update (neighborhood_id, title, body, severity, expires_at) on public.announcements to authenticated;
+grant update (neighborhood_id, title, body, severity, image_path, expires_at)
+  on public.announcements to authenticated;
 grant delete on public.announcements to authenticated;
 
 create policy "Anyone can read published announcements of active municipalities"

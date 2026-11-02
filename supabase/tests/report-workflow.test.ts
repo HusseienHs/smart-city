@@ -271,9 +271,9 @@ describe('report workflow', () => {
       );
       expect(actorNotifications).toHaveLength(0);
 
-      const history = await world.db.as<{ to_status: string; changed_by: string }>(
+      const history = await world.db.as<{ to_status: string }>(
         adminA,
-        `select to_status, changed_by from public.report_status_history where report_id = $1 order by created_at`,
+        `select to_status from public.report_status_history where report_id = $1 order by created_at`,
         [world.reports.assignedXA],
       );
       expect(history.map((row) => row.to_status)).toEqual([
@@ -283,14 +283,76 @@ describe('report workflow', () => {
         'resolved',
       ]);
 
-      const audit = await world.db.as<{ action: string; actor_id: string }>(
+      const audit = await world.db.as<{ action: string; actor_id: string; actor_kind: string }>(
         adminA,
-        `select action, actor_id from public.audit_logs
-         where entity_id = $1 and action = 'report.status_changed'`,
-        [world.reports.assignedXA],
+        `select action, actor_id, actor_kind from public.get_audit_log($1)
+         where entity_id = $2 and action = 'report.status_changed'`,
+        [ids.muniA, world.reports.assignedXA],
       );
       expect(audit).toHaveLength(2);
-      expect(audit.every((row) => row.actor_id === ids.employeeAX)).toBe(true);
+      expect(
+        audit.every((row) => row.actor_id === ids.employeeAX && row.actor_kind === 'staff'),
+      ).toBe(true);
+    });
+
+    it('keeps notes internal unless explicitly marked public (F7)', async () => {
+      await world.db.as(
+        employeeAX,
+        `select public.update_report_status($1, 'in_progress', 'Internal: budget code 7')`,
+        [world.reports.assignedXA],
+      );
+      const [entry] = await world.db.query<{ note_is_public: boolean }>(
+        `select note_is_public from public.report_status_history
+         where report_id = $1 and to_status = 'in_progress'`,
+        [world.reports.assignedXA],
+      );
+      expect(entry!.note_is_public).toBe(false);
+      const updates = await world.db.as<{ note: string | null }>(
+        citizenA2,
+        `select note from public.get_my_report_updates($1)`,
+        [world.reports.assignedXA],
+      );
+      expect(updates.map((row) => row.note)).not.toContain('Internal: budget code 7');
+      // Resolution still requires an explicit public note.
+      expect(
+        await world.db.fails(
+          employeeAX,
+          `select public.update_report_status($1, 'resolved', 'Replaced the lamp')`,
+          [world.reports.assignedXA],
+        ),
+      ).toMatch(/public note/i);
+    });
+
+    it('sends the tracking number only to the reporter, not to other followers (F5)', async () => {
+      await world.db.as(citizenA1, `select public.follow_report($1)`, [world.reports.assignedXA]);
+      await setStatus(employeeAX, 'in_progress', null, false, null, null);
+
+      const [own] = await world.db.as<{ data: Record<string, unknown> }>(
+        citizenA2,
+        `select data from public.notifications where data ->> 'to_status' = 'in_progress'`,
+      );
+      expect(own!.data.tracking_number).toMatch(/^TSA-/);
+
+      const [follower] = await world.db.as<{ data: Record<string, unknown> }>(
+        citizenA1,
+        `select data from public.notifications where data ->> 'to_status' = 'in_progress'`,
+      );
+      expect(follower!.data).not.toHaveProperty('tracking_number');
+      expect(follower!.data).toEqual({
+        report_id: world.reports.assignedXA,
+        from_status: 'assigned',
+        to_status: 'in_progress',
+      });
+    });
+
+    it('never reveals the reporter as the actor of a submission in the audit log (F1/F6)', async () => {
+      const [entry] = await world.db.as<{ actor_id: string | null; actor_kind: string }>(
+        adminA,
+        `select actor_id, actor_kind from public.get_audit_log($1)
+         where action = 'report.submitted' and entity_id = $2`,
+        [ids.muniA, world.reports.assignedXA],
+      );
+      expect(entry).toEqual({ actor_id: null, actor_kind: 'citizen' });
     });
   });
 

@@ -161,13 +161,17 @@ create trigger set_updated_at before update on public.employees
   for each row execute function private.set_updated_at();
 
 -- -----------------------------------------------------------------------------
--- audit_logs: append-only.
+-- audit_logs: append-only. Never read directly by API roles — only through
+-- get_audit_log(), which redacts citizen identities (and report payloads for
+-- platform admins). The service role keeps full access for incident response.
 -- -----------------------------------------------------------------------------
 create table public.audit_logs (
   id bigint generated always as identity primary key,
   municipality_id uuid references public.municipalities (id),
   -- No FK: the audit trail must outlive the user account.
   actor_id uuid,
+  -- Who acted: a citizen's id is never shown to staff or platform admins.
+  actor_kind text not null check (actor_kind in ('system', 'staff', 'citizen', 'platform')),
   action text not null,
   entity_type text not null,
   entity_id uuid,
@@ -195,24 +199,43 @@ create trigger audit_logs_no_truncate before truncate on public.audit_logs
   for each statement execute function private.prevent_audit_mutation();
 
 -- Internal: write an audit entry. Not callable by API roles.
+-- p_actor_kind lets citizen-facing functions mark the actor as a citizen explicitly
+-- (e.g. a staff member submitting a report as a resident stays anonymous to colleagues).
 create function private.write_audit(
   p_municipality_id uuid,
   p_action text,
   p_entity_type text,
   p_entity_id uuid,
-  p_details jsonb default '{}'::jsonb
+  p_details jsonb default '{}'::jsonb,
+  p_actor_kind text default null
 )
 returns void
-language sql
+language plpgsql
 security definer
 set search_path = ''
 as $$
-  insert into public.audit_logs (municipality_id, actor_id, action, entity_type, entity_id, details)
-  values (p_municipality_id, (select auth.uid()), p_action, p_entity_type, p_entity_id,
-          coalesce(p_details, '{}'::jsonb));
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  insert into public.audit_logs (municipality_id, actor_id, actor_kind, action, entity_type, entity_id, details)
+  values (
+    p_municipality_id,
+    v_uid,
+    coalesce(p_actor_kind, case
+      when v_uid is null then 'system'
+      when p_municipality_id is not null and private.is_staff(p_municipality_id) then 'staff'
+      when private.is_platform_admin() then 'platform'
+      else 'citizen'
+    end),
+    p_action,
+    p_entity_type,
+    p_entity_id,
+    coalesce(p_details, '{}'::jsonb)
+  );
+end;
 $$;
 
-revoke execute on function private.write_audit(uuid, text, text, uuid, jsonb) from public;
+revoke execute on function private.write_audit(uuid, text, text, uuid, jsonb, text) from public;
 
 -- Generic row-change audit trigger for administrative tables.
 create function private.audit_row_change()
@@ -323,43 +346,49 @@ as $$
     and e.is_active;
 $$;
 
+-- Called by RLS policies (as the querying role).
+grant execute on function
+  private.is_platform_admin(),
+  private.has_staff_role(uuid, public.staff_role[]),
+  private.staff_municipality_ids()
+to authenticated;
+
 -- -----------------------------------------------------------------------------
 -- Escalation guards on employees.
+--
+-- SECURITY INVOKER on purpose: `current_user` then tells us who issued the write.
+--   * anon / authenticated → a direct API request: only `job_title` / `is_active` updates
+--     by an admin of the municipality are possible (grants + RLS), and they are checked here.
+--   * anything else → trusted code: SECURITY DEFINER functions (accept_staff_invitation,
+--     set_employee_role), migrations, or the server-side service role.
+-- Staff memberships are only ever created by accepting an invitation.
 -- -----------------------------------------------------------------------------
 create function private.guard_employee_change()
 returns trigger
 language plpgsql
-security definer
 set search_path = ''
 as $$
 declare
   v_uid uuid := (select auth.uid());
 begin
-  -- Service-role / migration context (no end user): allowed.
-  if v_uid is null then
+  if current_user not in ('anon', 'authenticated') then
     return new;
   end if;
 
   if tg_op = 'INSERT' then
-    if new.user_id = v_uid then
-      raise exception 'You cannot grant yourself a staff role' using errcode = '42501';
-    end if;
-    new.invited_by := v_uid;
-    return new;
-  end if;
-
-  -- UPDATE
-  if old.user_id = v_uid and (
-    new.role is distinct from old.role
-    or new.is_active is distinct from old.is_active
-    or new.department_id is distinct from old.department_id
-  ) then
-    raise exception 'You cannot change your own role, department or status'
+    raise exception 'Staff memberships are created by accepting an invitation'
       using errcode = '42501';
   end if;
 
-  if old.role = 'municipality_admin' and old.is_active
-     and (new.role <> 'municipality_admin' or not new.is_active)
+  if new.role is distinct from old.role or new.department_id is distinct from old.department_id then
+    raise exception 'Use set_employee_role() to change roles or departments' using errcode = '42501';
+  end if;
+
+  if old.user_id = v_uid and new.is_active is distinct from old.is_active then
+    raise exception 'You cannot change your own status' using errcode = '42501';
+  end if;
+
+  if old.role = 'municipality_admin' and old.is_active and not new.is_active
      and not exists (
        select 1 from public.employees e
        where e.municipality_id = old.municipality_id
@@ -388,6 +417,73 @@ create trigger audit_municipalities after update on public.municipalities
   for each row execute function private.audit_row_change();
 
 -- -----------------------------------------------------------------------------
+-- staff_invitations: the only way to become staff. An admin invites an email address;
+-- the membership is created only when the user who owns that *confirmed* email accepts.
+-- -----------------------------------------------------------------------------
+create type public.invitation_status as enum ('pending', 'accepted', 'declined', 'revoked');
+
+create table public.staff_invitations (
+  id uuid primary key default gen_random_uuid(),
+  municipality_id uuid not null references public.municipalities (id),
+  email text not null check (email = lower(btrim(email)) and email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
+  role public.staff_role not null,
+  department_id uuid,
+  job_title text check (char_length(job_title) <= 100),
+  status public.invitation_status not null default 'pending',
+  invited_by uuid references public.profiles (id) on delete set null,
+  expires_at timestamptz not null default now() + interval '7 days',
+  responded_at timestamptz,
+  accepted_user_id uuid references public.profiles (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  foreign key (department_id, municipality_id) references public.departments (id, municipality_id),
+  check (role not in ('employee', 'department_manager') or department_id is not null)
+);
+
+create unique index staff_invitations_one_pending_idx
+  on public.staff_invitations (municipality_id, email) where status = 'pending';
+create trigger set_updated_at before update on public.staff_invitations
+  for each row execute function private.set_updated_at();
+
+-- Server-controlled fields on insert.
+create function private.prepare_staff_invitation()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.email := lower(btrim(new.email));
+  new.invited_by := (select auth.uid());
+  new.status := 'pending';
+  new.expires_at := now() + interval '7 days';
+  new.responded_at := null;
+  new.accepted_user_id := null;
+  return new;
+end;
+$$;
+
+create trigger prepare_staff_invitation before insert on public.staff_invitations
+  for each row execute function private.prepare_staff_invitation();
+create trigger audit_staff_invitations after insert on public.staff_invitations
+  for each row execute function private.audit_row_change();
+
+create function private.require_uid()
+returns uuid
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  if v_uid is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+  return v_uid;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
 -- Row Level Security
 -- -----------------------------------------------------------------------------
 alter table public.municipalities enable row level security;
@@ -398,11 +494,12 @@ alter table public.platform_admins enable row level security;
 alter table public.departments enable row level security;
 alter table public.employees enable row level security;
 alter table public.audit_logs enable row level security;
+alter table public.staff_invitations enable row level security;
 
 -- Remove Supabase's default broad grants; re-grant precisely below.
 revoke all on public.municipalities, public.neighborhoods, public.profiles,
   public.profile_contacts, public.platform_admins, public.departments, public.employees,
-  public.audit_logs
+  public.audit_logs, public.staff_invitations
   from anon, authenticated;
 
 -- municipalities --------------------------------------------------------------
@@ -467,21 +564,12 @@ grant select on public.profiles to authenticated;
 grant update (full_name, preferred_locale, home_municipality_id, home_neighborhood_id)
   on public.profiles to authenticated;
 
+-- Profiles are strictly private: nobody reads another person's profile directly.
+-- Colleague names come from get_colleagues(); reporter identity only from
+-- get_report_reporter_contact() (handlers only, audited).
 create policy "Users read their own profile"
   on public.profiles for select to authenticated
   using (id = (select auth.uid()));
-
--- Colleagues can see each other's names (needed to assign work). Citizen profiles are
--- never readable by staff; reporter contact goes through get_report_reporter_contact().
-create policy "Staff read colleagues in their municipality"
-  on public.profiles for select to authenticated
-  using (
-    exists (
-      select 1 from public.employees e
-      where e.user_id = profiles.id
-        and e.municipality_id in (select private.staff_municipality_ids())
-    )
-  );
 
 create policy "Users update their own profile"
   on public.profiles for update to authenticated
@@ -542,34 +630,301 @@ create policy "Municipality admins update departments"
   with check ((select private.has_staff_role(municipality_id, '{municipality_admin}')));
 
 -- employees -------------------------------------------------------------------------
-grant select on public.employees to authenticated;
-grant insert (user_id, municipality_id, department_id, role, job_title, is_active)
+-- No INSERT grant: memberships come only from accept_staff_invitation().
+-- Role / department changes only through set_employee_role(). user_id is not readable.
+grant select (id, municipality_id, department_id, role, job_title, is_active, invited_by,
+              created_at, updated_at)
   on public.employees to authenticated;
-grant update (department_id, role, job_title, is_active) on public.employees to authenticated;
+grant update (job_title, is_active) on public.employees to authenticated;
 
-create policy "Staff read colleagues; users read their own memberships"
+create policy "Users read their own memberships"
+  on public.employees for select to authenticated
+  using (user_id = (select auth.uid()));
+
+create policy "Staff read active colleagues; admins read all staff"
   on public.employees for select to authenticated
   using (
-    user_id = (select auth.uid())
-    or municipality_id in (select private.staff_municipality_ids())
+    (is_active and municipality_id in (select private.staff_municipality_ids()))
+    or (select private.has_staff_role(municipality_id, '{municipality_admin}'))
     or (select private.is_platform_admin())
   );
-
-create policy "Municipality admins add employees"
-  on public.employees for insert to authenticated
-  with check ((select private.has_staff_role(municipality_id, '{municipality_admin}')));
 
 create policy "Municipality admins update employees"
   on public.employees for update to authenticated
   using ((select private.has_staff_role(municipality_id, '{municipality_admin}')))
   with check ((select private.has_staff_role(municipality_id, '{municipality_admin}')));
 
--- audit_logs: read-only, admins of the municipality ----------------------------------
-grant select on public.audit_logs to authenticated;
+-- audit_logs: no direct access for API roles; read through get_audit_log(). ---------------
 
-create policy "Municipality admins read their audit log"
-  on public.audit_logs for select to authenticated
-  using (
-    (select private.has_staff_role(municipality_id, '{municipality_admin}'))
-    or (select private.is_platform_admin())
-  );
+-- staff_invitations: created and listed by municipality admins ----------------------------
+grant select on public.staff_invitations to authenticated;
+grant insert (municipality_id, email, role, department_id, job_title)
+  on public.staff_invitations to authenticated;
+
+create policy "Municipality admins read their invitations"
+  on public.staff_invitations for select to authenticated
+  using ((select private.has_staff_role(municipality_id, '{municipality_admin}')));
+
+create policy "Municipality admins create invitations"
+  on public.staff_invitations for insert to authenticated
+  with check ((select private.has_staff_role(municipality_id, '{municipality_admin}')));
+
+-- -----------------------------------------------------------------------------
+-- Staff functions
+-- -----------------------------------------------------------------------------
+
+-- Names of active colleagues — the only way staff see other people's names.
+-- Never returns home municipality, neighborhood, language or user ids.
+create function public.get_colleagues(p_municipality_id uuid)
+returns table (
+  employee_id uuid,
+  full_name text,
+  role public.staff_role,
+  department_id uuid,
+  job_title text
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select e.id, p.full_name, e.role, e.department_id, e.job_title
+  from public.employees e
+  join public.profiles p on p.id = e.user_id
+  where e.municipality_id = p_municipality_id
+    and e.is_active
+    and private.is_staff(p_municipality_id)
+  order by p.full_name;
+$$;
+
+-- Pending invitations addressed to the caller's confirmed email.
+create function public.get_my_staff_invitations()
+returns table (
+  id uuid,
+  municipality_id uuid,
+  municipality_name jsonb,
+  role public.staff_role,
+  department_name jsonb,
+  expires_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select i.id, i.municipality_id, m.name, i.role, d.name, i.expires_at
+  from public.staff_invitations i
+  join public.municipalities m on m.id = i.municipality_id
+  left join public.departments d on d.id = i.department_id
+  join auth.users u on u.id = (select auth.uid())
+  where u.email_confirmed_at is not null
+    and i.email = lower(u.email)
+    and i.status = 'pending'
+    and i.expires_at > now()
+  order by i.created_at;
+$$;
+
+-- Accept an invitation: the only path that creates (or reactivates) a staff membership.
+create function public.accept_staff_invitation(p_invitation_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.require_uid();
+  v_email text;
+  v_invitation public.staff_invitations;
+  v_existing public.employees;
+  v_employee_id uuid;
+begin
+  select lower(u.email) into v_email
+  from auth.users u
+  where u.id = v_uid and u.email_confirmed_at is not null;
+
+  select * into v_invitation
+  from public.staff_invitations i
+  where i.id = p_invitation_id
+  for update;
+
+  if not found or v_email is null or v_invitation.email <> v_email
+     or v_invitation.status <> 'pending' or v_invitation.expires_at <= now() then
+    raise exception 'Invitation not found or no longer valid' using errcode = '42501';
+  end if;
+
+  if v_invitation.invited_by = v_uid then
+    raise exception 'You cannot accept an invitation you created' using errcode = '42501';
+  end if;
+
+  if v_invitation.department_id is not null and not exists (
+    select 1 from public.departments d where d.id = v_invitation.department_id and d.is_active
+  ) then
+    raise exception 'The invited department is no longer active' using errcode = '22023';
+  end if;
+
+  select * into v_existing
+  from public.employees e
+  where e.user_id = v_uid and e.municipality_id = v_invitation.municipality_id
+  for update;
+
+  if found then
+    if v_existing.is_active then
+      raise exception 'You are already a staff member of this municipality' using errcode = '22023';
+    end if;
+    update public.employees e set
+      role = v_invitation.role,
+      department_id = v_invitation.department_id,
+      job_title = v_invitation.job_title,
+      invited_by = v_invitation.invited_by,
+      is_active = true
+    where e.id = v_existing.id;
+    v_employee_id := v_existing.id;
+  else
+    insert into public.employees (user_id, municipality_id, department_id, role, job_title, invited_by)
+    values (v_uid, v_invitation.municipality_id, v_invitation.department_id, v_invitation.role,
+            v_invitation.job_title, v_invitation.invited_by)
+    returning id into v_employee_id;
+  end if;
+
+  update public.staff_invitations i
+  set status = 'accepted', responded_at = now(), accepted_user_id = v_uid
+  where i.id = p_invitation_id;
+
+  perform private.write_audit(v_invitation.municipality_id, 'staff_invitation.accepted',
+    'staff_invitation', p_invitation_id,
+    jsonb_build_object('employee_id', v_employee_id, 'role', v_invitation.role,
+                       'department_id', v_invitation.department_id));
+  return v_employee_id;
+end;
+$$;
+
+create function public.decline_staff_invitation(p_invitation_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.require_uid();
+  v_invitation public.staff_invitations;
+begin
+  select * into v_invitation
+  from public.staff_invitations i
+  where i.id = p_invitation_id
+    and i.status = 'pending'
+    and i.email = (
+      select lower(u.email) from auth.users u
+      where u.id = v_uid and u.email_confirmed_at is not null
+    )
+  for update;
+  if not found then
+    raise exception 'Invitation not found or no longer valid' using errcode = '42501';
+  end if;
+
+  update public.staff_invitations i set status = 'declined', responded_at = now()
+  where i.id = p_invitation_id;
+
+  perform private.write_audit(v_invitation.municipality_id, 'staff_invitation.declined',
+    'staff_invitation', p_invitation_id);
+end;
+$$;
+
+create function public.revoke_staff_invitation(p_invitation_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.require_uid();
+  v_invitation public.staff_invitations;
+begin
+  select * into v_invitation from public.staff_invitations i where i.id = p_invitation_id for update;
+  if not found
+     or not private.has_staff_role(v_invitation.municipality_id, '{municipality_admin}')
+     or v_invitation.status <> 'pending' then
+    raise exception 'Invitation not found or no longer valid' using errcode = '42501';
+  end if;
+
+  update public.staff_invitations i set status = 'revoked', responded_at = now()
+  where i.id = p_invitation_id;
+
+  perform private.write_audit(v_invitation.municipality_id, 'staff_invitation.revoked',
+    'staff_invitation', p_invitation_id, jsonb_build_object('revoked_by', v_uid));
+end;
+$$;
+
+-- Audit log reader.
+--   municipality_admin → their municipality's log; citizen actors are anonymized.
+--   platform admin     → operational view: citizen actors anonymized AND report entries
+--                        stripped of entity id and payload (no report details, tracking
+--                        numbers or reporter references).
+create function public.get_audit_log(
+  p_municipality_id uuid,
+  p_limit integer default 100,
+  p_before_id bigint default null
+)
+returns table (
+  id bigint,
+  municipality_id uuid,
+  actor_id uuid,
+  actor_kind text,
+  action text,
+  entity_type text,
+  entity_id uuid,
+  details jsonb,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_is_admin boolean;
+  v_is_platform boolean;
+begin
+  perform private.require_uid();
+  v_is_admin := private.has_staff_role(p_municipality_id, '{municipality_admin}');
+  v_is_platform := private.is_platform_admin();
+
+  if not (v_is_admin or v_is_platform) then
+    raise exception 'Audit log not found or access denied' using errcode = '42501';
+  end if;
+
+  return query
+    select
+      a.id,
+      a.municipality_id,
+      case when a.actor_kind = 'citizen' then null else a.actor_id end,
+      a.actor_kind,
+      a.action,
+      a.entity_type,
+      case when v_is_admin or a.entity_type <> 'report' then a.entity_id end,
+      case when v_is_admin or a.entity_type <> 'report' then a.details else '{}'::jsonb end,
+      a.created_at
+    from public.audit_logs a
+    where a.municipality_id = p_municipality_id
+      and (p_before_id is null or a.id < p_before_id)
+    order by a.id desc
+    limit least(greatest(coalesce(p_limit, 100), 1), 500);
+end;
+$$;
+
+revoke execute on function
+  public.get_colleagues(uuid),
+  public.get_my_staff_invitations(),
+  public.accept_staff_invitation(uuid),
+  public.decline_staff_invitation(uuid),
+  public.revoke_staff_invitation(uuid),
+  public.get_audit_log(uuid, integer, bigint)
+from public, anon;
+
+grant execute on function
+  public.get_colleagues(uuid),
+  public.get_my_staff_invitations(),
+  public.accept_staff_invitation(uuid),
+  public.decline_staff_invitation(uuid),
+  public.revoke_staff_invitation(uuid),
+  public.get_audit_log(uuid, integer, bigint)
+to authenticated;

@@ -172,11 +172,17 @@ create table public.report_comments (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null,
   municipality_id uuid not null,
+  -- Internal only (not readable by API roles): would identify the reporter.
   author_id uuid references public.profiles (id) on delete set null,
+  -- What staff see instead: the staff author, or "from the reporter".
+  author_employee_id uuid,
+  from_reporter boolean not null default false,
   body text not null check (char_length(btrim(body)) between 1 and 2000),
   is_internal boolean not null default false,
   created_at timestamptz not null default now(),
-  foreign key (report_id, municipality_id) references public.reports (id, municipality_id)
+  foreign key (report_id, municipality_id) references public.reports (id, municipality_id),
+  foreign key (author_employee_id, municipality_id)
+    references public.employees (id, municipality_id) on delete set null (author_employee_id)
 );
 
 create index report_comments_report_idx on public.report_comments (report_id, created_at);
@@ -187,11 +193,16 @@ create table public.report_status_history (
   municipality_id uuid not null,
   from_status public.report_status,
   to_status public.report_status not null,
+  -- Internal only (not readable by API roles): for the initial entry this is the reporter.
   changed_by uuid references public.profiles (id) on delete set null,
+  -- What staff see instead: the employee who made the change (null for the submission).
+  changed_by_employee_id uuid,
   note text check (char_length(note) <= 2000),
   note_is_public boolean not null default false,
   created_at timestamptz not null default now(),
-  foreign key (report_id, municipality_id) references public.reports (id, municipality_id)
+  foreign key (report_id, municipality_id) references public.reports (id, municipality_id),
+  foreign key (changed_by_employee_id, municipality_id)
+    references public.employees (id, municipality_id) on delete set null (changed_by_employee_id)
 );
 
 create index report_status_history_report_idx on public.report_status_history (report_id, created_at);
@@ -222,6 +233,11 @@ create index report_followers_user_idx on public.report_followers (user_id);
 -- -----------------------------------------------------------------------------
 
 -- The single definition of "which staff member may see which report".
+-- Employees and managers see the reports of their *current* department only, so moving
+-- someone to another department removes their access to the previous one immediately.
+-- (Assignees always belong to the report's department — enforced by assign_report and
+-- set_employee_role — so "assigned to me" is covered by "my department".)
+-- p_assignee_id is kept in the signature for policy compatibility; it grants nothing.
 create function private.can_access_report(
   p_municipality_id uuid,
   p_department_id uuid,
@@ -238,8 +254,8 @@ as $$
       when 'municipality_admin' then true
       when 'department_manager' then p_department_id is not null
                                      and p_department_id = e.department_id
-      when 'employee' then (p_assignee_id is not null and p_assignee_id = e.id)
-                           or (p_department_id is not null and p_department_id = e.department_id)
+      when 'employee' then p_department_id is not null
+                           and p_department_id = e.department_id
       when 'intake_dispatcher' then p_department_id is null
       else false
     end
@@ -249,6 +265,9 @@ as $$
       and e.is_active
   ), false);
 $$;
+
+-- Called by the reports RLS policy (as the querying role).
+grant execute on function private.can_access_report(uuid, uuid, uuid) to authenticated;
 
 -- Staff actually handling a report (excludes intake dispatchers, who only triage).
 create function private.can_handle_report(
@@ -266,23 +285,9 @@ as $$
     and private.staff_role(p_municipality_id) <> 'intake_dispatcher';
 $$;
 
-create function private.require_uid()
-returns uuid
-language plpgsql
-stable
-set search_path = ''
-as $$
-declare
-  v_uid uuid := (select auth.uid());
-begin
-  if v_uid is null then
-    raise exception 'Not authenticated' using errcode = '42501';
-  end if;
-  return v_uid;
-end;
-$$;
-
--- Internal: notify everyone following a report, except the actor.
+-- Internal: notify everyone following a report, except the actor. The tracking number is
+-- added only to the reporter's own notification; other followers get the report id and
+-- the status change, nothing that identifies the report outside the public data.
 create function private.notify_report_followers(
   p_report_id uuid,
   p_type public.notification_type,
@@ -294,14 +299,33 @@ security definer
 set search_path = ''
 as $$
   insert into public.notifications (user_id, municipality_id, type, data)
-  select f.user_id, f.municipality_id, p_type, p_data
+  select
+    f.user_id,
+    f.municipality_id,
+    p_type,
+    case when f.user_id = r.reporter_id
+      then p_data || jsonb_build_object('tracking_number', r.tracking_number)
+      else p_data
+    end
   from public.report_followers f
+  join public.reports r on r.id = f.report_id
   where f.report_id = p_report_id
     and f.user_id is distinct from (select auth.uid());
 $$;
 
 revoke execute on function private.notify_report_followers(uuid, public.notification_type, jsonb)
   from public;
+
+-- The caller's employee id in a municipality (for attributing staff actions), or null.
+create function private.current_employee_id(p_municipality_id uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select (private.current_employee(p_municipality_id)).id;
+$$;
 
 -- Shared denial: identical for "does not exist" and "not allowed", so callers cannot
 -- probe which report ids exist.
@@ -388,16 +412,32 @@ create trigger audit_municipality_report_categories
 -- reports: staff read only (department-scoped). No write grants at all. ---------------
 -- Platform admins deliberately have NO access to report data: exact locations and
 -- citizen-provided content are for authorized municipal staff only.
-grant select on public.reports to authenticated;
+-- Column-level grant: reporter_id is NOT readable. Reporter identity is available only
+-- through get_report_reporter_contact() (handlers only, audited). Clients must list
+-- columns explicitly (`select *` is denied).
+grant select (
+  id, municipality_id, tracking_number, category_id, neighborhood_id, description, location,
+  public_location, location_accuracy_m, address, visibility, status, priority,
+  suggested_department_id, department_id, assignee_id, rejection_reason, duplicate_of_id,
+  confirmation_count, follower_count, status_changed_at, first_response_at, resolved_at,
+  closed_at, created_at, updated_at
+) on public.reports to authenticated;
 
 create policy "Staff read reports they are authorized for"
   on public.reports for select to authenticated
   using (private.can_access_report(municipality_id, department_id, assignee_id));
 
 -- Report children: visible to staff exactly when the parent report is (the subquery is
--- itself filtered by the reports policy above).
-grant select on public.report_attachments, public.report_comments, public.report_status_history
-  to authenticated;
+-- itself filtered by the reports policy above). Columns that would reveal the reporter's
+-- user id (author_id, changed_by, uploaded_by) are not granted.
+grant select (id, report_id, municipality_id, kind, storage_path, mime_type, size_bytes, created_at)
+  on public.report_attachments to authenticated;
+grant select (id, report_id, municipality_id, author_employee_id, from_reporter, body, is_internal,
+              created_at)
+  on public.report_comments to authenticated;
+grant select (id, report_id, municipality_id, from_status, to_status, changed_by_employee_id, note,
+              note_is_public, created_at)
+  on public.report_status_history to authenticated;
 
 create policy "Staff read attachments of accessible reports"
   on public.report_attachments for select to authenticated
@@ -551,21 +591,24 @@ begin
   insert into public.report_status_history (report_id, municipality_id, from_status, to_status, changed_by)
   values (v_id, p_municipality_id, null, 'submitted', v_uid);
 
+  -- Always recorded as a citizen action (even when the reporter is also staff), so the
+  -- reporter's identity is never shown in the audit log.
   perform private.write_audit(p_municipality_id, 'report.submitted', 'report', v_id,
-    jsonb_build_object('tracking_number', v_tracking));
+    jsonb_build_object('tracking_number', v_tracking), 'citizen');
 
   return query select v_id, v_tracking;
 end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- RPC: register an uploaded photo (the file must already be in storage)
+-- RPC: register an uploaded photo. The file must already be in storage; its size and
+-- type are taken from the stored object's metadata, never from the caller.
+-- Paths: {municipality_id}/{report_id}/citizen/{uuid}.{ext}     (citizen_photo)
+--        {municipality_id}/{report_id}/completion/{uuid}.{ext}  (completion_photo)
 -- -----------------------------------------------------------------------------
 create function public.add_report_attachment(
   p_report_id uuid,
   p_storage_path text,
-  p_mime_type text,
-  p_size_bytes integer,
   p_kind public.attachment_kind default 'citizen_photo'
 )
 returns uuid
@@ -578,6 +621,10 @@ declare
   v_uid uuid := private.require_uid();
   v_report public.reports;
   v_id uuid;
+  v_folder text := case when p_kind = 'citizen_photo' then 'citizen' else 'completion' end;
+  v_metadata jsonb;
+  v_size bigint;
+  v_mime text;
 begin
   select * into v_report from public.reports r where r.id = p_report_id for update;
   if not found then
@@ -604,23 +651,37 @@ begin
     if v_report.status not in ('in_progress', 'resolved') then
       raise exception 'Completion photos require the report to be in progress or resolved' using errcode = '22023';
     end if;
+    if (
+      select count(*) from public.report_attachments a
+      where a.report_id = p_report_id and a.kind = 'completion_photo'
+    ) >= 5 then
+      raise exception 'A report can have at most 5 completion photos' using errcode = '22023';
+    end if;
   end if;
 
-  -- Path must be exactly {municipality_id}/{report_id}/{uuid}.{ext}
   if p_storage_path !~ ('^' || v_report.municipality_id::text || '/' || v_report.id::text
-                        || '/[0-9a-f-]{36}\.(jpg|jpeg|png|heic|webp)$') then
+                        || '/' || v_folder || '/[0-9a-f-]{36}\.(jpg|jpeg|png|heic|webp)$') then
     raise exception 'Invalid storage path' using errcode = '22023';
   end if;
 
-  if not exists (
-    select 1 from storage.objects o
-    where o.bucket_id = 'report-media' and o.name = p_storage_path
-  ) then
+  select o.metadata into v_metadata
+  from storage.objects o
+  where o.bucket_id = 'report-media' and o.name = p_storage_path;
+  if not found then
     raise exception 'The file has not been uploaded' using errcode = '22023';
   end if;
 
+  v_size := (v_metadata ->> 'size')::bigint;
+  v_mime := v_metadata ->> 'mimetype';
+  if v_size is null or v_size < 1 or v_size > 10485760 then
+    raise exception 'The file is empty or larger than 10 MB' using errcode = '22023';
+  end if;
+  if v_mime is null or v_mime not in ('image/jpeg', 'image/png', 'image/heic', 'image/webp') then
+    raise exception 'Unsupported file type' using errcode = '22023';
+  end if;
+
   insert into public.report_attachments (report_id, municipality_id, kind, storage_path, mime_type, size_bytes, uploaded_by)
-  values (p_report_id, v_report.municipality_id, p_kind, p_storage_path, p_mime_type, p_size_bytes, v_uid)
+  values (p_report_id, v_report.municipality_id, p_kind, p_storage_path, v_mime, v_size, v_uid)
   returning id into v_id;
 
   return v_id;
@@ -634,7 +695,9 @@ create function public.update_report_status(
   p_report_id uuid,
   p_status public.report_status,
   p_note text default null,
-  p_note_is_public boolean default true,
+  -- Notes are internal unless explicitly marked public. Resolving and rejecting require an
+  -- explicit public note.
+  p_note_is_public boolean default false,
   p_rejection_reason public.report_rejection_reason default null,
   p_duplicate_of_id uuid default null
 )
@@ -730,14 +793,15 @@ begin
   where r.id = p_report_id;
 
   insert into public.report_status_history (
-    report_id, municipality_id, from_status, to_status, changed_by, note, note_is_public
+    report_id, municipality_id, from_status, to_status, changed_by, changed_by_employee_id,
+    note, note_is_public
   ) values (
-    p_report_id, v_report.municipality_id, v_report.status, p_status, v_uid, v_note, v_note_is_public
+    p_report_id, v_report.municipality_id, v_report.status, p_status, v_uid,
+    private.current_employee_id(v_report.municipality_id), v_note, v_note_is_public
   );
 
   perform private.notify_report_followers(p_report_id, 'report_status_changed', jsonb_build_object(
     'report_id', p_report_id,
-    'tracking_number', v_report.tracking_number,
     'from_status', v_report.status,
     'to_status', p_status
   ));
@@ -843,12 +907,14 @@ begin
   where r.id = p_report_id;
 
   if v_new_status <> v_report.status then
-    insert into public.report_status_history (report_id, municipality_id, from_status, to_status, changed_by)
-    values (p_report_id, v_report.municipality_id, v_report.status, v_new_status, v_uid);
+    insert into public.report_status_history (
+      report_id, municipality_id, from_status, to_status, changed_by, changed_by_employee_id
+    ) values (
+      p_report_id, v_report.municipality_id, v_report.status, v_new_status, v_uid, v_actor.id
+    );
 
     perform private.notify_report_followers(p_report_id, 'report_status_changed', jsonb_build_object(
       'report_id', p_report_id,
-      'tracking_number', v_report.tracking_number,
       'from_status', v_report.status,
       'to_status', v_new_status
     ));
@@ -903,8 +969,13 @@ begin
     end if;
   end if;
 
-  insert into public.report_comments (report_id, municipality_id, author_id, body, is_internal)
-  values (p_report_id, v_report.municipality_id, v_uid, btrim(p_body), coalesce(p_is_internal, false))
+  insert into public.report_comments (
+    report_id, municipality_id, author_id, author_employee_id, from_reporter, body, is_internal
+  ) values (
+    p_report_id, v_report.municipality_id, v_uid,
+    case when v_is_staff then private.current_employee_id(v_report.municipality_id) end,
+    not v_is_staff, btrim(p_body), coalesce(p_is_internal, false)
+  )
   returning id into v_id;
 
   if v_is_staff and not coalesce(p_is_internal, false)
@@ -939,7 +1010,7 @@ begin
   end if;
 
   perform private.write_audit(v_report.municipality_id, 'report.reporter_contact_viewed', 'report',
-    p_report_id, jsonb_build_object('reporter_id', v_report.reporter_id));
+    p_report_id);
 
   return query
     select p.full_name, c.phone
@@ -1219,11 +1290,146 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
+-- Staff role / department changes (municipality admins only).
+--
+-- When an employee leaves a department (transfer, or a role that cannot hold
+-- assignments), their open reports are handed over in the same transaction:
+--   * to p_reassign_to (an active employee/manager of the *previous* department), or
+--   * back to the previous department's queue (assignee cleared), visible to its manager.
+-- Access to the previous department's reports ends immediately because
+-- can_access_report() only grants employees/managers their current department.
+-- -----------------------------------------------------------------------------
+create function public.set_employee_role(
+  p_employee_id uuid,
+  p_role public.staff_role,
+  p_department_id uuid,
+  p_reassign_to uuid default null
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+#variable_conflict use_column
+declare
+  v_uid uuid := private.require_uid();
+  v_employee public.employees;
+  v_leaves_department boolean;
+  v_report record;
+  v_moved integer := 0;
+begin
+  select * into v_employee from public.employees e where e.id = p_employee_id for update;
+  if not found or not private.has_staff_role(v_employee.municipality_id, '{municipality_admin}') then
+    raise exception 'Employee not found or access denied' using errcode = '42501';
+  end if;
+
+  if v_employee.user_id = v_uid then
+    raise exception 'You cannot change your own role or department' using errcode = '42501';
+  end if;
+
+  if p_role in ('employee', 'department_manager') and p_department_id is null then
+    raise exception 'This role requires a department' using errcode = '22023';
+  end if;
+
+  if p_department_id is not null and not exists (
+    select 1 from public.departments d
+    where d.id = p_department_id and d.municipality_id = v_employee.municipality_id and d.is_active
+  ) then
+    raise exception 'Department not found' using errcode = '22023';
+  end if;
+
+  if v_employee.role = 'municipality_admin' and v_employee.is_active
+     and p_role <> 'municipality_admin'
+     and not exists (
+       select 1 from public.employees e
+       where e.municipality_id = v_employee.municipality_id and e.role = 'municipality_admin'
+         and e.is_active and e.id <> v_employee.id
+     ) then
+    raise exception 'A municipality must keep at least one active admin' using errcode = '42501';
+  end if;
+
+  v_leaves_department := v_employee.department_id is not null and (
+    p_department_id is distinct from v_employee.department_id
+    or p_role not in ('employee', 'department_manager')
+  );
+
+  if p_reassign_to is not null then
+    if not v_leaves_department then
+      raise exception 'Reassignment only applies when the employee leaves their department'
+        using errcode = '22023';
+    end if;
+    if p_reassign_to = p_employee_id or not exists (
+      select 1 from public.employees e
+      where e.id = p_reassign_to
+        and e.municipality_id = v_employee.municipality_id
+        and e.department_id = v_employee.department_id
+        and e.is_active
+        and e.role in ('employee', 'department_manager')
+    ) then
+      raise exception 'Open reports can only be handed to an active member of the previous department'
+        using errcode = '22023';
+    end if;
+  end if;
+
+  if v_leaves_department then
+    for v_report in
+      select r.id from public.reports r
+      where r.assignee_id = p_employee_id
+        and r.status in ('submitted', 'under_review', 'assigned', 'in_progress')
+      for update
+    loop
+      update public.reports r set assignee_id = p_reassign_to where r.id = v_report.id;
+      perform private.write_audit(v_employee.municipality_id, 'report.reassigned', 'report', v_report.id,
+        jsonb_build_object('reason', 'employee_transfer', 'from_assignee_id', p_employee_id,
+                           'to_assignee_id', p_reassign_to));
+      v_moved := v_moved + 1;
+    end loop;
+  end if;
+
+  update public.employees e set role = p_role, department_id = p_department_id
+  where e.id = p_employee_id;
+
+  return v_moved;
+end;
+$$;
+
+-- Deactivating an employee hands their open reports back to the department queue.
+create function private.release_assignments_on_deactivation()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_report record;
+begin
+  for v_report in
+    select r.id from public.reports r
+    where r.assignee_id = new.id
+      and r.status in ('submitted', 'under_review', 'assigned', 'in_progress')
+    for update
+  loop
+    update public.reports r set assignee_id = null where r.id = v_report.id;
+    perform private.write_audit(new.municipality_id, 'report.reassigned', 'report', v_report.id,
+      jsonb_build_object('reason', 'employee_deactivated', 'from_assignee_id', new.id));
+  end loop;
+  return new;
+end;
+$$;
+
+revoke execute on function private.release_assignments_on_deactivation() from public;
+
+create trigger release_assignments_on_deactivation
+  after update of is_active on public.employees
+  for each row when (old.is_active and not new.is_active)
+  execute function private.release_assignments_on_deactivation();
+
+-- -----------------------------------------------------------------------------
 -- Function privileges: authenticated users only. Never anon.
 -- -----------------------------------------------------------------------------
 revoke execute on function
   public.submit_report(uuid, text, text, double precision, double precision, real, text, public.report_visibility),
-  public.add_report_attachment(uuid, text, text, integer, public.attachment_kind),
+  public.add_report_attachment(uuid, text, public.attachment_kind),
   public.update_report_status(uuid, public.report_status, text, boolean, public.report_rejection_reason, uuid),
   public.assign_report(uuid, uuid, uuid, public.report_priority),
   public.add_report_comment(uuid, text, boolean),
@@ -1236,12 +1442,13 @@ revoke execute on function
   public.confirm_report(uuid),
   public.unconfirm_report(uuid),
   public.follow_report(uuid),
-  public.unfollow_report(uuid)
+  public.unfollow_report(uuid),
+  public.set_employee_role(uuid, public.staff_role, uuid, uuid)
 from public, anon;
 
 grant execute on function
   public.submit_report(uuid, text, text, double precision, double precision, real, text, public.report_visibility),
-  public.add_report_attachment(uuid, text, text, integer, public.attachment_kind),
+  public.add_report_attachment(uuid, text, public.attachment_kind),
   public.update_report_status(uuid, public.report_status, text, boolean, public.report_rejection_reason, uuid),
   public.assign_report(uuid, uuid, uuid, public.report_priority),
   public.add_report_comment(uuid, text, boolean),
@@ -1254,5 +1461,6 @@ grant execute on function
   public.confirm_report(uuid),
   public.unconfirm_report(uuid),
   public.follow_report(uuid),
-  public.unfollow_report(uuid)
+  public.unfollow_report(uuid),
+  public.set_employee_role(uuid, public.staff_role, uuid, uuid)
 to authenticated;

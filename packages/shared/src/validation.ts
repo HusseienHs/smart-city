@@ -56,7 +56,8 @@ export const updateReportStatusSchema = z
     reportId: z.uuid(),
     status: z.enum(REPORT_STATUSES),
     note: z.string().trim().max(2000).optional(),
-    noteIsPublic: z.boolean().default(true),
+    // Internal by default; resolving and rejecting require an explicit public note.
+    noteIsPublic: z.boolean().default(false),
     rejectionReason: z.enum(REPORT_REJECTION_REASONS).optional(),
     duplicateOfId: z.uuid().optional(),
   })

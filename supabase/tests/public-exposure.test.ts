@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { anon, user } from './support/db';
+import { type Actor, anon, user } from './support/db';
 import { exactLocationA, ids } from './support/fixtures';
 import { DENIED, useWorld } from './support/world';
 
@@ -132,57 +132,69 @@ describe('public report exposure', () => {
   });
 
   describe('photos', () => {
-    const objectPath = (reportId: string) =>
-      `${ids.muniA}/${reportId}/0b9d6f1e-6c41-4d7f-9a3e-2f1c8d7e6a5b.jpg`;
+    const fileName = (n: number) => `${String(n).padStart(8, '0')}-6c41-4d7f-9a3e-2f1c8d7e6a5b.jpg`;
+    const objectPath = (reportId: string, kind: 'citizen' | 'completion' = 'citizen', n = 1) =>
+      `${ids.muniA}/${reportId}/${kind}/${fileName(n)}`;
+    const jpeg = JSON.stringify({ size: 120_000, mimetype: 'image/jpeg' });
 
-    const upload = (actor: ReturnType<typeof user>, reportId: string) =>
-      world.db.as(
-        actor,
-        `insert into storage.objects (bucket_id, name) values ('report-media', $1)`,
-        [objectPath(reportId)],
-      );
+    const uploadSql = `insert into storage.objects (bucket_id, name, metadata) values ('report-media', $1, $2::jsonb)`;
+    const upload = (actor: Actor, path: string, metadata = jpeg) =>
+      world.db.as(actor, uploadSql, [path, metadata]);
+    const failUpload = (actor: Actor, path: string, metadata = jpeg) =>
+      world.db.fails(actor, uploadSql, [path, metadata]);
 
-    const read = (actor: ReturnType<typeof user> | typeof anon, reportId: string) =>
+    const read = (actor: Actor, path: string) =>
       world.db.as(
         actor,
         `select name from storage.objects where bucket_id = 'report-media' and name = $1`,
-        [objectPath(reportId)],
+        [path],
       );
 
     it('lets the reporter upload to their own new report only', async () => {
-      await upload(user(ids.citizenA1), world.reports.publicUnassignedA);
+      await upload(user(ids.citizenA1), objectPath(world.reports.publicUnassignedA));
       expect(
-        await world.db.fails(
+        await failUpload(
           user(ids.citizenA2),
-          `insert into storage.objects (bucket_id, name) values ('report-media', $1)`,
-          [
-            `${ids.muniA}/${world.reports.publicUnassignedA}/1b9d6f1e-6c41-4d7f-9a3e-2f1c8d7e6a5b.jpg`,
-          ],
+          objectPath(world.reports.publicUnassignedA, 'citizen', 2),
         ),
       ).toMatch(DENIED);
       // Wrong municipality prefix for the report → denied.
       expect(
-        await world.db.fails(
+        await failUpload(
           user(ids.citizenA1),
-          `insert into storage.objects (bucket_id, name) values ('report-media', $1)`,
-          [
-            `${ids.muniB}/${world.reports.publicUnassignedA}/2b9d6f1e-6c41-4d7f-9a3e-2f1c8d7e6a5b.jpg`,
-          ],
+          `${ids.muniB}/${world.reports.publicUnassignedA}/citizen/${fileName(3)}`,
+        ),
+      ).toMatch(DENIED);
+      // Citizens cannot write into the completion folder.
+      expect(
+        await failUpload(
+          user(ids.citizenA1),
+          objectPath(world.reports.publicUnassignedA, 'completion', 4),
         ),
       ).toMatch(DENIED);
     });
 
-    it('never exposes photos publicly — only to the reporter and authorized staff', async () => {
-      await upload(user(ids.citizenA1), world.reports.publicUnassignedA);
-      await world.db.as(
-        user(ids.citizenA1),
-        `select public.add_report_attachment($1, $2, 'image/jpeg', 1000)`,
-        [world.reports.publicUnassignedA, objectPath(world.reports.publicUnassignedA)],
+    it('caps stored photos at 5 per report, counting actual storage objects (F2)', async () => {
+      const report = world.reports.publicUnassignedA;
+      // None of these are registered as attachments — the limit still applies.
+      for (let n = 1; n <= 5; n += 1)
+        await upload(user(ids.citizenA1), objectPath(report, 'citizen', n));
+      expect(await failUpload(user(ids.citizenA1), objectPath(report, 'citizen', 6))).toMatch(
+        DENIED,
       );
+    });
 
-      expect(await read(user(ids.citizenA1), world.reports.publicUnassignedA)).toHaveLength(1);
-      expect(await read(user(ids.dispatcherA), world.reports.publicUnassignedA)).toHaveLength(1);
-      expect(await read(user(ids.adminA), world.reports.publicUnassignedA)).toHaveLength(1);
+    it('never exposes photos publicly — only to the reporter and authorized staff', async () => {
+      const path = objectPath(world.reports.publicUnassignedA);
+      await upload(user(ids.citizenA1), path);
+      await world.db.as(user(ids.citizenA1), `select public.add_report_attachment($1, $2)`, [
+        world.reports.publicUnassignedA,
+        path,
+      ]);
+
+      expect(await read(user(ids.citizenA1), path)).toHaveLength(1);
+      expect(await read(user(ids.dispatcherA), path)).toHaveLength(1);
+      expect(await read(user(ids.adminA), path)).toHaveLength(1);
 
       for (const actor of [
         user(ids.citizenA2),
@@ -190,10 +202,10 @@ describe('public report exposure', () => {
         user(ids.employeeAY),
         user(ids.adminB),
         user(ids.platformAdmin),
+        anon,
       ]) {
-        expect(await read(actor, world.reports.publicUnassignedA)).toHaveLength(0);
+        expect(await read(actor, path)).toHaveLength(0);
       }
-      expect(await read(anon, world.reports.publicUnassignedA)).toHaveLength(0);
 
       const [bucket] = await world.db.query<{ public: boolean }>(
         `select public from storage.buckets where id = 'report-media'`,
@@ -201,21 +213,43 @@ describe('public report exposure', () => {
       expect(bucket!.public).toBe(false);
     });
 
-    it('requires the file to exist and match the report before registering it', async () => {
-      expect(
-        await world.db.fails(
-          user(ids.citizenA1),
-          `select public.add_report_attachment($1, $2, 'image/jpeg', 1000)`,
-          [world.reports.publicUnassignedA, objectPath(world.reports.publicUnassignedA)],
-        ),
-      ).toMatch(/not been uploaded/i);
-      expect(
-        await world.db.fails(
-          user(ids.citizenA1),
-          `select public.add_report_attachment($1, $2, 'image/jpeg', 1000)`,
-          [world.reports.publicUnassignedA, objectPath(world.reports.privateNoiseA)],
-        ),
-      ).toMatch(/invalid storage path/i);
+    it('registers a photo only if the file exists, matches the report, and passes size/type checks', async () => {
+      const report = world.reports.publicUnassignedA;
+      const register = (path: string) =>
+        world.db.fails(user(ids.citizenA1), `select public.add_report_attachment($1, $2)`, [
+          report,
+          path,
+        ]);
+
+      expect(await register(objectPath(report, 'citizen', 1))).toMatch(/not been uploaded/i);
+      expect(await register(objectPath(world.reports.privateNoiseA, 'citizen', 1))).toMatch(
+        /invalid storage path/i,
+      );
+
+      // Size and type come from the stored object's metadata, not from the caller.
+      await upload(
+        user(ids.citizenA1),
+        objectPath(report, 'citizen', 2),
+        JSON.stringify({ size: 11_000_000, mimetype: 'image/jpeg' }),
+      );
+      expect(await register(objectPath(report, 'citizen', 2))).toMatch(/larger than 10 MB/i);
+      await upload(
+        user(ids.citizenA1),
+        objectPath(report, 'citizen', 3),
+        JSON.stringify({ size: 1000, mimetype: 'text/html' }),
+      );
+      expect(await register(objectPath(report, 'citizen', 3))).toMatch(/unsupported file type/i);
+
+      await upload(user(ids.citizenA1), objectPath(report, 'citizen', 4));
+      await world.db.as(user(ids.citizenA1), `select public.add_report_attachment($1, $2)`, [
+        report,
+        objectPath(report, 'citizen', 4),
+      ]);
+      const [row] = await world.db.query<{ mime_type: string; size_bytes: number }>(
+        `select mime_type, size_bytes from public.report_attachments where storage_path = $1`,
+        [objectPath(report, 'citizen', 4)],
+      );
+      expect(row).toEqual({ mime_type: 'image/jpeg', size_bytes: 120_000 });
     });
 
     it('lets only handling staff add completion photos, while work is in progress', async () => {
@@ -225,23 +259,14 @@ describe('public report exposure', () => {
         `select public.update_report_status($1, 'in_progress')`,
         [report],
       );
-      const path = `${ids.muniA}/${report}/3b9d6f1e-6c41-4d7f-9a3e-2f1c8d7e6a5b.jpg`;
+      const path = objectPath(report, 'completion', 1);
 
-      expect(
-        await world.db.fails(
-          user(ids.employeeAY),
-          `insert into storage.objects (bucket_id, name) values ('report-media', $1)`,
-          [path],
-        ),
-      ).toMatch(DENIED);
+      expect(await failUpload(user(ids.employeeAY), path)).toMatch(DENIED);
+      expect(await failUpload(user(ids.dispatcherA), path)).toMatch(DENIED);
+      await upload(user(ids.employeeAX), path);
       await world.db.as(
         user(ids.employeeAX),
-        `insert into storage.objects (bucket_id, name) values ('report-media', $1)`,
-        [path],
-      );
-      await world.db.as(
-        user(ids.employeeAX),
-        `select public.add_report_attachment($1, $2, 'image/jpeg', 1000, 'completion_photo')`,
+        `select public.add_report_attachment($1, $2, 'completion_photo')`,
         [report, path],
       );
       // The reporter sees the completion photo of their own report.
@@ -251,6 +276,13 @@ describe('public report exposure', () => {
         [report],
       );
       expect(attachments.map((row) => row.kind)).toEqual(['completion_photo']);
+
+      // Completion photos have their own 5-object cap.
+      for (let n = 2; n <= 5; n += 1)
+        await upload(user(ids.employeeAX), objectPath(report, 'completion', n));
+      expect(await failUpload(user(ids.employeeAX), objectPath(report, 'completion', 6))).toMatch(
+        DENIED,
+      );
     });
   });
 });

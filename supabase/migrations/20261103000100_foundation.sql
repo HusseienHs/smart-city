@@ -21,8 +21,12 @@ create schema if not exists private;
 revoke all on schema private from public;
 grant usage on schema private to authenticated, service_role;
 
--- Functions are executable by PUBLIC by default in Postgres. Helpers that must not be
--- callable directly revoke this individually.
+-- Postgres grants EXECUTE on new functions to PUBLIC. In `private`, nothing should be
+-- executable unless granted explicitly: only the helpers that RLS policies and check
+-- constraints call (they run as the querying role) are granted to `authenticated`, next to
+-- their definition. The PUBLIC grant is revoked for the whole schema at the end of the last
+-- migration (per-schema default privileges cannot remove PUBLIC's global default), and a
+-- test fails if any private function is executable by anon.
 
 -- -----------------------------------------------------------------------------
 -- Enums. Values mirror packages/shared (a test fails if they drift).
@@ -102,6 +106,9 @@ as $$
       select 1 from jsonb_each(value) as e where jsonb_typeof(e.value) <> 'string'
     );
 $$;
+
+-- Used by CHECK constraints on tables staff write to.
+grant execute on function private.is_localized_text(jsonb) to authenticated;
 
 -- Snaps a point to a ~50 m grid. Used for every location shown publicly, so the exact
 -- position of a report is never derivable from public data. Grid snapping (rather than

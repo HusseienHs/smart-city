@@ -51,7 +51,7 @@ describe('schema security invariants', () => {
     ]);
     for (const table of await publicTables()) {
       const [privileges] = await world.db.query<Record<string, boolean>>(
-        `select has_table_privilege('anon', $1, 'SELECT') as sel,
+        `select has_any_column_privilege('anon', $1, 'SELECT') as sel,
                 has_any_column_privilege('anon', $1, 'INSERT') as ins,
                 has_any_column_privilege('anon', $1, 'UPDATE') as upd,
                 has_table_privilege('anon', $1, 'DELETE') as del,
@@ -74,10 +74,10 @@ describe('schema security invariants', () => {
       INSERT: [
         'announcements',
         'departments',
-        'employees',
         'municipality_report_categories',
         'neighborhoods',
         'profile_contacts',
+        'staff_invitations',
       ],
       UPDATE: [
         'announcements',
@@ -116,10 +116,15 @@ describe('schema security invariants', () => {
       ['reports', 'location', false],
       ['municipalities', 'code', false],
       ['municipalities', 'status', false],
-      // Admins invite staff by inserting memberships (RLS: admins of that municipality only),
-      // but a membership can never be moved to another user or municipality.
-      ['employees', 'user_id', true],
-      ['employees', 'municipality_id', true],
+      // Memberships come only from accepted invitations; roles/departments only via
+      // set_employee_role().
+      ['employees', 'user_id', false],
+      ['employees', 'municipality_id', false],
+      ['employees', 'role', false],
+      ['employees', 'department_id', false],
+      ['staff_invitations', 'status', false],
+      ['staff_invitations', 'invited_by', false],
+      ['announcements', 'published_by', false],
       ['announcements', 'status', false],
       ['announcements', 'published_at', false],
       ['announcements', 'created_by', false],
@@ -144,6 +149,77 @@ describe('schema security invariants', () => {
     }
   });
 
+  it('hides identifying columns from every API role (F1, F8)', async () => {
+    const hidden: [string, string][] = [
+      ['reports', 'reporter_id'],
+      ['report_comments', 'author_id'],
+      ['report_status_history', 'changed_by'],
+      ['report_attachments', 'uploaded_by'],
+      ['employees', 'user_id'],
+      ['announcements', 'created_by'],
+      ['announcements', 'published_by'],
+    ];
+    for (const [table, column] of hidden) {
+      for (const role of ['anon', 'authenticated']) {
+        const [row] = await world.db.query<{ sel: boolean }>(
+          `select has_column_privilege($1, $2, $3, 'SELECT') as sel`,
+          [role, `public.${table}`, column],
+        );
+        expect({ role, table, column, sel: row!.sel }).toEqual({ role, table, column, sel: false });
+      }
+    }
+  });
+
+  it('gives no API role direct read access to the audit log (F6)', async () => {
+    for (const role of ['anon', 'authenticated']) {
+      const [row] = await world.db.query<{ sel: boolean }>(
+        `select has_any_column_privilege($1, 'public.audit_logs', 'SELECT') as sel`,
+        [role],
+      );
+      expect(row!.sel).toBe(false);
+    }
+  });
+
+  it('serializes report photo uploads with a volatile, locking policy function (F2)', async () => {
+    const [fn] = await world.db.query<{ volatility: string; body: string }>(
+      `select provolatile as volatility, prosrc as body from pg_proc
+       where oid = 'private.can_upload_report_media(text)'::regprocedure`,
+    );
+    expect(fn!.volatility).toBe('v');
+    expect(fn!.body).toContain('pg_advisory_xact_lock');
+    expect(fn!.body).toContain('storage.objects');
+  });
+
+  it('lets authenticated users execute only the private helpers that policies need', async () => {
+    const executable = async (role: string) =>
+      (
+        await world.db.query<{ name: string }>(
+          `select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'private' and has_function_privilege($1, p.oid, 'EXECUTE') order by 1`,
+          [role],
+        )
+      ).map((row) => row.name);
+
+    expect(await executable('anon')).toEqual([]);
+    expect(await executable('authenticated')).toEqual(
+      [
+        'can_access_report',
+        'can_delete_public_announcement_media',
+        'can_draft_content',
+        'can_edit_announcement_media',
+        'can_publish_announcement_media',
+        'can_publish_content',
+        'can_read_draft_media',
+        'can_read_report_media',
+        'can_upload_report_media',
+        'has_staff_role',
+        'is_localized_text',
+        'is_platform_admin',
+        'staff_municipality_ids',
+      ].sort(),
+    );
+  });
+
   it('exposes no function in public to anon', async () => {
     const executable = await world.db.query(
       `select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -160,11 +236,16 @@ describe('schema security invariants', () => {
     );
     expect(rows.map((row) => row.name)).toEqual(
       [
+        'accept_staff_invitation',
         'add_report_attachment',
         'add_report_comment',
         'assign_report',
         'confirm_report',
+        'decline_staff_invitation',
         'follow_report',
+        'get_audit_log',
+        'get_colleagues',
+        'get_my_staff_invitations',
         'get_my_report_attachments',
         'get_my_report_comments',
         'get_my_report_updates',
@@ -172,7 +253,9 @@ describe('schema security invariants', () => {
         'get_public_reports',
         'get_report_reporter_contact',
         'register_push_token',
+        'revoke_staff_invitation',
         'set_announcement_status',
+        'set_employee_role',
         'submit_report',
         'unconfirm_report',
         'unfollow_report',
@@ -192,7 +275,8 @@ describe('schema security invariants', () => {
 
   it('keeps internal write helpers out of reach of API roles', async () => {
     const internal = [
-      'private.write_audit(uuid, text, text, uuid, jsonb)',
+      'private.write_audit(uuid, text, text, uuid, jsonb, text)',
+      'private.release_assignments_on_deactivation()',
       'private.notify_report_followers(uuid, public.notification_type, jsonb)',
       'private.audit_row_change()',
       'private.guard_employee_change()',

@@ -87,7 +87,8 @@ export async function setupFixtures(db: TestDb): Promise<FixtureReports> {
   for (const [userId, email, name] of users) {
     // Profiles are created by the on_auth_user_created trigger.
     await db.query(
-      `insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, jsonb_build_object('full_name', $3::text))`,
+      `insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data)
+       values ($1, $2, now(), jsonb_build_object('full_name', $3::text))`,
       [userId, email, name],
     );
   }

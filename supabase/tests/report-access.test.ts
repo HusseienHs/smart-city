@@ -18,7 +18,8 @@ describe('report access within a municipality', () => {
   it('scopes report visibility by role and department', async () => {
     expect(await visible(user(ids.employeeAX))).toEqual(pick('assignedXA'));
     expect(await visible(user(ids.managerAX))).toEqual(pick('assignedXA'));
-    expect(await visible(user(ids.employeeAY))).toEqual(pick('assignedYA'));
+    // Employees see only reports assigned to them; Y's report is routed but unassigned.
+    expect(await visible(user(ids.employeeAY))).toEqual([]);
     expect(await visible(user(ids.managerAY))).toEqual(pick('assignedYA'));
     expect(await visible(user(ids.dispatcherA))).toEqual(
       pick('publicUnassignedA', 'privateNoiseA'),

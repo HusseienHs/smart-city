@@ -32,7 +32,8 @@ describe('department transfers', () => {
       employeeIds.employeeAX,
       ids.deptAY,
     ]);
-    expect(await visible()).toEqual([world.reports.assignedYA]);
+    // Nothing is assigned to them in the new department yet, so they see nothing.
+    expect(await visible()).toEqual([]);
     expect(
       await world.db.fails(employeeAX, `select public.update_report_status($1, 'in_progress')`, [
         world.reports.assignedXA,

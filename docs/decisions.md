@@ -45,14 +45,17 @@ Frontends use shared helpers (e.g. `canTransitionReportStatus`) purely for UX.
 **Revisit:** Encrypt the session at rest (AES key in SecureStore, ciphertext in AsyncStorage)
 before production launch.
 
-### D-007 · Hosting: Frankfurt, development only, synthetic data (2026-11-02)
+### D-007 · Hosting: West Europe (London), development only, synthetic data (2026-11-02)
 
-**Decision:** A hosted Supabase project in Frankfurt (eu-central-1) is used **for development
+**Decision:** A hosted Supabase project in West Europe (London) is used **for development
 only, with synthetic test data**. No real citizen information is stored anywhere until data
 residency, Israeli privacy requirements (Privacy Protection Law and its regulations) and
 municipal contractual requirements have been reviewed.
 **Consequence:** All seed data is fictional and labeled as such. Production hosting is an open
 decision.
+**Correction (2026-11-04):** This entry originally named Frankfurt. The development project was
+actually created in West Europe (London). London is in the UK, outside the EU, which the
+data-residency review must take into account; it doesn't change the synthetic-data-only rule.
 
 ### D-008 · Map provider stays abstract (2026-11-02)
 

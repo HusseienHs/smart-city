@@ -40,7 +40,8 @@ describe('staff invitations', () => {
 
   it('creates a membership only when the intended user accepts', async () => {
     const person = await newUser(invitee, inviteeEmail);
-    const invitationId = await invite('  New.Hire@Example.test ');
+    // A department manager sees their department's reports as soon as they accept.
+    const invitationId = await invite('  New.Hire@Example.test ', 'department_manager');
 
     // Before acceptance: no membership, no access.
     expect(await world.db.as(person, `select id from public.employees`)).toHaveLength(0);
@@ -50,7 +51,7 @@ describe('staff invitations', () => {
       person,
       `select id, role from public.get_my_staff_invitations()`,
     );
-    expect(pending).toEqual([{ id: invitationId, role: 'employee' }]);
+    expect(pending).toEqual([{ id: invitationId, role: 'department_manager' }]);
 
     await world.db.as(person, `select public.accept_staff_invitation($1)`, [invitationId]);
     const reports = await world.db.as<{ id: string }>(person, `select id from public.reports`);

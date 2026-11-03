@@ -1,8 +1,9 @@
 # Database schema & security design
 
-> **Status:** implemented in `supabase/migrations` (6 migrations) and covered by 131 automated
-> security tests. **Not yet applied to the hosted project** — see §9 before applying.
-> Environment constraint (D-007): the hosted Frankfurt project holds **synthetic data only**.
+> **Status:** implemented in `supabase/migrations` (7 migrations) and covered by 145 automated
+> security tests. All 7 migrations, including `…000700` (narrowed staff report access, §5.2),
+> are applied to the development project, and its remote migration history matches.
+> Environment constraint (D-007): the hosted West Europe (London) project holds **synthetic data only**.
 > Revised after the pre-deployment review (findings F1–F9 and the department-transfer rule, §5.1).
 
 ## 1. Security principles
@@ -41,8 +42,8 @@
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `anon`               | Public reference data: active municipalities, neighborhoods, departments, enabled categories, published announcements (without author ids)                                                                   |
 | citizen (signed in)  | Own profile & phone, own reports (via RPC), public reports (via RPC), own notifications, confirm/follow, own staff invitations                                                                               |
-| `employee`           | Reports of their **current** department; status updates on those; drafts for their department                                                                                                                |
-| `intake_dispatcher`  | **Unassigned** reports only: `under_review`/`rejected`, route to a department, set priority. **Cannot draft content.**                                                                                       |
+| `employee`           | Only reports **assigned to them** within their current department; status updates on those; drafts for their department                                                                                      |
+| `intake_dispatcher`  | Only reports with **no department and no assignee**: `under_review`/`rejected`, route to a department, set priority. **Cannot draft content.**                                                               |
 | `department_manager` | Reports of their department; assign within it or return to intake; publish their department's content                                                                                                        |
 | `municipality_admin` | Everything in their municipality: all reports, staff (invitations, roles, transfers, deactivation), departments, settings, all content, audit log                                                            |
 | platform admin       | Read-only tenant _structure_ (municipalities, departments, staff) and an operational audit view. **No access to reports, citizen data, photos, exact locations, tracking numbers or report audit payloads.** |
@@ -57,14 +58,15 @@ transfers take effect immediately.
 `{"he","ar","en"}` (Hebrew required, validated), PostGIS `geography(…, 4326)` (WGS84,
 provider-independent — D-008).
 
-| Migration               | Contents                                                                                                                                                                                                                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `…000100_foundation`    | PostGIS (in `extensions`), `private` schema, enums, `set_updated_at`, `is_localized_text`, `round_location`                                                                                                                                                                                                                        |
-| `…000200_tenancy`       | `municipalities`, `neighborhoods`, `profiles` (+ sign-up trigger), `profile_contacts`, `platform_admins`, `departments`, `employees` (+ escalation guards), `staff_invitations`, `audit_logs` (+ `actor_kind`), RLS helpers, `get_colleagues()`, invitation RPCs, `get_audit_log()`                                                |
-| `…000300_notifications` | `notifications` (Realtime), `push_tokens`, `register_push_token()`                                                                                                                                                                                                                                                                 |
-| `…000400_reports`       | `report_categories` (+ catalog), `municipality_report_categories`, `report_status_transitions` (+ graph), `reports`, `report_tracking_counters`, `report_attachments`, `report_comments`, `report_status_history`, `report_confirmations`, `report_followers`, report RPCs, `set_employee_role()`, release-on-deactivation trigger |
-| `…000500_content`       | `announcements` (draft → published → archived, `image_path`), `set_announcement_status()`                                                                                                                                                                                                                                          |
-| `…000600_storage`       | Buckets `report-media` (private), `content-drafts` (private), `public-content` (public read); storage policies; private-schema EXECUTE hardening                                                                                                                                                                                   |
+| Migration                        | Contents                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `…000100_foundation`             | PostGIS (in `extensions`), `private` schema, enums, `set_updated_at`, `is_localized_text`, `round_location`                                                                                                                                                                                                                        |
+| `…000200_tenancy`                | `municipalities`, `neighborhoods`, `profiles` (+ sign-up trigger), `profile_contacts`, `platform_admins`, `departments`, `employees` (+ escalation guards), `staff_invitations`, `audit_logs` (+ `actor_kind`), RLS helpers, `get_colleagues()`, invitation RPCs, `get_audit_log()`                                                |
+| `…000300_notifications`          | `notifications` (Realtime), `push_tokens`, `register_push_token()`                                                                                                                                                                                                                                                                 |
+| `…000400_reports`                | `report_categories` (+ catalog), `municipality_report_categories`, `report_status_transitions` (+ graph), `reports`, `report_tracking_counters`, `report_attachments`, `report_comments`, `report_status_history`, `report_confirmations`, `report_followers`, report RPCs, `set_employee_role()`, release-on-deactivation trigger |
+| `…000500_content`                | `announcements` (draft → published → archived, `image_path`), `set_announcement_status()`                                                                                                                                                                                                                                          |
+| `…000600_storage`                | Buckets `report-media` (private), `content-drafts` (private), `public-content` (public read); storage policies; private-schema EXECUTE hardening                                                                                                                                                                                   |
+| `…000700_employee_report_access` | Replaces `private.can_access_report()` only: employees limited to their own assignments, dispatchers to reports with no department and no assignee (§5.2)                                                                                                                                                                          |
 
 Key columns of `reports`: `tracking_number` (`CODE-YYYY-NNNNNN`, per-municipality yearly
 counter), `reporter_id` (internal, `on delete set null`, **not readable by any API role**),
@@ -91,24 +93,24 @@ tables, `employees` and `announcements`. Clients must list the columns they need
 
 ✅ allowed · ◐ restricted · — denied. "RPC" = through a function, never the table.
 
-| Data                                                                    | anon | Citizen                                                      | Employee                 | Dispatcher           | Dept manager              | Muni admin                 | Other municipality |
-| ----------------------------------------------------------------------- | ---- | ------------------------------------------------------------ | ------------------------ | -------------------- | ------------------------- | -------------------------- | ------------------ |
-| Reference data (municipalities, neighborhoods, departments, categories) | ✅   | ✅                                                           | ✅                       | ✅                   | ✅                        | ✅ + edit                  | public only        |
-| Own profile / own phone                                                 | —    | ✅                                                           | ✅                       | ✅                   | ✅                        | ✅                         | —                  |
-| Colleague names (active staff only)                                     | —    | —                                                            | ◐ RPC                    | ◐ RPC                | ◐ RPC                     | ◐ RPC                      | —                  |
-| Other people's profiles (home area, language)                           | —    | —                                                            | —                        | —                    | —                         | —                          | —                  |
-| Reporter identity & phone                                               | —    | —                                                            | ◐ RPC, own dept, audited | —                    | ◐ RPC, audited            | ◐ RPC, audited             | —                  |
-| Own reports                                                             | —    | ◐ RPC (no priority/assignee/department)                      |                          |                      |                           |                            |                    |
-| Others' public reports                                                  | —    | ◐ RPC: category, status, ~50 m location, date, confirmations |                          |                      |                           |                            |                    |
-| Reports (table) incl. exact location, without reporter id               | —    | —                                                            | ◐ own dept               | ◐ unassigned         | ◐ own dept                | ✅                         | —                  |
-| Change status                                                           | —    | —                                                            | ◐                        | ◐ review/reject only | ◐                         | ✅                         | —                  |
-| Assign / route                                                          | —    | —                                                            | —                        | ◐ route only         | ◐ within dept / to intake | ✅                         | —                  |
-| Internal comments & notes                                               | —    | —                                                            | ✅ (accessible reports)  | ✅                   | ✅                        | ✅                         | —                  |
-| Report photos                                                           | —    | ◐ own reports                                                | ◐                        | ◐                    | ◐                         | ✅                         | —                  |
-| Drafts (incl. draft images)                                             | —    | —                                                            | ◐ own dept               | —                    | ◐ own dept                | ✅                         | —                  |
-| Publish content / public images                                         | —    | —                                                            | —                        | —                    | ◐ own dept                | ✅                         | —                  |
-| Staff invitations, roles, transfers                                     | —    | ◐ accept/decline own                                         | —                        | —                    | —                         | ✅                         | —                  |
-| Audit log                                                               | —    | —                                                            | —                        | —                    | —                         | ◐ RPC, citizens anonymized | —                  |
+| Data                                                                    | anon | Citizen                                                      | Employee                              | Dispatcher              | Dept manager              | Muni admin                 | Other municipality |
+| ----------------------------------------------------------------------- | ---- | ------------------------------------------------------------ | ------------------------------------- | ----------------------- | ------------------------- | -------------------------- | ------------------ |
+| Reference data (municipalities, neighborhoods, departments, categories) | ✅   | ✅                                                           | ✅                                    | ✅                      | ✅                        | ✅ + edit                  | public only        |
+| Own profile / own phone                                                 | —    | ✅                                                           | ✅                                    | ✅                      | ✅                        | ✅                         | —                  |
+| Colleague names (active staff only)                                     | —    | —                                                            | ◐ RPC                                 | ◐ RPC                   | ◐ RPC                     | ◐ RPC                      | —                  |
+| Other people's profiles (home area, language)                           | —    | —                                                            | —                                     | —                       | —                         | —                          | —                  |
+| Reporter identity & phone                                               | —    | —                                                            | ◐ RPC, assigned reports only, audited | —                       | ◐ RPC, own dept, audited  | ◐ RPC, audited             | —                  |
+| Own reports                                                             | —    | ◐ RPC (no priority/assignee/department)                      |                                       |                         |                           |                            |                    |
+| Others' public reports                                                  | —    | ◐ RPC: category, status, ~50 m location, date, confirmations |                                       |                         |                           |                            |                    |
+| Reports (table) incl. exact location, without reporter id               | —    | —                                                            | ◐ assigned to them, own dept          | ◐ no dept & no assignee | ◐ own dept                | ✅                         | —                  |
+| Change status                                                           | —    | —                                                            | ◐                                     | ◐ review/reject only    | ◐                         | ✅                         | —                  |
+| Assign / route                                                          | —    | —                                                            | —                                     | ◐ route only            | ◐ within dept / to intake | ✅                         | —                  |
+| Internal comments & notes                                               | —    | —                                                            | ✅ (accessible reports)               | ✅                      | ✅                        | ✅                         | —                  |
+| Report photos                                                           | —    | ◐ own reports                                                | ◐                                     | ◐                       | ◐                         | ✅                         | —                  |
+| Drafts (incl. draft images)                                             | —    | —                                                            | ◐ own dept                            | —                       | ◐ own dept                | ✅                         | —                  |
+| Publish content / public images                                         | —    | —                                                            | —                                     | —                       | ◐ own dept                | ✅                         | —                  |
+| Staff invitations, roles, transfers                                     | —    | ◐ accept/decline own                                         | —                                     | —                       | —                         | ✅                         | —                  |
+| Audit log                                                               | —    | —                                                            | —                                     | —                       | —                         | ◐ RPC, citizens anonymized | —                  |
 
 ## 5. Decisions implemented
 
@@ -214,13 +216,51 @@ for their department, managers publish their department's content, and admins pu
 
 **Department transfers.**
 
-- Employees and managers see only their **current** department's reports (assignment no
-  longer grants access on its own), so a transfer removes access to the old department immediately.
+- Employees and managers see only reports of their **current** department (employees: only
+  those assigned to them, §5.2), so a transfer removes access to the old department immediately.
 - Roles and departments change only through `set_employee_role()` (admins, never their own
   record). Open reports assigned to the employee are handed, in the same transaction, to a
   named active member of the old department or back to its queue.
 - Deactivation releases open assignments too. Every handover is audited as `report.reassigned`.
 - Finished reports keep their historical assignee.
+
+### 5.2 Hosted security review: narrowed staff report access (migration `…000700`)
+
+`private.can_access_report(p_municipality_id, p_department_id, p_assignee_id)` now
+implements, for the caller's **active** membership in the report's municipality:
+
+| Role                 | Access                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `municipality_admin` | every report of the municipality (unchanged)                                        |
+| `department_manager` | reports whose `department_id` is their department (unchanged)                       |
+| `employee`           | `assignee_id` = their own membership row **and** `department_id` = their department |
+| `intake_dispatcher`  | `department_id IS NULL` **and** `assignee_id IS NULL`                               |
+
+No active membership in that municipality → `false`, so inactive staff, citizens and staff of
+other municipalities get no staff access.
+
+- **Assignment model:** `reports.assignee_id` references `employees.id` (the membership row),
+  not `auth.users.id`, through the composite FK `(assignee_id, municipality_id) → employees(id,
+municipality_id)`. "Assigned to the current user" therefore means
+  `p_assignee_id = e.id`, where `e` is selected by `e.user_id = auth.uid()`.
+- **Dispatcher:** `check (assignee_id is null or department_id is not null)` already makes
+  "no department but an assignee" impossible as data. The extra condition is defense in
+  depth, and is tested at function level.
+- **Unchanged:** signature, `SECURITY DEFINER`, `STABLE`, `search_path = ''`, `EXECUTE`
+  (authenticated only; verified identical before and after the migration, and now also
+  revoked explicitly from `service_role`, which bypasses RLS and never needs it), `can_handle_report()` (still delegates and excludes dispatchers),
+  and citizen access (`reporter_id` checks in the `get_my_*` functions, RPCs and storage policies).
+
+**Behavior change versus §5.0 / §5.1:** employees previously saw _every_ report of their
+department. Now:
+
+- Employees no longer see unassigned department reports, or reports assigned to colleagues.
+  That covers the table, child tables, photos, comments and status changes.
+- The department queue (routed, unassigned reports) is visible only to the department
+  manager and admins. Reports must be assigned to an employee before they can work on them.
+- Reports handed back to the queue on a transfer or deactivation (§5.1) wait for the
+  manager to reassign them.
+- Reporter contact details reach an employee only for reports assigned to them.
 
 ## 6. Escalation guards
 
@@ -234,7 +274,7 @@ for their department, managers publish their department's content, and admins pu
   report workflow columns and `audit_logs` are not writable through the API.
 - Requests without a verified user id are treated as unauthenticated.
 
-## 7. Automated tests (`supabase/tests`, 131 tests)
+## 7. Automated tests (`supabase/tests`, 145 tests)
 
 Tests run in-process on **PGlite** (Postgres compiled to WebAssembly) with PostGIS. That
 means no Docker and no network, and the hosted project is never touched. A test-only shim
@@ -244,19 +284,20 @@ means no Docker and no network, and the hosted project is never touched. A test-
 statement runs as a specific actor (`SET ROLE` + `request.jwt.claims`), like an API request,
 inside a transaction that is rolled back.
 
-| Suite                     | Covers                                                                                                                                                                                                                                                                                                                                                |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-guards` (16)      | RLS on every table; exact privilege allowlists; protected columns; **identifying columns hidden**; no direct audit access; locking upload policy; no anon RPCs; exact RPC allowlist; **private helpers: none for anon, allowlist for authenticated**; pinned `search_path`; enums, categories and workflow equal `packages/shared`; seed is fictional |
-| `tenant-isolation` (16)   | B's staff see none of A's rows in 9 tables and none of A's drafts; every RPC denied cross-tenant; cross-tenant assignment rejected; composite FKs hold even for the owner; staff and settings management denied; audit log scoped                                                                                                                     |
-| `report-access` (11)      | Role/department visibility matrix; deactivation; dispatcher and manager limits; employees can't assign; assignee must belong to the department                                                                                                                                                                                                        |
-| `report-workflow` (22)    | Submission validation, routing, rate limit, sensitive-category default; transitions; note, reason, duplicate and completion-photo rules; history, audit and notifications; **F5 follower notifications; F7 private-by-default notes; citizen actor anonymized**; reporter view; confirm/follow                                                        |
-| `public-exposure` (13)    | Private reports never listed; column allowlist; no identity leaks; 50 m rounding; bounding-box probing; anon denied; exact coordinates only for authorized staff; **F2: 5-object cap counted in storage, metadata-based size/type checks**; photo read matrix; completion photos                                                                      |
-| `contact-access` (9)      | Handlers get name and phone, audited; 8 unauthorized actors denied; **F1: reporter/author columns unreadable, employee-id attribution; F4: colleague names via RPC only, active staff only, no profile fields**                                                                                                                                       |
-| `staff-invitations` (8)   | **F1:** acceptance by the intended confirmed email only; no access before acceptance; revoked, declined and expired invitations; admin-only management; server-controlled fields; no self-acceptance; the reporter-identity bypass is blocked; audit                                                                                                  |
-| `department-transfer` (8) | Immediate loss of access to the old department; open reports to queue or a named colleague of the old department; invalid handovers; role change and deactivation release assignments; finished reports keep history; no cross-municipality move                                                                                                      |
-| `role-escalation` (11)    | No direct memberships for anyone; non-admins can't change roles; no self role/status change; audited promotion; cross-municipality denied; last admin; platform admin; protected writes; append-only audit; own profile only; missing identity                                                                                                        |
-| `content-publishing` (13) | Draft/publish matrix; audit of publish, archive and edit; draft visibility; **F8 author ids hidden; F9 dispatchers can't draft; F3 private draft images, controlled publishing, publisher-only deletion, path binding**                                                                                                                               |
-| `audit-log` (4)           | **F6:** no direct access; admins and platform admins only; citizen actors never shown; platform view has no report ids, payloads or tracking numbers                                                                                                                                                                                                  |
+| Suite                      | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-guards` (16)       | RLS on every table; exact privilege allowlists; protected columns; **identifying columns hidden**; no direct audit access; locking upload policy; no anon RPCs; exact RPC allowlist; **private helpers: none for anon, allowlist for authenticated**; pinned `search_path`; enums, categories and workflow equal `packages/shared`; seed is fictional                                                                                                                                                       |
+| `tenant-isolation` (16)    | B's staff see none of A's rows in 9 tables and none of A's drafts; every RPC denied cross-tenant; cross-tenant assignment rejected; composite FKs hold even for the owner; staff and settings management denied; audit log scoped                                                                                                                                                                                                                                                                           |
+| `report-access` (11)       | Role/department visibility matrix; deactivation; dispatcher and manager limits; employees can't assign; assignee must belong to the department                                                                                                                                                                                                                                                                                                                                                              |
+| `report-access-scope` (14) | §5.2 rules: admin across departments; manager own department only; employee only own assignments in own department (not unassigned, not another employee's or the manager's, not another department's, not stale assignments); dispatcher only no-department/no-assignee (incl. function-level check of the unreachable case); inactive and non-member staff denied; cross-municipality denied; citizen access via `reporter_id` unchanged; exact ACL of `can_access_report` (owner + `authenticated` only) |
+| `report-workflow` (22)     | Submission validation, routing, rate limit, sensitive-category default; transitions; note, reason, duplicate and completion-photo rules; history, audit and notifications; **F5 follower notifications; F7 private-by-default notes; citizen actor anonymized**; reporter view; confirm/follow                                                                                                                                                                                                              |
+| `public-exposure` (13)     | Private reports never listed; column allowlist; no identity leaks; 50 m rounding; bounding-box probing; anon denied; exact coordinates only for authorized staff; **F2: 5-object cap counted in storage, metadata-based size/type checks**; photo read matrix; completion photos                                                                                                                                                                                                                            |
+| `contact-access` (9)       | Handlers get name and phone, audited; 8 unauthorized actors denied; **F1: reporter/author columns unreadable, employee-id attribution; F4: colleague names via RPC only, active staff only, no profile fields**                                                                                                                                                                                                                                                                                             |
+| `staff-invitations` (8)    | **F1:** acceptance by the intended confirmed email only; no access before acceptance; revoked, declined and expired invitations; admin-only management; server-controlled fields; no self-acceptance; the reporter-identity bypass is blocked; audit                                                                                                                                                                                                                                                        |
+| `department-transfer` (8)  | Immediate loss of access to the old department; open reports to queue or a named colleague of the old department; invalid handovers; role change and deactivation release assignments; finished reports keep history; no cross-municipality move                                                                                                                                                                                                                                                            |
+| `role-escalation` (11)     | No direct memberships for anyone; non-admins can't change roles; no self role/status change; audited promotion; cross-municipality denied; last admin; platform admin; protected writes; append-only audit; own profile only; missing identity                                                                                                                                                                                                                                                              |
+| `content-publishing` (13)  | Draft/publish matrix; audit of publish, archive and edit; draft visibility; **F8 author ids hidden; F9 dispatchers can't draft; F3 private draft images, controlled publishing, publisher-only deletion, path binding**                                                                                                                                                                                                                                                                                     |
+| `audit-log` (4)            | **F6:** no direct access; admins and platform admins only; citizen actors never shown; platform view has no report ids, payloads or tracking numbers                                                                                                                                                                                                                                                                                                                                                        |
 
 **Mutation checks:** security bugs were injected on purpose and each was caught:
 
@@ -355,8 +396,9 @@ Neither command below may include `--include-seed`. Seed data is a separate appr
 In Supabase CLI v3, `db push` targets the **local** database unless `--remote` is given.
 
 1. `supabase link --project-ref <dev-project>` (CLI; no Docker needed).
-2. `supabase db push --remote --dry-run`. Review the output: it must list exactly the six
-   committed migrations and nothing else. **Anything unexpected → STOP.**
+2. `supabase db push --remote --dry-run`. Review the output: it must list exactly the
+   committed migrations that aren't applied yet, and nothing else. For the §5.2 change that's
+   only `20261103000700_employee_report_access.sql`. **Anything unexpected → STOP.**
 3. `supabase db push --remote`, only after the dry-run has been reviewed and approved.
 
 ### 9.3 Post-deployment verification

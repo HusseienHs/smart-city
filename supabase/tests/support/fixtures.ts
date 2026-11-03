@@ -27,6 +27,7 @@ export const ids = {
   adminA: id(4, 15),
   admin2A: id(4, 16),
   formerEmployeeAX: id(4, 17), // deactivated
+  employeeAX2: id(4, 18), // second ordinary employee in X
   adminB: id(4, 20),
   employeeBZ: id(4, 21),
   platformAdmin: id(4, 30),
@@ -44,6 +45,7 @@ export const employeeIds = {
   formerEmployeeAX: id(5, 8),
   adminB: id(5, 9),
   employeeBZ: id(5, 10),
+  employeeAX2: id(5, 11),
 } as const;
 
 /** Exact fixture location of the public report in A (inside the north neighborhood). */
@@ -80,6 +82,7 @@ export async function setupFixtures(db: TestDb): Promise<FixtureReports> {
     [ids.adminA, 'admin.a@example.test', 'Admin A'],
     [ids.admin2A, 'admin2.a@example.test', 'Admin Two A'],
     [ids.formerEmployeeAX, 'former.ax@example.test', 'Former Employee AX'],
+    [ids.employeeAX2, 'employee.ax2@example.test', 'Employee AX Two'],
     [ids.adminB, 'admin.b@example.test', 'Admin B'],
     [ids.employeeBZ, 'employee.bz@example.test', 'Employee BZ'],
     [ids.platformAdmin, 'platform@example.test', 'Platform Admin'],
@@ -131,6 +134,7 @@ export async function setupFixtures(db: TestDb): Promise<FixtureReports> {
     [employeeIds.adminA, ids.adminA, ids.muniA, 'municipality_admin', null, true],
     [employeeIds.admin2A, ids.admin2A, ids.muniA, 'municipality_admin', null, true],
     [employeeIds.formerEmployeeAX, ids.formerEmployeeAX, ids.muniA, 'employee', ids.deptAX, false],
+    [employeeIds.employeeAX2, ids.employeeAX2, ids.muniA, 'employee', ids.deptAX, true],
     [employeeIds.adminB, ids.adminB, ids.muniB, 'municipality_admin', null, true],
     [employeeIds.employeeBZ, ids.employeeBZ, ids.muniB, 'employee', ids.deptBZ, true],
   ];

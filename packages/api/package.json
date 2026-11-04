@@ -1,0 +1,31 @@
+{
+  "name": "@smart-city/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed data-access layer on top of Supabase, shared by the mobile app and the admin dashboard.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@smart-city/shared": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  },
+  "devDependencies": {
+    "@smart-city/config": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
+    "eslint": "^9.39.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

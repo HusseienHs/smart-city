@@ -1,6 +1,6 @@
 # Database schema & security design
 
-> **Status:** implemented in `supabase/migrations` (7 migrations) and covered by 145 automated
+> **Status:** implemented in `supabase/migrations` (7 migrations) and covered by 165 automated
 > security tests. All 7 migrations, including `…000700` (narrowed staff report access, §5.2),
 > are applied to the development project, and its remote migration history matches.
 > Environment constraint (D-007): the hosted West Europe (London) project holds **synthetic data only**.
@@ -274,7 +274,7 @@ department. Now:
   report workflow columns and `audit_logs` are not writable through the API.
 - Requests without a verified user id are treated as unauthenticated.
 
-## 7. Automated tests (`supabase/tests`, 145 tests)
+## 7. Automated tests (`supabase/tests`, 165 tests)
 
 Tests run in-process on **PGlite** (Postgres compiled to WebAssembly) with PostGIS. That
 means no Docker and no network, and the hosted project is never touched. A test-only shim
@@ -290,6 +290,7 @@ inside a transaction that is rolled back.
 | `tenant-isolation` (16)    | B's staff see none of A's rows in 9 tables and none of A's drafts; every RPC denied cross-tenant; cross-tenant assignment rejected; composite FKs hold even for the owner; staff and settings management denied; audit log scoped                                                                                                                                                                                                                                                                           |
 | `report-access` (11)       | Role/department visibility matrix; deactivation; dispatcher and manager limits; employees can't assign; assignee must belong to the department                                                                                                                                                                                                                                                                                                                                                              |
 | `report-access-scope` (14) | §5.2 rules: admin across departments; manager own department only; employee only own assignments in own department (not unassigned, not another employee's or the manager's, not another department's, not stale assignments); dispatcher only no-department/no-assignee (incl. function-level check of the unreachable case); inactive and non-member staff denied; cross-municipality denied; citizen access via `reporter_id` unchanged; exact ACL of `can_access_report` (owner + `authenticated` only) |
+| `api-column-access` (20)   | The exact column lists used by `@smart-city/api`, run as anon, citizen and staff against the real grants and policies; public rows returned; drafts never exposed                                                                                                                                                                                                                                                                                                                                           |
 | `report-workflow` (22)     | Submission validation, routing, rate limit, sensitive-category default; transitions; note, reason, duplicate and completion-photo rules; history, audit and notifications; **F5 follower notifications; F7 private-by-default notes; citizen actor anonymized**; reporter view; confirm/follow                                                                                                                                                                                                              |
 | `public-exposure` (13)     | Private reports never listed; column allowlist; no identity leaks; 50 m rounding; bounding-box probing; anon denied; exact coordinates only for authorized staff; **F2: 5-object cap counted in storage, metadata-based size/type checks**; photo read matrix; completion photos                                                                                                                                                                                                                            |
 | `contact-access` (9)       | Handlers get name and phone, audited; 8 unauthorized actors denied; **F1: reporter/author columns unreadable, employee-id attribution; F4: colleague names via RPC only, active staff only, no profile fields**                                                                                                                                                                                                                                                                                             |
@@ -433,4 +434,5 @@ supabase db push --include-seed   # dev project only — never production
 - API-level integration tests (supabase-js against the dev project: Auth, PostgREST,
   Storage, Realtime), with throwaway synthetic users.
 - CI (GitHub Actions): `pnpm check` on every PR, which includes the database tests.
-- Generate database types into `packages/shared` (`supabase gen types --linked`).
+- ~~Generate database types~~ Done: `packages/api/src/database.types.ts`, compared against all
+  7 migrations (tables, columns, enums, functions, arguments and return columns).

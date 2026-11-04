@@ -76,6 +76,18 @@ push`); developers don't need Docker. Migrations stay plain SQL under `supabase/
 so the local stack (`supabase start`) keeps working for anyone who has Docker, and CI runs
 it (GitHub Actions has Docker).
 
+### D-011 · Typed API package; generated types (2026-11-04)
+
+**Decision:** `packages/api` (`@smart-city/api`) holds the generated database types and all
+data-access functions. Functions receive the app's Supabase client as an argument, list
+their columns explicitly, keep database row names (snake_case) and throw only `ApiError`,
+whose database details stay in a non-enumerable `debug` field.
+**Why:** One typed, testable place for queries; `packages/shared` stays free of Supabase.
+**Constraint:** Windows Smart App Control blocks the unsigned Supabase CLI binary on the main
+development machine. CLI steps run from WSL or CI, or use the Management API directly.
+Mobile bundling must be checked with Metro: it rejected TypeScript syntax (`declare` class
+fields) that passed type checks, Vitest and Next.js.
+
 ### Open
 
 - Production hosting region and data-processing agreements.

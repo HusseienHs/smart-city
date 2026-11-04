@@ -10,6 +10,17 @@ import {
   STATUSES_REQUIRING_PUBLIC_NOTE,
 } from './reports';
 
+/**
+ * Text stored per language in jsonb columns. Mirrors `private.is_localized_text`:
+ * only he/ar/en keys, string values, and Hebrew is required.
+ */
+export const localizedTextSchema = z.strictObject({
+  he: z.string().trim().min(1),
+  ar: z.string().optional(),
+  en: z.string().optional(),
+});
+export type LocalizedText = z.infer<typeof localizedTextSchema>;
+
 /** Upper bound for photos attached to a single report. */
 export const MAX_REPORT_PHOTOS = 5;
 /** 10 MB, enforced again by the storage bucket policy. */

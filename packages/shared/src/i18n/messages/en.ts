@@ -57,6 +57,16 @@ export const en = {
     noData: 'No data yet – metrics appear once reports are received',
     statusWorkflow: 'Report status workflow',
   },
+  apiErrors: {
+    validation: 'Please check the details you entered.',
+    unauthorized: 'Please sign in to continue.',
+    forbidden: 'This item was not found, or you do not have access to it.',
+    notFound: 'This item was not found.',
+    conflict: 'This conflicts with existing information.',
+    rateLimited: 'Too many requests. Please try again in a little while.',
+    network: 'Could not connect. Check your connection and try again.',
+    server: 'Something went wrong on our side. Please try again.',
+  },
   reportCategory: {
     pothole: 'Pothole',
     streetlight: 'Broken streetlight',

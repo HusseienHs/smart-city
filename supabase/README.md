@@ -35,8 +35,14 @@ pnpm dlx supabase link --project-ref <dev-project-ref>
 pnpm dlx supabase db push --remote --dry-run   # CLI v3: --remote targets the linked project
 pnpm dlx supabase db push --remote             # only after the dry-run is approved
 pnpm dlx supabase db push --remote --include-seed   # dev project only, separate approval (§9.4)
-pnpm dlx supabase gen types typescript --linked > packages/shared/src/database.types.ts
+pnpm dlx supabase gen types typescript --linked > packages/api/src/database.types.ts
 ```
+
+Windows Smart App Control blocks the unsigned CLI binary on the main development machine
+(D-011). There, regenerate the types through the same Management API endpoint the CLI uses:
+`GET https://api.supabase.com/v1/projects/<ref>/types/typescript?included_schemas=public`,
+saving the response's `types` field to the same file, or run the CLI from WSL or CI. The
+generated file is never edited by hand and is excluded from Prettier and ESLint.
 
 The local stack (`supabase start`, which needs Docker) works with the same migrations for
 anyone who has Docker, and in CI.

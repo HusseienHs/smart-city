@@ -17,6 +17,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@smart-city/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@smart-city/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -78,6 +81,9 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.88.1(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
+      '@smart-city/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@smart-city/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -161,6 +167,31 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
+  packages/api:
+    dependencies:
+      '@smart-city/shared':
+        specifier: workspace:*
+        version: link:../shared
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@smart-city/config':
+        specifier: workspace:*
+        version: link:../config
+      '@supabase/supabase-js':
+        specifier: ^2.118.0
+        version: 2.118.0
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(terser@5.51.2))
+
   packages/config:
     dependencies:
       '@eslint/js':
@@ -209,6 +240,9 @@ importers:
       '@electric-sql/pglite-postgis':
         specifier: 0.2.14
         version: 0.2.14(@electric-sql/pglite@0.5.14)
+      '@smart-city/api':
+        specifier: workspace:*
+        version: link:../packages/api
       '@smart-city/config':
         specifier: workspace:*
         version: link:../packages/config

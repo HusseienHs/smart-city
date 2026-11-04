@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { Database, SmartCityClient } from '@smart-city/api';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -10,11 +11,11 @@ import { requireSupabaseConfig } from '@/lib/env';
  * Uses the user's session cookies — it acts as the signed-in user, so RLS applies.
  * Create a new client per request; never share one between users.
  */
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(): Promise<SmartCityClient> {
   const { url, key } = requireSupabaseConfig();
   const cookieStore = await cookies();
 
-  return createServerClient(url, key, {
+  return createServerClient<Database>(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

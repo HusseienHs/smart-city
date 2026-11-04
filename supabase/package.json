@@ -13,6 +13,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.5.14",
     "@electric-sql/pglite-postgis": "0.2.14",
+    "@smart-city/api": "workspace:*",
     "@smart-city/config": "workspace:*",
     "@smart-city/shared": "workspace:*",
     "@types/node": "^24",

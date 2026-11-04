@@ -10,3 +10,4 @@ apps/mobile/android
 apps/admin/next-env.d.ts
 apps/mobile/expo-env.d.ts
 **/AGENTS.md
+packages/api/src/database.types.ts

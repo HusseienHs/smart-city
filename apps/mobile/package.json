@@ -15,6 +15,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@smart-city/api": "workspace:*",
     "@smart-city/shared": "workspace:*",
     "@supabase/supabase-js": "^2.118.0",
     "expo": "~58.0.22",

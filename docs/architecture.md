@@ -24,14 +24,15 @@ municipalities, with strict data isolation between them.
 
 ## Repository layout
 
-| Path              | Purpose                                                                                                                            |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/mobile`     | Citizen app. Expo SDK 58, React Native 0.88, Expo Router (file-based routes in `src/app`).                                         |
-| `apps/admin`      | Municipality dashboard. Next.js 16 App Router, Tailwind CSS 4, Cache Components.                                                   |
-| `packages/shared` | Framework-agnostic TypeScript: domain constants, Zod schemas, status workflow, design tokens, translations. No React, no Supabase. |
-| `packages/config` | Shared TypeScript base config and ESLint base config.                                                                              |
-| `supabase`        | Migrations, RLS/storage policies, seed data, Edge Functions — the backend as code.                                                 |
-| `docs`            | Architecture, roadmap, decision log.                                                                                               |
+| Path              | Purpose                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile`     | Citizen app. Expo SDK 58, React Native 0.88, Expo Router (file-based routes in `src/app`).                                                         |
+| `apps/admin`      | Municipality dashboard. Next.js 16 App Router, Tailwind CSS 4, Cache Components.                                                                   |
+| `packages/api`    | `@smart-city/api`: generated database types, typed data-access functions and `ApiError`. Takes the app's Supabase client as an argument; no React. |
+| `packages/shared` | Framework-agnostic TypeScript: domain constants, Zod schemas, status workflow, design tokens, translations. No React, no Supabase.                 |
+| `packages/config` | Shared TypeScript base config and ESLint base config.                                                                                              |
+| `supabase`        | Migrations, RLS/storage policies, seed data, Edge Functions — the backend as code.                                                                 |
+| `docs`            | Architecture, roadmap, decision log.                                                                                                               |
 
 Workspace packages ship **TypeScript source** (no build step). Metro compiles them for
 mobile; Next compiles them via `transpilePackages`. This keeps the inner loop instant and

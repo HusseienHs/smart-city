@@ -18,6 +18,7 @@ apps/
   mobile/     Citizen app — Expo SDK 58, Expo Router
   admin/      Municipality dashboard — Next.js 16, Tailwind CSS 4
 packages/
+  api/        Typed data access on top of Supabase, used by both apps
   shared/     Domain types, Zod schemas, business rules, design tokens, translations
   config/     Shared TypeScript and ESLint configuration
 supabase/     Migrations, RLS policies, seed data (backend as code)

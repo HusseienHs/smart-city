@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { assignReportSchema, createReportSchema, reportPhotoSchema } from './validation';
+import {
+  assignReportSchema,
+  createReportSchema,
+  localizedTextSchema,
+  reportPhotoSchema,
+} from './validation';
 
 const validReport = {
   municipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
@@ -42,6 +47,19 @@ describe('reportPhotoSchema', () => {
     expect(
       reportPhotoSchema.safeParse({ mimeType: 'application/pdf', sizeBytes: 1000 }).success,
     ).toBe(false);
+  });
+});
+
+describe('localizedTextSchema', () => {
+  it('requires Hebrew and allows Arabic and English', () => {
+    expect(localizedTextSchema.safeParse({ he: 'שלום', en: 'Hello' }).success).toBe(true);
+    expect(localizedTextSchema.safeParse({ en: 'Hello' }).success).toBe(false);
+    expect(localizedTextSchema.safeParse({ he: '   ' }).success).toBe(false);
+  });
+
+  it('rejects unknown languages and non-string values', () => {
+    expect(localizedTextSchema.safeParse({ he: 'שלום', fr: 'Salut' }).success).toBe(false);
+    expect(localizedTextSchema.safeParse({ he: 'שלום', en: 1 }).success).toBe(false);
   });
 });
 

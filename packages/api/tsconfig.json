@@ -1,0 +1,8 @@
+{
+  "extends": "@smart-city/config/typescript/base.json",
+  "compilerOptions": {
+    // supabase-js' type declarations reference fetch/URL types.
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

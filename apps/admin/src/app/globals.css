@@ -12,9 +12,9 @@
   --border: #e2e5eb;
   --foreground: #12151c;
   --muted: #6b7280;
-  --primary: #0b5fff;
-  --primary-pressed: #0049d6;
-  --primary-soft: #eef4ff;
+  --primary: #007072;
+  --primary-pressed: #005a5c;
+  --primary-soft: #f3f9f9;
   --danger: #dc2626;
 }
 
@@ -26,9 +26,9 @@
     --border: #1f2430;
     --foreground: #f7f8fa;
     --muted: #9aa1ae;
-    --primary: #3d7fff;
-    --primary-pressed: #0b5fff;
-    --primary-soft: #0b1a3a;
+    --primary: #1a8a8b;
+    --primary-pressed: #007072;
+    --primary-soft: #0e2526;
     --danger: #f87171;
   }
 }

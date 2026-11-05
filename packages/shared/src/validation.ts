@@ -116,16 +116,29 @@ export const assignReportSchema = z
   });
 export type AssignReportInput = z.infer<typeof assignReportSchema>;
 
+// Keyboards often add a trailing space after an email suggestion.
+const emailSchema = z.string().trim().pipe(z.email());
+/** Lets callers that only see issue messages tell a too-long password from a too-short one. */
+export const PASSWORD_TOO_LONG_MESSAGE = 'password_too_long';
+const newPasswordSchema = z.string().min(8).max(72, PASSWORD_TOO_LONG_MESSAGE);
+
 export const signUpSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8).max(72),
+  email: emailSchema,
+  password: newPasswordSchema,
   fullName: z.string().trim().min(2).max(100),
   preferredLocale: z.enum(SUPPORTED_LOCALES),
 });
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
 export const signInSchema = z.object({
-  email: z.email(),
+  email: emailSchema,
   password: z.string().min(1),
 });
 export type SignInInput = z.infer<typeof signInSchema>;
+
+/** Used to request a password reset or another verification email. */
+export const emailOnlySchema = z.object({ email: emailSchema });
+export type EmailOnlyInput = z.infer<typeof emailOnlySchema>;
+
+export const updatePasswordSchema = z.object({ password: newPasswordSchema });
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;

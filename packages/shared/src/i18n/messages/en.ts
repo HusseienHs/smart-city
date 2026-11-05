@@ -109,6 +109,20 @@ export const en = {
     network: 'Could not connect. Check your connection and try again.',
     server: 'Something went wrong on our side. Please try again.',
   },
+  authErrors: {
+    invalidCredentials: 'The email or password is incorrect.',
+    emailNotConfirmed: 'Please confirm your email address before signing in.',
+    emailInUse: 'An account with this email already exists. Try signing in.',
+    weakPassword: 'This password is too easy to guess. Please choose a stronger one.',
+    samePassword: 'Your new password must be different from the current one.',
+    emailRateLimited: 'Too many emails were sent. Please wait a while and try again.',
+    emailSendFailed: 'We couldn’t send an email to this address right now. Please try again later.',
+    signupDisabled: 'New registrations are currently closed.',
+    reauthRequired:
+      'For your security, please sign out and sign in again before changing your password.',
+    linkInvalid:
+      'It may have expired, already been used, or been opened on a different device. If you were confirming your email, try signing in. Otherwise, request a new link.',
+  },
   reportCategory: {
     pothole: 'Pothole',
     streetlight: 'Broken streetlight',

@@ -10,5 +10,9 @@ export {
 } from './errors/api-error';
 export { fromSupabaseError, toApiError, type SupabaseErrorLike } from './errors/to-api-error';
 
+export * from './auth/auth';
+export * from './auth/auth-callback';
+export * from './auth/auth-errors';
+
 export * from './reference-data/columns';
 export * from './reference-data/reference-data';

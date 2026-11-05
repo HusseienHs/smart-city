@@ -65,12 +65,17 @@ export class ApiError extends Error {
 
   constructor(
     code: ApiErrorCode,
-    options: { debug?: ApiErrorDebugInfo; issues?: readonly ApiValidationIssue[] } = {},
+    options: {
+      debug?: ApiErrorDebugInfo;
+      issues?: readonly ApiValidationIssue[];
+      /** A more specific message than the default for this code. */
+      messageKey?: MessageKey;
+    } = {},
   ) {
     super(SAFE_MESSAGES[code]);
     this.name = 'ApiError';
     this.code = code;
-    this.messageKey = MESSAGE_KEYS[code];
+    this.messageKey = options.messageKey ?? MESSAGE_KEYS[code];
     this.issues = options.issues ?? [];
     Object.defineProperty(this, 'debug', {
       value: options.debug ?? {},

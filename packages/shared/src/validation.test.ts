@@ -3,8 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   assignReportSchema,
   createReportSchema,
+  emailOnlySchema,
   localizedTextSchema,
+  PASSWORD_TOO_LONG_MESSAGE,
   reportPhotoSchema,
+  signInSchema,
+  signUpSchema,
+  updatePasswordSchema,
 } from './validation';
 
 const validReport = {
@@ -68,5 +73,59 @@ describe('assignReportSchema', () => {
     const reportId = '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e';
     expect(assignReportSchema.safeParse({ reportId }).success).toBe(false);
     expect(assignReportSchema.safeParse({ reportId, departmentId: reportId }).success).toBe(true);
+  });
+});
+
+describe('auth schemas', () => {
+  const signUp = {
+    email: 'citizen@example.com',
+    password: 'long-enough',
+    fullName: 'Dana Levi',
+    preferredLocale: 'he',
+  };
+
+  it('trims emails and names', () => {
+    const result = signUpSchema.parse({
+      ...signUp,
+      email: ' citizen@example.com ',
+      fullName: '  Dana Levi ',
+    });
+    expect(result.email).toBe('citizen@example.com');
+    expect(result.fullName).toBe('Dana Levi');
+  });
+
+  it('does not trim passwords', () => {
+    expect(signInSchema.parse({ email: signUp.email, password: ' secret ' }).password).toBe(
+      ' secret ',
+    );
+  });
+
+  it('rejects malformed emails', () => {
+    expect(emailOnlySchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    expect(signInSchema.safeParse({ email: 'a@', password: 'x' }).success).toBe(false);
+  });
+
+  it('enforces the same password length for sign-up and password updates', () => {
+    for (const [password, valid] of [
+      ['a'.repeat(7), false],
+      ['a'.repeat(8), true],
+      ['a'.repeat(72), true],
+      ['a'.repeat(73), false],
+    ] as const) {
+      expect(signUpSchema.safeParse({ ...signUp, password }).success).toBe(valid);
+      expect(updatePasswordSchema.safeParse({ password }).success).toBe(valid);
+    }
+  });
+
+  it('keeps the too_big code on an over-long password, with an identifiable message', () => {
+    const result = updatePasswordSchema.safeParse({ password: 'a'.repeat(73) });
+    expect(result.error?.issues[0]).toMatchObject({
+      code: 'too_big',
+      message: PASSWORD_TOO_LONG_MESSAGE,
+    });
+  });
+
+  it('only accepts supported locales', () => {
+    expect(signUpSchema.safeParse({ ...signUp, preferredLocale: 'fr' }).success).toBe(false);
   });
 });

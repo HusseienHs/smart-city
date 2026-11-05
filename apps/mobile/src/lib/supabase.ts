@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 import { env, isSupabaseConfigured } from './env';
+import { ensureWebCrypto } from './web-crypto';
 
 let client: SmartCityClient | null = null;
 
@@ -21,6 +22,11 @@ export function getSupabase(): SmartCityClient {
     );
   }
 
+  // Must run before createClient: Supabase's PKCE helpers read the global crypto at call time
+  // and would otherwise fall back to Math.random() and the plain challenge (Hermes has no
+  // Web Crypto). Throws rather than continue insecurely.
+  ensureWebCrypto();
+
   client = createClient<Database>(env.supabaseUrl, env.supabasePublishableKey, {
     auth: {
       // AsyncStorage is used on web too only when rendering in a browser; during static
@@ -28,7 +34,11 @@ export function getSupabase(): SmartCityClient {
       ...(Platform.OS !== 'web' || typeof window !== 'undefined' ? { storage: AsyncStorage } : {}),
       autoRefreshToken: true,
       persistSession: true,
+      // Email links are handled by the auth/callback screen, which exchanges the PKCE code.
+      // The code verifier is kept in the same storage, so a link opened after an app restart
+      // still works on this device.
       detectSessionInUrl: false,
+      flowType: 'pkce',
     },
   });
 

@@ -1,6 +1,6 @@
 import { signInSchema, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -75,10 +75,26 @@ export default function SignInScreen() {
           onSubmitEditing={handleSubmit}
         />
 
+        <Link
+          href={{ pathname: '/forgot-password', params: { email: email.trim() } }}
+          style={[styles.forgot, { color: colors.primary }]}
+        >
+          {t('auth.forgotPassword')}
+        </Link>
+
         {formError ? (
           <Text style={{ color: colors.danger }} accessibilityLiveRegion="polite">
             {t(formError)}
           </Text>
+        ) : null}
+        {formError === 'auth.errors.emailNotConfirmed' ? (
+          <Button
+            title={t('auth.resendVerification')}
+            variant="soft"
+            onPress={() =>
+              router.push({ pathname: '/verify-email', params: { email: email.trim() } })
+            }
+          />
         ) : null}
 
         <Button
@@ -106,4 +122,5 @@ const styles = StyleSheet.create({
   form: { gap: spacing.lg },
   footer: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
   link: { fontSize: 16, fontWeight: '600' },
+  forgot: { fontSize: 14, fontWeight: '600', alignSelf: 'flex-start' },
 });

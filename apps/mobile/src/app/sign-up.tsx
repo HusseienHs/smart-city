@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
-import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
@@ -27,8 +26,6 @@ export default function SignUpScreen() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, MessageKey>>>({});
   const [formError, setFormError] = useState<MessageKey | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  /** Set once the account exists but the email still has to be confirmed. */
-  const [confirmationSentTo, setConfirmationSentTo] = useState<string | null>(null);
 
   async function handleSubmit() {
     setFormError(null);
@@ -62,21 +59,10 @@ export default function SignUpScreen() {
       return;
     }
     // Without email confirmation Supabase signs the user in right away, and the root layout
-    // opens the app. Otherwise they confirm their email first, then sign in.
-    if (result.needsConfirmation) setConfirmationSentTo(parsed.data.email);
-  }
-
-  if (confirmationSentTo) {
-    return (
-      <Screen title={t('auth.signUpTitle')}>
-        <EmptyState
-          icon="mail-outline"
-          title={t('auth.checkEmailTitle')}
-          description={t('auth.checkEmailDescription', { email: confirmationSentTo })}
-        />
-        <Button title={t('auth.signIn')} onPress={() => router.replace('/sign-in')} />
-      </Screen>
-    );
+    // opens the app. Otherwise they confirm their email first (with a resend option).
+    if (result.needsConfirmation) {
+      router.replace({ pathname: '/verify-email', params: { email: parsed.data.email } });
+    }
   }
 
   return (

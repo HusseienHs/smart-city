@@ -1,7 +1,8 @@
 import { getTextDirection, resolveLocale, type Locale } from '@smart-city/shared';
 import { createTranslator, type Translator } from '@smart-city/shared/i18n';
 import { useLocales } from 'expo-localization';
-import { createContext, use, useMemo, type PropsWithChildren } from 'react';
+import { createContext, use, useEffect, useMemo, type PropsWithChildren } from 'react';
+import { Platform } from 'react-native';
 
 interface I18nContextValue {
   locale: Locale;
@@ -23,6 +24,14 @@ export function I18nProvider({ children }: PropsWithChildren) {
     () => ({ locale, direction: getTextDirection(locale), t: createTranslator(locale) }),
     [locale],
   );
+
+  // Native apps mirror layouts through I18nManager. On the web, the document direction does
+  // it: flex rows, tab bars and horizontal lists follow `dir`.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = value.direction;
+  }, [locale, value.direction]);
 
   return <I18nContext value={value}>{children}</I18nContext>;
 }

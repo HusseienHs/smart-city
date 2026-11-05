@@ -17,7 +17,12 @@ export function Screen({ title, subtitle, children }: ScreenProps) {
   const colors = useThemeColors();
   return (
     <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      {/* Keep taps working while the keyboard is open, and scroll focused inputs into view. */}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <View style={styles.header}>
           <Text variant="title" accessibilityRole="header">
             {title}

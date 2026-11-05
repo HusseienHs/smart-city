@@ -5,11 +5,11 @@
  */
 export const palette = {
   brand: {
-    50: '#EEF4FF',
-    100: '#D9E6FF',
-    500: '#0B5FFF',
-    600: '#0049D6',
-    700: '#003AAB',
+    50: '#F3F9F9',
+    100: '#D6ECEC',
+    500: '#007072',
+    600: '#005A5C',
+    700: '#004547',
   },
   neutral: {
     0: '#FFFFFF',
@@ -38,6 +38,7 @@ export const colorSchemes = {
     textMuted: palette.neutral[500],
     primary: palette.brand[500],
     primaryPressed: palette.brand[600],
+    primarySoft: palette.brand[50],
     onPrimary: palette.neutral[0],
     danger: palette.danger,
   },
@@ -48,8 +49,9 @@ export const colorSchemes = {
     border: palette.neutral[800],
     text: palette.neutral[50],
     textMuted: palette.neutral[400],
-    primary: '#3D7FFF',
+    primary: '#1A8A8B',
     primaryPressed: palette.brand[500],
+    primarySoft: '#0E2526',
     onPrimary: palette.neutral[0],
     danger: '#F87171',
   },

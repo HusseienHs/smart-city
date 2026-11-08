@@ -53,8 +53,11 @@ export default function TabsLayout() {
         options={{ title: t('mobileTabs.home'), tabBarIcon: tabIcon('home-outline', 'home') }}
       />
       <Tabs.Screen
-        name="explore"
-        options={{ title: t('mobileTabs.explore'), tabBarIcon: tabIcon('map-outline', 'map') }}
+        name="notices"
+        options={{
+          title: t('mobileTabs.notices'),
+          tabBarIcon: tabIcon('megaphone-outline', 'megaphone'),
+        }}
       />
       <Tabs.Screen
         name="report"

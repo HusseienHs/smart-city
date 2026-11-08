@@ -167,6 +167,23 @@ export async function listMunicipalityReportCategories(
     .sort((a, b) => a.category.sort_order - b.category.sort_order);
 }
 
+/** Public-read bucket where publishers place images of published announcements. */
+export const PUBLIC_CONTENT_BUCKET = 'public-content';
+
+/**
+ * The public URL of a published announcement's image (`image_path`), or null when it has none.
+ * Builds the URL only (no request); the bucket is public-read, so no signed URL is needed.
+ * The publisher copies the image after publishing, so the file can briefly be missing: callers
+ * should handle a failed image load.
+ */
+export function announcementImageUrl(
+  client: SmartCityClient,
+  imagePath: string | null,
+): string | null {
+  if (!imagePath) return null;
+  return client.storage.from(PUBLIC_CONTENT_BUCKET).getPublicUrl(imagePath).data.publicUrl;
+}
+
 const DEFAULT_ANNOUNCEMENT_LIMIT = 50;
 const MAX_ANNOUNCEMENT_LIMIT = 100;
 

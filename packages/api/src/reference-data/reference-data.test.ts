@@ -12,6 +12,7 @@ import {
 } from './columns';
 import {
   acceptsReports,
+  announcementImageUrl,
   listCities,
   listDepartments,
   listMunicipalityReportCategories,
@@ -198,6 +199,23 @@ describe('query shapes', () => {
       ['municipality_id', municipalityId],
       ['is_enabled', true],
     ]);
+  });
+});
+
+describe('announcementImageUrl', () => {
+  it('builds the public URL in the public-content bucket, without a request', () => {
+    const { client, calls } = fakeClient({ data: [] });
+    const path = `${municipalityId}/announcements/a1/b2.jpg`;
+    expect(announcementImageUrl(client, path)).toBe(
+      `https://project.supabase.co/storage/v1/object/public/public-content/${path}`,
+    );
+    expect(calls.map((call) => call.method)).toEqual(['storage.from', 'storage.getPublicUrl']);
+  });
+
+  it('returns null when the announcement has no image', () => {
+    const { client, calls } = fakeClient({ data: [] });
+    expect(announcementImageUrl(client, null)).toBeNull();
+    expect(calls).toEqual([]);
   });
 });
 

@@ -75,6 +75,15 @@ export function fakeClient(
           calls.push({ method: 'storage.upload', args });
           return settle();
         },
+        // Synchronous and offline, like storage-js: only builds the URL.
+        getPublicUrl: (path: string) => {
+          calls.push({ method: 'storage.getPublicUrl', args: [path] });
+          return {
+            data: {
+              publicUrl: `https://project.supabase.co/storage/v1/object/public/${bucket}/${path}`,
+            },
+          };
+        },
       };
     },
   };

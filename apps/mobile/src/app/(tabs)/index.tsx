@@ -1,7 +1,9 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Image, type ImageSource } from 'expo-image';
 import { router, type Href } from 'expo-router';
+import type { ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,13 +14,16 @@ import { useI18n } from '@/lib/i18n';
 
 interface Favorite {
   label: MessageKey;
-  image: ImageSource;
+  /** A photo, or (for tiles without one) an icon on the brand tint. */
+  image?: ImageSource;
+  icon?: ComponentProps<typeof Ionicons>['name'];
   href: Href;
 }
 
-// Photos: see assets/images/CREDITS.md.
+// Photos: see assets/images/CREDITS.md. The city map tile was replaced by the Notice Board
+// (the map isn't built yet; its tab became the Notice Board).
 const FAVORITES: readonly Favorite[] = [
-  { label: 'home.cityMap', image: require('@/assets/images/home-map.jpg'), href: '/explore' },
+  { label: 'home.noticeBoard', icon: 'megaphone', href: '/notices' },
   { label: 'home.events', image: require('@/assets/images/home-events.jpg'), href: '/events' },
   {
     label: 'home.myAccount',
@@ -71,12 +76,20 @@ export default function HomeScreen() {
               accessibilityLabel={t(favorite.label)}
               style={({ pressed }) => [styles.favorite, pressed && styles.pressed]}
             >
-              <Image
-                source={favorite.image}
-                style={[styles.tile, { backgroundColor: colors.primarySoft }]}
-                contentFit="cover"
-                accessible={false}
-              />
+              {favorite.image ? (
+                <Image
+                  source={favorite.image}
+                  style={[styles.tile, { backgroundColor: colors.primarySoft }]}
+                  contentFit="cover"
+                  accessible={false}
+                />
+              ) : (
+                <View
+                  style={[styles.tile, styles.iconTile, { backgroundColor: colors.primarySoft }]}
+                >
+                  <Ionicons name={favorite.icon ?? 'apps'} size={48} color={colors.primary} />
+                </View>
+              )}
               <Text style={styles.favoriteLabel}>{t(favorite.label)}</Text>
             </Pressable>
           ))}
@@ -117,6 +130,7 @@ const styles = StyleSheet.create({
   },
   favorite: { width: TILE_SIZE, gap: spacing.md, alignItems: 'center' },
   tile: { width: TILE_SIZE, height: TILE_SIZE, borderRadius: radii.lg },
+  iconTile: { alignItems: 'center', justifyContent: 'center' },
   favoriteLabel: { fontSize: 16, textAlign: 'center' },
   pressed: { opacity: 0.7 },
 });

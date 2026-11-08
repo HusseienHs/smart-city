@@ -75,6 +75,7 @@ function RootNavigator() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="my-reports" />
               <Stack.Screen name="my-reports/[id]" />
+              <Stack.Screen name="notices/[id]" />
               <Stack.Screen name="new-report" />
               <Stack.Screen name="account" />
             </Stack.Protected>

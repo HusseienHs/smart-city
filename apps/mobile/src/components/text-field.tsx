@@ -24,6 +24,8 @@ export function TextField({ label, error, ...inputProps }: TextFieldProps) {
         placeholderTextColor={colors.textMuted}
         style={[
           styles.input,
+          inputProps.multiline && styles.multiline,
+          inputProps.editable === false && styles.disabled,
           {
             color: colors.text,
             backgroundColor: colors.surface,
@@ -51,4 +53,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     writingDirection: 'auto',
   },
+  multiline: { minHeight: 140, paddingVertical: spacing.md, textAlignVertical: 'top' },
+  disabled: { opacity: 0.6 },
 });

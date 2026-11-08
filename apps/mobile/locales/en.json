@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "Smart City uses your location to mark where the problem you are reporting is. It is used only while you create a report.",
+    "ExpoLocationFullAccuracy": "Precise location helps the municipality find the exact spot of the problem you report.",
+    "NSCameraUsageDescription": "Smart City uses the camera so you can photograph the problem you are reporting.",
+    "NSPhotoLibraryUsageDescription": "Smart City accesses your photos so you can attach pictures of the problem to your report."
+  }
+}

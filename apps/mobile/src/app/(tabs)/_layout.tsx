@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs, type BottomTabNavigationOptions } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReportTabButton } from '@/components/report-tab-button';
 import { useThemeColors } from '@/hooks/use-theme';
@@ -21,9 +22,16 @@ function tabIcon(name: IconName, focusedName: IconName): TabBarIcon {
   };
 }
 
+/**
+ * Room for the icon and a full line of label text. The default (49) left the label a 10 px box,
+ * which cut off the bottom of the text. The bottom safe-area inset (gesture bar) is added on top.
+ */
+const TAB_BAR_HEIGHT = 60;
+
 export default function TabsLayout() {
   const { t } = useI18n();
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -31,7 +39,13 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: TAB_BAR_HEIGHT + insets.bottom,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: { fontSize: 11, lineHeight: 15 },
       }}
     >
       <Tabs.Screen

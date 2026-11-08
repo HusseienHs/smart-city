@@ -9,7 +9,15 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
+    },
+    "locales": {
+      "he": "./locales/he.json",
+      "ar": "./locales/ar.json",
+      "en": "./locales/en.json"
     },
     "android": {
       "adaptiveIcon": {
@@ -39,6 +47,24 @@
         {
           "supportsRTL": true,
           "supportedLocales": ["he", "ar", "en"]
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Smart City uses your location to mark where the problem you are reporting is. It is used only while you create a report.",
+          "locationFullAccuracyPermission": "Precise location helps the municipality find the exact spot of the problem you report.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Smart City uses the camera so you can photograph the problem you are reporting.",
+          "photosPermission": "Smart City accesses your photos so you can attach pictures of the problem to your report.",
+          "microphonePermission": false
         }
       ]
     ],

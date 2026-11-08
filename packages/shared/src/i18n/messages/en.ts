@@ -295,13 +295,11 @@ export const en = {
     partialTitleOne: 'The report was sent, but the photo wasn’t',
     partialDescriptionOne:
       'The municipality has your report, but the photo isn’t attached yet. Trying again never sends the report twice.',
-    municipalityLabel: 'Municipality',
+    municipalityLabel: 'Your city',
     chooseMunicipality: 'Choose the municipality',
-    municipalityHint:
-      'The report goes to this municipality. You can set your home municipality in your profile.',
-    noMunicipalities: 'No municipality accepts reports in the app yet.',
-    homeCityNotJoined:
-      '{city} hasn’t joined the app yet. Choose a municipality that accepts reports.',
+    municipalityHint: 'Reports go to the city you live in. To change it, edit your profile.',
+    noHomeCity: 'Set the city you live in to send a report.',
+    setCity: 'Set your city',
     noCategories: 'This municipality doesn’t accept reports in the app yet.',
     outsideMunicipality:
       'The location is outside the selected municipality. Check the location or choose another municipality.',

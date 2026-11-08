@@ -5,7 +5,6 @@
 import {
   getMyProfile,
   listMunicipalityReportCategories,
-  type Municipality,
   type MunicipalityReportCategory,
 } from '@smart-city/api';
 import { REPORT_CATEGORIES, type ReportCategory } from '@smart-city/shared';
@@ -45,19 +44,4 @@ export function useHomeMunicipalityId(userId: string | null) {
     userId,
     async () => (await getMyProfile(getSupabase()))?.home_municipality_id ?? null,
   );
-}
-
-/**
- * The home city when it can't be preselected on the report screen because it hasn't joined
- * the app (it's a listed city but not among the municipalities that accept reports).
- * Null while either list is loading, when there's no home city, or when it accepts reports.
- */
-export function homeCityNotJoined(
-  homeId: string | null,
-  reporting: readonly Pick<Municipality, 'id'>[] | null,
-  cities: readonly Municipality[] | null,
-): Municipality | null {
-  if (!homeId || !reporting || !cities) return null;
-  if (reporting.some((municipality) => municipality.id === homeId)) return null;
-  return cities.find((city) => city.id === homeId) ?? null;
 }

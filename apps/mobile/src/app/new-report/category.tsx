@@ -7,53 +7,39 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { LoadError, LoadingState } from '@/components/load-state';
-import { OptionPicker } from '@/components/option-picker';
 import { CATEGORY_ICONS } from '@/components/report/category-icons';
 import { Notice } from '@/components/report/notice';
 import { StepScreen } from '@/components/report/step-screen';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
-import { apiErrorMessageKey } from '@/lib/api-error-message';
 import { useAuth } from '@/lib/auth';
-import {
-  localizedName,
-  municipalityOptions,
-  useCities,
-  useReportingMunicipalities,
-} from '@/lib/home-area';
+import { localizedName, useCities } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { validateStep } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
-import {
-  homeCityNotJoined,
-  useHomeMunicipalityId,
-  useReportCategories,
-} from '@/lib/report-options';
+import { useHomeMunicipalityId, useReportCategories } from '@/lib/report-options';
 
-/** Step 1: municipality (the home municipality by default) and one of its categories. */
+/**
+ * Step 1: one of the categories of the user's city. Reports always go to the city chosen at
+ * sign-up; it can only be changed in the profile (Personal details).
+ */
 export default function CategoryStep() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
   const { user } = useAuth();
   const { draft, dispatch } = useReportDraft();
   const [errors, setErrors] = useState<{ municipality?: MessageKey; category?: MessageKey }>({});
-  /** The citizen chose a municipality themselves: don't apply the default over it. */
-  const [picked, setPicked] = useState(false);
-  const municipalities = useReportingMunicipalities();
   const cities = useCities();
   const home = useHomeMunicipalityId(user?.id ?? null);
+  const homeId = home.status === 'success' ? home.data : undefined;
   const categories = useReportCategories(draft.municipalityId);
-  const active = municipalities.status === 'success' ? municipalities.data : null;
 
-  // Default to the saved home municipality (only if it accepts reports), never to a guess.
+  // The report always goes to the home city (also replacing a city kept in an older draft).
   useEffect(() => {
-    if (picked || draft.municipalityId || draft.submission || !active) return;
-    if (home.status !== 'success') return;
-    const homeId = home.data;
-    if (homeId && active.some((municipality) => municipality.id === homeId)) {
+    if (draft.submission || homeId === undefined) return;
+    if (draft.municipalityId !== homeId)
       dispatch({ type: 'setMunicipality', municipalityId: homeId });
-    }
-  }, [picked, draft.municipalityId, draft.submission, active, home, dispatch]);
+  }, [homeId, draft.municipalityId, draft.submission, dispatch]);
 
   // A category chosen earlier (or a shortcut) that this municipality doesn't offer is cleared.
   useEffect(() => {
@@ -70,14 +56,13 @@ export default function CategoryStep() {
     if (Object.keys(next).length === 0) router.push('/new-report/details');
   }
 
-  // The home city is on the list but hasn't joined: say why it wasn't preselected.
-  const notJoinedHome = homeCityNotJoined(
-    home.status === 'success' ? home.data : null,
-    active,
-    cities.status === 'success' ? cities.data : null,
-  );
-
-  const loadingDefault = municipalities.status === 'loading' || home.status === 'loading';
+  const city =
+    homeId && cities.status === 'success' ? cities.data.find((item) => item.id === homeId) : null;
+  const cityName = city
+    ? localizedName(city.name, locale)
+    : home.status === 'loading' || cities.status === 'loading'
+      ? t('common.loading')
+      : null;
 
   return (
     <StepScreen
@@ -88,49 +73,42 @@ export default function CategoryStep() {
         <Button
           title={t('reportFlow.next')}
           onPress={handleNext}
-          disabled={categories.status !== 'success' || categories.data.length === 0}
+          disabled={!homeId || categories.status !== 'success' || categories.data.length === 0}
         />
       }
     >
       <View style={styles.municipality}>
-        <OptionPicker
-          label={t('reportFlow.municipalityLabel')}
-          value={draft.municipalityId}
-          options={municipalityOptions(active ?? [], locale)}
-          onChange={(municipalityId) => {
-            dispatch({ type: 'setMunicipality', municipalityId });
-            setPicked(true);
-            setErrors({});
-          }}
-          placeholder={loadingDefault ? t('common.loading') : t('reportFlow.chooseMunicipality')}
-          noneLabel={t('reportFlow.chooseMunicipality')}
-          search={
-            (active?.length ?? 0) > 12
-              ? { placeholder: t('common.search'), noResults: t('common.noResults') }
-              : undefined
-          }
-          loading={municipalities.status === 'loading'}
-          error={
-            municipalities.status === 'error'
-              ? {
-                  message: t(apiErrorMessageKey(municipalities.error)),
-                  retryLabel: t('common.retry'),
-                  onRetry: municipalities.reload,
-                }
-              : undefined
-          }
-        />
-        <Text variant="caption" muted>
-          {t('reportFlow.municipalityHint')}
-        </Text>
-        {active && active.length === 0 ? (
-          <Notice tone="error" message={t('reportFlow.noMunicipalities')} />
-        ) : notJoinedHome && !draft.municipalityId ? (
-          <Notice
-            message={t('reportFlow.homeCityNotJoined', {
-              city: localizedName(notJoinedHome.name, locale),
-            })}
-          />
+        {home.status === 'error' ? (
+          <LoadError error={home.error} onRetry={home.reload} />
+        ) : home.status === 'success' && !homeId ? (
+          <>
+            <Notice tone="error" message={t('reportFlow.noHomeCity')} />
+            <Button
+              title={t('reportFlow.setCity')}
+              variant="soft"
+              onPress={() => router.push('/account/details')}
+            />
+          </>
+        ) : (
+          <View
+            style={[
+              styles.cityRow,
+              { borderColor: colors.border, backgroundColor: colors.surface },
+            ]}
+          >
+            <Ionicons name="location-outline" size={20} color={colors.primary} />
+            <View style={styles.flex}>
+              <Text variant="caption" muted>
+                {t('reportFlow.municipalityLabel')}
+              </Text>
+              <Text style={styles.cityName}>{cityName ?? '—'}</Text>
+            </View>
+          </View>
+        )}
+        {homeId ? (
+          <Text variant="caption" muted>
+            {t('reportFlow.municipalityHint')}
+          </Text>
         ) : null}
         {errors.municipality ? <Notice tone="error" message={t(errors.municipality)} /> : null}
       </View>
@@ -190,6 +168,18 @@ export default function CategoryStep() {
 
 const styles = StyleSheet.create({
   municipality: { gap: spacing.sm },
+  cityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 56,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+    borderWidth: 1,
+  },
+  cityName: { fontWeight: '600' },
+  flex: { flex: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   card: {
     flexBasis: '47%',

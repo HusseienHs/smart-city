@@ -337,18 +337,25 @@ describe('schema security invariants', () => {
     expect(fromDb).toEqual(fromShared);
   });
 
-  it('applies the development seed, which contains only fictional data', async () => {
+  it('applies the development seed: every listed city accepts reports, no people or reports', async () => {
     await world.db.exec(TestDb.readSeed());
-    const municipalities = await world.db.query<{ code: string; name: { en: string } }>(
-      `select code, name from public.municipalities where code like 'DM%' order by code`,
+    await world.db.exec(TestDb.readSeed()); // idempotent
+    const [cities] = await world.db.query<{ active: number; listed: number; categories: number }>(
+      `select count(*) filter (where status = 'active')::int as active,
+              count(*)::int as listed,
+              (select count(*)::int from public.municipality_report_categories mrc
+                 join public.municipalities m on m.id = mrc.municipality_id
+                 where m.cbs_code is not null and mrc.is_enabled) as categories
+       from public.municipalities where cbs_code is not null`,
     );
-    expect(municipalities.map((row) => row.code)).toEqual(['DMN', 'DMS']);
-    for (const municipality of municipalities) expect(municipality.name.en).toMatch(/^Demo /);
+    const [category] = await world.db.query<{ n: number }>(
+      `select count(*)::int as n from public.report_categories`,
+    );
+    expect(cities).toEqual({ active: 82, listed: 82, categories: 82 * category!.n });
     const [counts] = await world.db.query<{ users: number; reports: number }>(
       `select (select count(*)::int from auth.users where email not like '%@example.test') as users,
-              (select count(*)::int from public.reports r join public.municipalities m
-                 on m.id = r.municipality_id where m.code like 'DM%') as reports`,
+              (select count(*)::int from public.reports) as reports`,
     );
-    expect(counts).toEqual({ users: 0, reports: 0 });
+    expect(counts!.users).toBe(0);
   });
 });

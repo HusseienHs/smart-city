@@ -1,7 +1,6 @@
 import {
   listCities,
   listNeighborhoods,
-  listReportingMunicipalities,
   type Municipality,
   type Neighborhood,
 } from '@smart-city/api';
@@ -18,13 +17,6 @@ export { localizedName, municipalityOptions } from './city-options';
  */
 export function useCities(enabled = true) {
   return useAsync<Municipality[]>(enabled ? 'cities' : null, () => listCities(getSupabase()));
-}
-
-/** Municipalities that accept reports (joined the app): the choices on the report screen. */
-export function useReportingMunicipalities(enabled = true) {
-  return useAsync<Municipality[]>(enabled ? 'reporting-municipalities' : null, () =>
-    listReportingMunicipalities(getSupabase()),
-  );
 }
 
 /** Active neighborhoods of one municipality, via @smart-city/api. */

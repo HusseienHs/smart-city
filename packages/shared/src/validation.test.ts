@@ -82,6 +82,7 @@ describe('auth schemas', () => {
     password: 'long-enough',
     fullName: 'Dana Levi',
     preferredLocale: 'he',
+    homeMunicipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
   };
 
   it('trims emails and names', () => {
@@ -127,5 +128,11 @@ describe('auth schemas', () => {
 
   it('only accepts supported locales', () => {
     expect(signUpSchema.safeParse({ ...signUp, preferredLocale: 'fr' }).success).toBe(false);
+  });
+
+  it('requires a home city', () => {
+    const { homeMunicipalityId: _omitted, ...withoutCity } = signUp;
+    expect(signUpSchema.safeParse(withoutCity).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...signUp, homeMunicipalityId: 'haifa' }).success).toBe(false);
   });
 });

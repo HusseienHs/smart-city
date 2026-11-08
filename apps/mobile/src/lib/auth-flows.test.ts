@@ -81,6 +81,7 @@ describe('development-only redirect validation', () => {
     email: 'dana@example.com',
     password: 'correct horse battery',
     preferredLocale: 'he',
+    homeMunicipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
   } as const;
   const webLink = 'http://localhost:8081/auth/callback';
 
@@ -138,6 +139,7 @@ describe('scenario 1: registration and email verification', () => {
     email: 'dana@example.com',
     password: 'correct-horse',
     preferredLocale: 'he' as const,
+    homeMunicipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
   };
 
   it('sends the profile metadata and the callback URL', async () => {
@@ -148,7 +150,11 @@ describe('scenario 1: registration and email verification', () => {
       email: 'dana@example.com',
       password: 'correct-horse',
       options: {
-        data: { full_name: 'Dana Levi', preferred_locale: 'he' },
+        data: {
+          full_name: 'Dana Levi',
+          preferred_locale: 'he',
+          home_municipality_id: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
+        },
         emailRedirectTo: CALLBACK_URL,
       },
     });

@@ -8,6 +8,8 @@ export const en = {
     tagline: 'Your city, in your pocket',
   },
   common: {
+    search: 'Search',
+    noResults: 'No matches',
     loading: 'Loading…',
     retry: 'Try again',
     errorTitle: 'Something went wrong',
@@ -45,6 +47,8 @@ export const en = {
     notConfigured: 'Backend not configured – running in offline preview mode',
   },
   auth: {
+    city: 'City you live in',
+    chooseCity: 'Choose your city',
     signIn: 'Sign in',
     signUp: 'Create account',
     signOut: 'Sign out',
@@ -104,6 +108,7 @@ export const en = {
       passwordTooShort: 'The password must be at least 8 characters',
       passwordTooLong: 'The password must be at most 72 characters',
       nameRequired: 'Enter your full name (at least 2 characters)',
+      cityRequired: 'Choose the city you live in',
       invalidCredentials: 'Wrong email or password',
       emailNotConfirmed: 'Confirm your email first – check your inbox',
       userExists: 'An account with this email already exists',
@@ -293,6 +298,8 @@ export const en = {
     municipalityHint:
       'The report goes to this municipality. You can set your home municipality in your profile.',
     noMunicipalities: 'No municipality accepts reports in the app yet.',
+    homeCityNotJoined:
+      '{city} hasn’t joined the app yet. Choose a municipality that accepts reports.',
     noCategories: 'This municipality doesn’t accept reports in the app yet.',
     outsideMunicipality:
       'The location is outside the selected municipality. Check the location or choose another municipality.',

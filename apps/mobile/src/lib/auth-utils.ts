@@ -21,8 +21,16 @@ export const AUTH_CALLBACK_PATH = 'auth/callback';
  * Sign-up metadata. `private.handle_new_user` copies exactly these keys into
  * `public.profiles.full_name` and `public.profiles.preferred_locale`.
  */
-export function signUpMetadata(input: { fullName: string; preferredLocale: Locale }) {
-  return { full_name: input.fullName.trim(), preferred_locale: input.preferredLocale };
+export function signUpMetadata(input: {
+  fullName: string;
+  preferredLocale: Locale;
+  homeMunicipalityId: string;
+}) {
+  return {
+    full_name: input.fullName.trim(),
+    preferred_locale: input.preferredLocale,
+    home_municipality_id: input.homeMunicipalityId,
+  };
 }
 
 /** Maps a Supabase Auth error code to a translated message. Unknown codes get a generic one. */

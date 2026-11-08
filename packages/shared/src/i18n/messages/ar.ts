@@ -6,6 +6,8 @@ export const ar: Messages = {
     tagline: 'مدينتك في جيبك',
   },
   common: {
+    search: 'بحث',
+    noResults: 'لا توجد نتائج',
     loading: 'جارٍ التحميل…',
     retry: 'حاول مرة أخرى',
     errorTitle: 'حدث خطأ ما',
@@ -43,6 +45,8 @@ export const ar: Messages = {
     notConfigured: 'الخادم غير مُهيّأ – وضع المعاينة بدون اتصال',
   },
   auth: {
+    city: 'مدينة السكن',
+    chooseCity: 'اختر مدينتك',
     signIn: 'تسجيل الدخول',
     signUp: 'إنشاء حساب',
     signOut: 'تسجيل الخروج',
@@ -100,6 +104,7 @@ export const ar: Messages = {
       passwordTooShort: 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل',
       passwordTooLong: 'يجب ألا تتجاوز كلمة المرور 72 حرفًا',
       nameRequired: 'أدخل اسمك الكامل (حرفان على الأقل)',
+      cityRequired: 'اختر المدينة التي تسكن فيها',
       invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
       emailNotConfirmed: 'أكّد بريدك الإلكتروني أولًا – تحقّق من صندوق الوارد',
       userExists: 'يوجد حساب بهذا البريد الإلكتروني بالفعل',
@@ -286,6 +291,7 @@ export const ar: Messages = {
     chooseMunicipality: 'اختر البلدية',
     municipalityHint: 'يُرسل البلاغ إلى هذه البلدية. يمكنك تحديد بلدية السكن في ملفك الشخصي.',
     noMunicipalities: 'لا توجد بعد بلدية تستقبل البلاغات في التطبيق.',
+    homeCityNotJoined: 'لم تنضم {city} إلى التطبيق بعد. اختر بلدية تستقبل البلاغات.',
     noCategories: 'هذه البلدية لا تستقبل البلاغات في التطبيق بعد.',
     outsideMunicipality: 'الموقع خارج البلدية المختارة. تحقق من الموقع أو اختر بلدية أخرى.',
     categoryUnavailable: 'هذه الفئة لم تعد متاحة في هذه البلدية. اختر فئة أخرى.',

@@ -14,7 +14,7 @@ import { StepScreen } from '@/components/report/step-screen';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { readPhotoBytes } from '@/lib/device-photos';
-import { localizedName, useMunicipalities } from '@/lib/home-area';
+import { localizedName, useCities } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import {
   effectiveVisibility,
@@ -139,7 +139,7 @@ export default function ReviewStep() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
   const { draft, apply, dispatch, getDraft } = useReportDraft();
-  const municipalities = useMunicipalities();
+  const municipalities = useCities();
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<SendProgress | null>(null);
   const [error, setError] = useState<MessageKey | null>(null);

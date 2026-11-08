@@ -38,6 +38,7 @@ const signUpInput = {
   password: 'long-enough',
   fullName: '  Dana Levi ',
   preferredLocale: 'ar',
+  homeMunicipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
 } as const;
 
 async function caught(action: () => Promise<unknown>): Promise<ApiError> {
@@ -60,7 +61,11 @@ describe('signUp', () => {
       password: 'long-enough',
       options: {
         emailRedirectTo: REDIRECT,
-        data: { full_name: 'Dana Levi', preferred_locale: 'ar' },
+        data: {
+          full_name: 'Dana Levi',
+          preferred_locale: 'ar',
+          home_municipality_id: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
+        },
       },
     });
   });

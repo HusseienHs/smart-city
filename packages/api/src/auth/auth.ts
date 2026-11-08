@@ -51,14 +51,21 @@ export async function signUp(
   input: SignUpInput,
   emailRedirectTo: string,
 ): Promise<SignUpResult> {
-  const { email, password, fullName, preferredLocale } = parseInput(signUpSchema, input);
+  const { email, password, fullName, preferredLocale, homeMunicipalityId } = parseInput(
+    signUpSchema,
+    input,
+  );
   const { data } = await runAuth(
     client.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo,
-        data: { full_name: fullName, preferred_locale: preferredLocale },
+        data: {
+          full_name: fullName,
+          preferred_locale: preferredLocale,
+          home_municipality_id: homeMunicipalityId,
+        },
       },
     }),
   );

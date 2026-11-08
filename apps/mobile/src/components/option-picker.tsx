@@ -1,15 +1,31 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { radii, spacing } from '@smart-city/shared';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
+import { filterOptions } from '@/lib/option-search';
 
 import { Text } from './text';
 
 export interface PickerOption {
   id: string;
   label: string;
+  /** Extra text the search matches, e.g. the name in other languages. */
+  keywords?: string;
+}
+
+/** Search box for long lists: placeholder and the text shown when nothing matches. */
+export interface PickerSearch {
+  placeholder: string;
+  noResults: string;
 }
 
 interface OptionPickerProps {
@@ -18,7 +34,12 @@ interface OptionPickerProps {
   options: readonly PickerOption[];
   onChange: (id: string | null) => void;
   placeholder: string;
-  noneLabel: string;
+  /** The "no choice" row. Omit it when a choice is required. */
+  noneLabel?: string;
+  /** Adds a search box and a scrollable list (for long lists such as cities). */
+  search?: PickerSearch;
+  /** Already-translated validation error shown under the field. */
+  fieldError?: string;
   loading?: boolean;
   /** Translated error with a retry, shown instead of the options. */
   error?: { message: string; retryLabel: string; onRetry: () => void };
@@ -33,18 +54,50 @@ export function OptionPicker({
   onChange,
   placeholder,
   noneLabel,
+  search,
+  fieldError,
   loading = false,
   error,
   disabled = false,
 }: OptionPickerProps) {
   const colors = useThemeColors();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const selected = options.find((option) => option.id === value);
+  const shown = useMemo(
+    () => (search ? filterOptions(options, query) : [...options]),
+    [options, query, search],
+  );
+  const rows = [
+    ...(noneLabel !== undefined && !query ? [{ id: '', label: noneLabel }] : []),
+    ...shown,
+  ];
 
   function choose(id: string | null) {
     onChange(id);
     setOpen(false);
+    setQuery('');
   }
+
+  const optionRows = rows.map((option) => {
+    const isSelected = option.id === (value ?? '');
+    return (
+      <Pressable
+        key={option.id || 'none'}
+        onPress={() => choose(option.id || null)}
+        accessibilityRole="radio"
+        accessibilityState={{ checked: isSelected }}
+        style={({ pressed }) => [
+          styles.option,
+          { borderBottomColor: colors.border },
+          pressed && styles.disabled,
+        ]}
+      >
+        <Text style={styles.flex}>{option.label}</Text>
+        {isSelected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
+      </Pressable>
+    );
+  });
 
   return (
     <View style={styles.field}>
@@ -59,7 +112,10 @@ export function OptionPicker({
         accessibilityState={{ expanded: open, disabled }}
         style={[
           styles.control,
-          { borderColor: colors.border, backgroundColor: colors.surface },
+          {
+            borderColor: fieldError ? colors.danger : colors.border,
+            backgroundColor: colors.surface,
+          },
           disabled && styles.disabled,
         ]}
       >
@@ -82,30 +138,41 @@ export function OptionPicker({
                 <Text style={[styles.retry, { color: colors.primary }]}>{error.retryLabel}</Text>
               </Pressable>
             </View>
+          ) : search ? (
+            <>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={search.placeholder}
+                placeholderTextColor={colors.textMuted}
+                accessibilityLabel={search.placeholder}
+                autoCorrect={false}
+                autoCapitalize="none"
+                style={[styles.search, { color: colors.text, borderBottomColor: colors.border }]}
+              />
+              <ScrollView
+                style={styles.scroll}
+                nestedScrollEnabled
+                keyboardShouldPersistTaps="handled"
+              >
+                {rows.length ? (
+                  optionRows
+                ) : (
+                  <Text muted style={styles.padded}>
+                    {search.noResults}
+                  </Text>
+                )}
+              </ScrollView>
+            </>
           ) : (
-            [{ id: '', label: noneLabel }, ...options].map((option) => {
-              const isSelected = option.id === (value ?? '');
-              return (
-                <Pressable
-                  key={option.id || 'none'}
-                  onPress={() => choose(option.id || null)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: isSelected }}
-                  style={({ pressed }) => [
-                    styles.option,
-                    { borderBottomColor: colors.border },
-                    pressed && styles.disabled,
-                  ]}
-                >
-                  <Text style={styles.flex}>{option.label}</Text>
-                  {isSelected ? (
-                    <Ionicons name="checkmark" size={20} color={colors.primary} />
-                  ) : null}
-                </Pressable>
-              );
-            })
+            optionRows
           )}
         </View>
+      ) : null}
+      {fieldError ? (
+        <Text variant="caption" style={{ color: colors.danger }} accessibilityLiveRegion="polite">
+          {fieldError}
+        </Text>
       ) : null}
     </View>
   );
@@ -131,6 +198,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   padded: { padding: spacing.md, gap: spacing.sm },
+  search: {
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    fontSize: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  scroll: { maxHeight: 320 },
   retry: { fontWeight: '600' },
   flex: { flex: 1 },
   disabled: { opacity: 0.5 },

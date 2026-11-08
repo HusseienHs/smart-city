@@ -6,6 +6,8 @@ export const he: Messages = {
     tagline: 'העיר שלך, בכף היד',
   },
   common: {
+    search: 'חיפוש',
+    noResults: 'לא נמצאו תוצאות',
     loading: 'טוען…',
     retry: 'נסו שוב',
     errorTitle: 'משהו השתבש',
@@ -43,6 +45,8 @@ export const he: Messages = {
     notConfigured: 'השרת לא מוגדר – מצב תצוגה מקדימה ללא חיבור',
   },
   auth: {
+    city: 'עיר מגורים',
+    chooseCity: 'בחרו את העיר שלכם',
     signIn: 'התחברות',
     signUp: 'יצירת חשבון',
     signOut: 'התנתקות',
@@ -101,6 +105,7 @@ export const he: Messages = {
       passwordTooShort: 'הסיסמה חייבת להכיל לפחות 8 תווים',
       passwordTooLong: 'הסיסמה יכולה להכיל עד 72 תווים',
       nameRequired: 'הזינו שם מלא (לפחות 2 תווים)',
+      cityRequired: 'בחרו את העיר שבה אתם גרים',
       invalidCredentials: 'אימייל או סיסמה שגויים',
       emailNotConfirmed: 'יש לאמת את האימייל קודם – בדקו את תיבת הדואר',
       userExists: 'כבר קיים חשבון עם האימייל הזה',
@@ -286,6 +291,7 @@ export const he: Messages = {
     chooseMunicipality: 'בחרו רשות',
     municipalityHint: 'הדיווח יישלח לרשות הזו. אפשר לקבוע רשות מגורים בפרופיל.',
     noMunicipalities: 'עדיין אין רשות שמקבלת דיווחים באפליקציה.',
+    homeCityNotJoined: '{city} עדיין לא הצטרפה לאפליקציה. בחרו רשות שמקבלת דיווחים.',
     noCategories: 'הרשות הזו עדיין לא מקבלת דיווחים באפליקציה.',
     outsideMunicipality: 'המיקום נמצא מחוץ לרשות שנבחרה. בדקו את המיקום או בחרו רשות אחרת.',
     categoryUnavailable: 'הקטגוריה כבר לא זמינה ברשות הזו. בחרו קטגוריה אחרת.',

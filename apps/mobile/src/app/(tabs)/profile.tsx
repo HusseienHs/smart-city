@@ -13,7 +13,7 @@ import { Text } from '@/components/text';
 import { useAsync } from '@/hooks/use-async';
 import { useThemeColors } from '@/hooks/use-theme';
 import { signOut, useAuth } from '@/lib/auth';
-import { localizedName, useMunicipalities, useNeighborhoods } from '@/lib/home-area';
+import { localizedName, useCities, useNeighborhoods } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { getSupabase } from '@/lib/supabase';
 
@@ -39,7 +39,7 @@ export default function ProfileScreen() {
   const metadataName: unknown = user?.user_metadata.full_name;
   const name = loaded?.full_name ?? (typeof metadataName === 'string' ? metadataName : '');
 
-  const municipalities = useMunicipalities(Boolean(loaded?.home_municipality_id));
+  const municipalities = useCities(Boolean(loaded?.home_municipality_id));
   const neighborhoods = useNeighborhoods(
     loaded?.home_neighborhood_id ? loaded.home_municipality_id : null,
   );

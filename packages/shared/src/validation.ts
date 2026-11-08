@@ -127,6 +127,8 @@ export const signUpSchema = z.object({
   password: newPasswordSchema,
   fullName: z.string().trim().min(2).max(100),
   preferredLocale: z.enum(SUPPORTED_LOCALES),
+  /** The city the user lives in: becomes the profile's home municipality. */
+  homeMunicipalityId: z.uuid(),
 });
 export type SignUpInput = z.infer<typeof signUpSchema>;
 

@@ -11,12 +11,14 @@ import {
   REPORT_CATEGORY_COLUMNS,
 } from './columns';
 import {
+  acceptsReports,
+  listCities,
   listDepartments,
-  listMunicipalities,
   listMunicipalityReportCategories,
   listNeighborhoods,
   listPublishedAnnouncements,
   listReportCategories,
+  listReportingMunicipalities,
 } from './reference-data';
 
 const municipalityId = '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e';
@@ -27,7 +29,8 @@ const scope = { municipalityId };
 
 /** Every function, with a valid call and a representative row, for the shared behaviors. */
 const allFunctions = [
-  ['listMunicipalities', (c: never) => listMunicipalities(c), { id: 'm', name }],
+  ['listReportingMunicipalities', (c: never) => listReportingMunicipalities(c), { id: 'm', name }],
+  ['listCities', (c: never) => listCities(c), { id: 'm', name }],
   ['listNeighborhoods', (c: never) => listNeighborhoods(c, scope), { id: 'n', name }],
   ['listDepartments', (c: never) => listDepartments(c, scope), { id: 'd', name }],
   ['listReportCategories', (c: never) => listReportCategories(c), { id: 'c', name }],
@@ -132,13 +135,27 @@ describe('query shapes', () => {
   const firstArgs = (calls: Parameters<typeof callArgs>[0], method: string) =>
     callArgs(calls, method);
 
-  it('listMunicipalities: active only, explicit columns, no boundary', async () => {
+  it('listReportingMunicipalities: active only, explicit columns, no boundary', async () => {
     const { client, calls } = fakeClient({ data: [] });
-    await listMunicipalities(client);
+    await listReportingMunicipalities(client);
     expect(firstArgs(calls, 'from')).toEqual([['municipalities']]);
     expect(firstArgs(calls, 'select')).toEqual([[MUNICIPALITY_COLUMNS]]);
     expect(firstArgs(calls, 'eq')).toEqual([['status', 'active']]);
     expect(MUNICIPALITY_COLUMNS).not.toContain('boundary');
+  });
+
+  it('listCities: active and onboarding, never suspended', async () => {
+    const { client, calls } = fakeClient({ data: [] });
+    await listCities(client);
+    expect(firstArgs(calls, 'from')).toEqual([['municipalities']]);
+    expect(firstArgs(calls, 'select')).toEqual([[MUNICIPALITY_COLUMNS]]);
+    expect(firstArgs(calls, 'in')).toEqual([['status', ['active', 'onboarding']]]);
+  });
+
+  it('acceptsReports: only active municipalities', () => {
+    expect(acceptsReports({ status: 'active' })).toBe(true);
+    expect(acceptsReports({ status: 'onboarding' })).toBe(false);
+    expect(acceptsReports({ status: 'suspended' })).toBe(false);
   });
 
   it('listNeighborhoods and listDepartments: scoped and active only', async () => {

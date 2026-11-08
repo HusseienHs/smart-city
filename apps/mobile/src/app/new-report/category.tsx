@@ -15,11 +15,20 @@ import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { apiErrorMessageKey } from '@/lib/api-error-message';
 import { useAuth } from '@/lib/auth';
-import { localizedName, useMunicipalities } from '@/lib/home-area';
+import {
+  localizedName,
+  municipalityOptions,
+  useCities,
+  useReportingMunicipalities,
+} from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { validateStep } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
-import { useHomeMunicipalityId, useReportCategories } from '@/lib/report-options';
+import {
+  homeCityNotJoined,
+  useHomeMunicipalityId,
+  useReportCategories,
+} from '@/lib/report-options';
 
 /** Step 1: municipality (the home municipality by default) and one of its categories. */
 export default function CategoryStep() {
@@ -30,7 +39,8 @@ export default function CategoryStep() {
   const [errors, setErrors] = useState<{ municipality?: MessageKey; category?: MessageKey }>({});
   /** The citizen chose a municipality themselves: don't apply the default over it. */
   const [picked, setPicked] = useState(false);
-  const municipalities = useMunicipalities();
+  const municipalities = useReportingMunicipalities();
+  const cities = useCities();
   const home = useHomeMunicipalityId(user?.id ?? null);
   const categories = useReportCategories(draft.municipalityId);
   const active = municipalities.status === 'success' ? municipalities.data : null;
@@ -60,6 +70,13 @@ export default function CategoryStep() {
     if (Object.keys(next).length === 0) router.push('/new-report/details');
   }
 
+  // The home city is on the list but hasn't joined: say why it wasn't preselected.
+  const notJoinedHome = homeCityNotJoined(
+    home.status === 'success' ? home.data : null,
+    active,
+    cities.status === 'success' ? cities.data : null,
+  );
+
   const loadingDefault = municipalities.status === 'loading' || home.status === 'loading';
 
   return (
@@ -79,10 +96,7 @@ export default function CategoryStep() {
         <OptionPicker
           label={t('reportFlow.municipalityLabel')}
           value={draft.municipalityId}
-          options={(active ?? []).map((municipality) => ({
-            id: municipality.id,
-            label: localizedName(municipality.name, locale),
-          }))}
+          options={municipalityOptions(active ?? [], locale)}
           onChange={(municipalityId) => {
             dispatch({ type: 'setMunicipality', municipalityId });
             setPicked(true);
@@ -90,6 +104,11 @@ export default function CategoryStep() {
           }}
           placeholder={loadingDefault ? t('common.loading') : t('reportFlow.chooseMunicipality')}
           noneLabel={t('reportFlow.chooseMunicipality')}
+          search={
+            (active?.length ?? 0) > 12
+              ? { placeholder: t('common.search'), noResults: t('common.noResults') }
+              : undefined
+          }
           loading={municipalities.status === 'loading'}
           error={
             municipalities.status === 'error'
@@ -106,6 +125,12 @@ export default function CategoryStep() {
         </Text>
         {active && active.length === 0 ? (
           <Notice tone="error" message={t('reportFlow.noMunicipalities')} />
+        ) : notJoinedHome && !draft.municipalityId ? (
+          <Notice
+            message={t('reportFlow.homeCityNotJoined', {
+              city: localizedName(notJoinedHome.name, locale),
+            })}
+          />
         ) : null}
         {errors.municipality ? <Notice tone="error" message={t(errors.municipality)} /> : null}
       </View>

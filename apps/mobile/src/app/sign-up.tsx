@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
+import { OptionPicker } from '@/components/option-picker';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
@@ -12,9 +13,10 @@ import { useThemeColors } from '@/hooks/use-theme';
 import { canUsePreview, signUp, useAuth } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/env';
 import { firstIssueByField } from '@/lib/forms';
+import { municipalityOptions, useCities } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 
-type Field = 'fullName' | 'email' | 'password';
+type Field = 'fullName' | 'email' | 'password' | 'homeMunicipalityId';
 
 export default function SignUpScreen() {
   const { t, locale } = useI18n();
@@ -23,6 +25,8 @@ export default function SignUpScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [homeMunicipalityId, setHomeMunicipalityId] = useState<string | null>(null);
+  const cities = useCities(isSupabaseConfigured);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, MessageKey>>>({});
   const [formError, setFormError] = useState<MessageKey | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -34,6 +38,7 @@ export default function SignUpScreen() {
       email: email.trim(),
       password,
       preferredLocale: locale,
+      homeMunicipalityId: homeMunicipalityId ?? undefined,
     });
     if (!parsed.success) {
       const issues = firstIssueByField(parsed.error);
@@ -45,6 +50,7 @@ export default function SignUpScreen() {
           (issues.password.code === 'too_big'
             ? 'auth.errors.passwordTooLong'
             : 'auth.errors.passwordTooShort'),
+        homeMunicipalityId: issues.homeMunicipalityId && 'auth.errors.cityRequired',
       });
       return;
     }
@@ -100,6 +106,29 @@ export default function SignUpScreen() {
           textContentType="newPassword"
           returnKeyType="go"
           onSubmitEditing={handleSubmit}
+        />
+        <OptionPicker
+          label={t('auth.city')}
+          value={homeMunicipalityId}
+          options={cities.status === 'success' ? municipalityOptions(cities.data, locale) : []}
+          onChange={(id) => {
+            setHomeMunicipalityId(id);
+            setFieldErrors((current) => ({ ...current, homeMunicipalityId: undefined }));
+          }}
+          placeholder={t('auth.chooseCity')}
+          search={{ placeholder: t('common.search'), noResults: t('common.noResults') }}
+          fieldError={fieldErrors.homeMunicipalityId && t(fieldErrors.homeMunicipalityId)}
+          loading={cities.status === 'loading'}
+          error={
+            cities.status === 'error'
+              ? {
+                  message: t('profile.loadError'),
+                  retryLabel: t('common.retry'),
+                  onRetry: cities.reload,
+                }
+              : undefined
+          }
+          disabled={!isSupabaseConfigured}
         />
 
         {formError ? (

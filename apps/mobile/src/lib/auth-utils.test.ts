@@ -31,9 +31,16 @@ describe('isPreviewAllowed', () => {
 
 describe('signUpMetadata', () => {
   it('uses the exact keys the handle_new_user trigger reads', () => {
-    expect(signUpMetadata({ fullName: '  Dana Levi ', preferredLocale: 'ar' })).toEqual({
+    expect(
+      signUpMetadata({
+        fullName: '  Dana Levi ',
+        preferredLocale: 'ar',
+        homeMunicipalityId: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
+      }),
+    ).toEqual({
       full_name: 'Dana Levi',
       preferred_locale: 'ar',
+      home_municipality_id: '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e',
     });
   });
 });

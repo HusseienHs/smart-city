@@ -88,6 +88,16 @@ development machine. CLI steps run from WSL or CI, or use the Management API dir
 Mobile bundling must be checked with Metro: it rejected TypeScript syntax (`declare` class
 fields) that passed type checks, Vitest and Next.js.
 
+### D-012 · Real municipality reference data (2026-11-08)
+
+**Decision:** The 82 Israeli cities (CBS municipal status _עירייה_, `bycode2024.xlsx`) are
+stored in `municipalities` in every environment, by migration `20261108000100`. Public names
+and codes of municipalities are not personal data; D-007's synthetic-only rule still applies to
+people and reports. Cities start as `onboarding`: choosable as a home city (required at
+sign-up) but not accepting reports until they join (`active`).
+**Details:** `docs/israeli-cities-design.md`. Municipality codes are permanent (tracking numbers).
+Arabic names were written by hand and still need review by a native speaker.
+
 ### Open
 
 - Production hosting region and data-processing agreements.

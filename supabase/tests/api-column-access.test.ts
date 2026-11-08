@@ -47,7 +47,7 @@ describe('@smart-city/api column lists against real permissions', () => {
   it('returns the expected public reference rows to anonymous visitors', async () => {
     const municipalities = await world.db.as<{ code: string }>(
       anon,
-      `select ${MUNICIPALITY_COLUMNS} from public.municipalities order by code`,
+      `select ${MUNICIPALITY_COLUMNS} from public.municipalities where status = 'active' order by code`,
     );
     expect(municipalities.map((row) => row.code)).toEqual(['TSA', 'TSB']);
 

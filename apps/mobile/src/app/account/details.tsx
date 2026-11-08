@@ -14,7 +14,7 @@ import { TextField } from '@/components/text-field';
 import { useAsync } from '@/hooks/use-async';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { localizedName, useMunicipalities, useNeighborhoods } from '@/lib/home-area';
+import { localizedName, municipalityOptions, useCities, useNeighborhoods } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import {
   savePersonalDetails,
@@ -102,12 +102,10 @@ function DetailsForm({
   const [saved, setSaved] = useState(false);
   const shown = editing ? form : current;
 
-  const municipalities = useMunicipalities();
+  const municipalities = useCities();
   const neighborhoods = useNeighborhoods(shown.homeMunicipalityId);
-  const municipalityOptions =
-    municipalities.status === 'success'
-      ? municipalities.data.map((m) => ({ id: m.id, label: localizedName(m.name, locale) }))
-      : [];
+  const cityOptions =
+    municipalities.status === 'success' ? municipalityOptions(municipalities.data, locale) : [];
   const neighborhoodOptions =
     neighborhoods.status === 'success'
       ? neighborhoods.data.map((n) => ({ id: n.id, label: localizedName(n.name, locale) }))
@@ -183,12 +181,13 @@ function DetailsForm({
           <OptionPicker
             label={t('profile.homeMunicipality')}
             value={form.homeMunicipalityId}
-            options={municipalityOptions}
+            options={cityOptions}
             onChange={(id) =>
               setForm({ ...form, homeMunicipalityId: id, homeNeighborhoodId: null })
             }
             placeholder={t('profile.notSet')}
             noneLabel={t('profile.none')}
+            search={{ placeholder: t('common.search'), noResults: t('common.noResults') }}
             loading={municipalities.status === 'loading'}
             error={municipalities.status === 'error' ? listError(municipalities.reload) : undefined}
           />
@@ -225,7 +224,7 @@ function DetailsForm({
           <Field label={t('profile.phone')} value={current.phone || t('profile.notSet')} />
           <Field
             label={t('profile.homeMunicipality')}
-            value={nameOf(municipalityOptions, current.homeMunicipalityId)}
+            value={nameOf(cityOptions, current.homeMunicipalityId)}
           />
           <Field
             label={t('profile.homeNeighborhood')}

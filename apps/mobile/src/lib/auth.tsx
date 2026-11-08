@@ -188,7 +188,7 @@ export function signIn({ email, password }: SignInInput): Promise<AuthResult> {
 }
 
 /**
- * Creates the account. `full_name` and `preferred_locale` are copied into `public.profiles`
+ * Creates the account. `full_name`, `preferred_locale` and `home_municipality_id` are copied into `public.profiles`
  * by the `handle_new_user` database trigger. With email confirmation enabled (required for
  * staff invitations) there is no session yet: the user must confirm their email first.
  */

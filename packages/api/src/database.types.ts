@@ -261,6 +261,7 @@ export type Database = {
         Row: {
           auto_route_reports: boolean
           boundary: unknown
+          cbs_code: number | null
           code: string
           contact_email: string | null
           contact_phone: string | null
@@ -276,6 +277,7 @@ export type Database = {
         Insert: {
           auto_route_reports?: boolean
           boundary?: unknown
+          cbs_code?: number | null
           code: string
           contact_email?: string | null
           contact_phone?: string | null
@@ -291,6 +293,7 @@ export type Database = {
         Update: {
           auto_route_reports?: boolean
           boundary?: unknown
+          cbs_code?: number | null
           code?: string
           contact_email?: string | null
           contact_phone?: string | null

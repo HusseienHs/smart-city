@@ -36,11 +36,36 @@ export interface Municipality {
   contact_phone: string | null;
 }
 
-export async function listMunicipalities(client: SmartCityClient): Promise<Municipality[]> {
+/**
+ * Municipalities that accept reports (status `active`): the choices on the report screen.
+ */
+export async function listReportingMunicipalities(
+  client: SmartCityClient,
+): Promise<Municipality[]> {
   const rows = await runListQuery(
     client.from('municipalities').select(MUNICIPALITY_COLUMNS).eq('status', 'active').order('code'),
   );
   return rows.map((row) => ({ ...row, name: toLocalizedText(row.name) }));
+}
+
+/**
+ * Every listed city a citizen can live in: joined (`active`) and not yet joined (`onboarding`).
+ * The choices for the home city at sign-up and in the profile. Sort by localized name in the UI.
+ */
+export async function listCities(client: SmartCityClient): Promise<Municipality[]> {
+  const rows = await runListQuery(
+    client
+      .from('municipalities')
+      .select(MUNICIPALITY_COLUMNS)
+      .in('status', ['active', 'onboarding'])
+      .order('code'),
+  );
+  return rows.map((row) => ({ ...row, name: toLocalizedText(row.name) }));
+}
+
+/** Whether reports can be sent to this municipality (it has joined the platform). */
+export function acceptsReports(municipality: Pick<Municipality, 'status'>): boolean {
+  return municipality.status === 'active';
 }
 
 export interface Neighborhood {

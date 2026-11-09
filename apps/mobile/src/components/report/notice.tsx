@@ -8,29 +8,35 @@ import { useThemeColors } from '@/hooks/use-theme';
 
 interface NoticeProps {
   message: string;
-  tone?: 'info' | 'error';
+  tone?: 'info' | 'error' | 'success' | 'warning';
   icon?: ComponentProps<typeof Ionicons>['name'];
 }
 
-/** Inline banner for demo notices (info) and form or submission errors (error). */
+const DEFAULT_ICONS = {
+  info: 'information-circle',
+  error: 'alert-circle',
+  success: 'checkmark-circle',
+  warning: 'warning',
+} as const;
+
+/** Inline banner for hints (info), form or submission errors (error) and confirmations. */
 export function Notice({ message, tone = 'info', icon }: NoticeProps) {
   const colors = useThemeColors();
-  const color = tone === 'error' ? colors.danger : colors.primary;
+  const tones = {
+    info: { color: colors.primary, background: colors.primarySoft },
+    error: { color: colors.danger, background: colors.dangerSoft },
+    success: { color: colors.success, background: colors.successSoft },
+    warning: { color: colors.warning, background: colors.warningSoft },
+  };
+  const { color, background } = tones[tone];
   return (
     <View
-      style={[styles.root, { backgroundColor: colors.primarySoft, borderColor: color }]}
+      style={[styles.root, { backgroundColor: background, borderColor: `${color}33` }]}
       accessibilityRole={tone === 'error' ? 'alert' : 'text'}
       accessibilityLiveRegion={tone === 'error' ? 'polite' : 'none'}
     >
-      <Ionicons
-        name={icon ?? (tone === 'error' ? 'alert-circle-outline' : 'information-circle-outline')}
-        size={20}
-        color={color}
-      />
-      <Text
-        variant="caption"
-        style={[styles.text, { color: tone === 'error' ? color : colors.text }]}
-      >
+      <Ionicons name={icon ?? DEFAULT_ICONS[tone]} size={20} color={color} />
+      <Text variant="caption" style={[styles.text, { color: colors.text }]}>
         {message}
       </Text>
     </View>
@@ -40,11 +46,11 @@ export function Notice({ message, tone = 'info', icon }: NoticeProps) {
 const styles = StyleSheet.create({
   root: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
   },
-  text: { flex: 1 },
+  text: { flex: 1, fontSize: 14, lineHeight: 20 },
 });

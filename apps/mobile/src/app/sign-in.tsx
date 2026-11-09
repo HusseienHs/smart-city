@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
+import { Notice } from '@/components/report/notice';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
@@ -48,12 +49,13 @@ export default function SignInScreen() {
   }
 
   return (
-    <Screen title={t('auth.signInTitle')} subtitle={t('auth.signInSubtitle')}>
+    <Screen icon="business" title={t('auth.signInTitle')} subtitle={t('auth.signInSubtitle')}>
       {!isSupabaseConfigured ? <Text muted>{t('auth.notConfigured')}</Text> : null}
 
       <View style={styles.form}>
         <TextField
           label={t('auth.email')}
+          icon="mail-outline"
           value={email}
           onChangeText={setEmail}
           error={fieldErrors.email && t(fieldErrors.email)}
@@ -65,6 +67,7 @@ export default function SignInScreen() {
         />
         <TextField
           label={t('auth.password')}
+          icon="lock-closed-outline"
           value={password}
           onChangeText={setPassword}
           error={fieldErrors.password && t(fieldErrors.password)}
@@ -82,11 +85,7 @@ export default function SignInScreen() {
           {t('auth.forgotPassword')}
         </Link>
 
-        {formError ? (
-          <Text style={{ color: colors.danger }} accessibilityLiveRegion="polite">
-            {t(formError)}
-          </Text>
-        ) : null}
+        {formError ? <Notice tone="error" message={t(formError)} /> : null}
         {formError === 'auth.errors.emailNotConfirmed' ? (
           <Button
             title={t('auth.resendVerification')}

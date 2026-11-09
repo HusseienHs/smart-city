@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getMyReports } from '@smart-city/api';
-import { spacing } from '@smart-city/shared';
+import { elevation, radii, spacing } from '@smart-city/shared';
 import { router, Stack } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
@@ -20,7 +20,7 @@ import { getSupabase } from '@/lib/supabase';
 
 /** The citizen's own reports (`getMyReports`, own reports only, newest first). */
 export default function MyReportsScreen() {
-  const { t, locale } = useI18n();
+  const { t, locale, direction } = useI18n();
   const colors = useThemeColors();
   const { user } = useAuth();
   const reports = useAsync<MyReport[]>(user?.id ?? null, () => getMyReports(getSupabase()));
@@ -60,7 +60,7 @@ export default function MyReportsScreen() {
         ListEmptyComponent={
           <EmptyState icon="document-text-outline" title={t('myReports.empty')} />
         }
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const category = toReportCategory(item.category_code);
           const label = t(`reportCategory.${category}`);
           return (
@@ -70,24 +70,36 @@ export default function MyReportsScreen() {
               accessibilityLabel={`${label}, ${item.tracking_number}, ${t(`reportStatus.${item.status}`)}`}
               style={({ pressed }) => [
                 styles.row,
-                index < items.length - 1 && {
-                  borderBottomColor: colors.border,
-                  borderBottomWidth: StyleSheet.hairlineWidth,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor: colors.shadow,
                 },
                 pressed && styles.pressed,
               ]}
             >
-              <Ionicons name={CATEGORY_ICONS[category]} size={24} color={colors.primary} />
+              <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name={CATEGORY_ICONS[category]} size={22} color={colors.primary} />
+              </View>
               <View style={styles.text}>
-                <Text style={styles.title}>{label}</Text>
+                <Text style={styles.title} numberOfLines={1}>
+                  {label}
+                </Text>
                 <Text variant="caption" muted style={styles.ltr}>
                   {item.tracking_number}
                 </Text>
                 <Text variant="caption" muted>
                   {t('myReports.submittedOn', { date: formatReportDate(item.created_at, locale) })}
                 </Text>
+                <View style={styles.badge}>
+                  <StatusBadge status={item.status} />
+                </View>
               </View>
-              <StatusBadge status={item.status} />
+              <Ionicons
+                name={direction === 'rtl' ? 'chevron-back' : 'chevron-forward'}
+                size={18}
+                color={colors.textMuted}
+              />
             </Pressable>
           );
         }}
@@ -97,11 +109,28 @@ export default function MyReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.xl, gap: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  content: { padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxxl },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    ...elevation.sm,
+  },
+  icon: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
   text: { flex: 1, gap: 2 },
   title: { fontSize: 17, fontWeight: '600' },
+  badge: { marginTop: spacing.xs },
   // Tracking numbers are Latin/digits: keep them left-to-right in Hebrew and Arabic.
   ltr: { writingDirection: 'ltr', alignSelf: 'flex-start' },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
 });

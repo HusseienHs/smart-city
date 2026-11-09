@@ -22,9 +22,14 @@ export function StepProgress({ step }: { step: ReportStep }) {
       accessibilityLabel={label}
       accessibilityValue={{ min: 1, max: total, now: current }}
     >
-      <Text variant="caption" muted>
-        {label}
-      </Text>
+      <View style={styles.labels}>
+        <Text variant="label" style={{ color: colors.primary }}>
+          {t(`reportFlow.steps.${step}`)}
+        </Text>
+        <Text variant="caption" muted>
+          {label}
+        </Text>
+      </View>
       <View style={styles.bar}>
         {REPORT_STEPS.map((name, index) => (
           <View
@@ -41,7 +46,8 @@ export function StepProgress({ step }: { step: ReportStep }) {
 }
 
 const styles = StyleSheet.create({
-  root: { gap: spacing.xs },
-  bar: { flexDirection: 'row', gap: spacing.xs },
-  segment: { flex: 1, height: 4, borderRadius: radii.full },
+  root: { gap: spacing.sm },
+  labels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bar: { flexDirection: 'row', gap: 6 },
+  segment: { flex: 1, height: 6, borderRadius: radii.full },
 });

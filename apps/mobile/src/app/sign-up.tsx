@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { OptionPicker } from '@/components/option-picker';
+import { Notice } from '@/components/report/notice';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
@@ -72,12 +73,13 @@ export default function SignUpScreen() {
   }
 
   return (
-    <Screen title={t('auth.signUpTitle')} subtitle={t('auth.signUpSubtitle')}>
+    <Screen icon="business" title={t('auth.signUpTitle')} subtitle={t('auth.signUpSubtitle')}>
       {!isSupabaseConfigured ? <Text muted>{t('auth.notConfigured')}</Text> : null}
 
       <View style={styles.form}>
         <TextField
           label={t('auth.fullName')}
+          icon="person-outline"
           value={fullName}
           onChangeText={setFullName}
           error={fieldErrors.fullName && t(fieldErrors.fullName)}
@@ -87,6 +89,7 @@ export default function SignUpScreen() {
         />
         <TextField
           label={t('auth.email')}
+          icon="mail-outline"
           value={email}
           onChangeText={setEmail}
           error={fieldErrors.email && t(fieldErrors.email)}
@@ -98,6 +101,7 @@ export default function SignUpScreen() {
         />
         <TextField
           label={t('auth.password')}
+          icon="lock-closed-outline"
           value={password}
           onChangeText={setPassword}
           error={fieldErrors.password && t(fieldErrors.password)}
@@ -131,11 +135,7 @@ export default function SignUpScreen() {
           disabled={!isSupabaseConfigured}
         />
 
-        {formError ? (
-          <Text style={{ color: colors.danger }} accessibilityLiveRegion="polite">
-            {t(formError)}
-          </Text>
-        ) : null}
+        {formError ? <Notice tone="error" message={t(formError)} /> : null}
 
         <Button
           title={t('auth.signUp')}

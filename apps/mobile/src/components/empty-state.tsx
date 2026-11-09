@@ -21,12 +21,14 @@ export function EmptyState({ icon, title, description }: EmptyStateProps) {
       accessible
       accessibilityLabel={description ? `${title}. ${description}` : title}
     >
-      <Ionicons name={icon} size={32} color={colors.primary} />
-      <Text variant="heading" style={styles.center}>
+      <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft }]}>
+        <Ionicons name={icon} size={30} color={colors.primary} />
+      </View>
+      <Text variant="subheading" style={styles.center}>
         {title}
       </Text>
       {description ? (
-        <Text muted style={styles.center}>
+        <Text muted style={[styles.center, styles.description]}>
           {description}
         </Text>
       ) : null}
@@ -38,9 +40,20 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
     gap: spacing.sm,
-    padding: spacing.xl,
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xl,
     borderRadius: radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: 'dashed',
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
   },
   center: { textAlign: 'center' },
+  description: { maxWidth: 300 },
 });

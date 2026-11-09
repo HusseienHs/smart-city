@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { elevation } from '@smart-city/shared';
 import { Tabs, type BottomTabNavigationOptions } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReportTabButton } from '@/components/report-tab-button';
@@ -26,7 +28,7 @@ function tabIcon(name: IconName, focusedName: IconName): TabBarIcon {
  * Room for the icon and a full line of label text. The default (49) left the label a 10 px box,
  * which cut off the bottom of the text. The bottom safe-area inset (gesture bar) is added on top.
  */
-const TAB_BAR_HEIGHT = 60;
+const TAB_BAR_HEIGHT = 64;
 
 export default function TabsLayout() {
   const { t } = useI18n();
@@ -42,10 +44,13 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+          borderTopWidth: StyleSheet.hairlineWidth,
           height: TAB_BAR_HEIGHT + insets.bottom,
-          paddingTop: 6,
+          paddingTop: 8,
+          shadowColor: colors.shadow,
+          ...elevation.md,
         },
-        tabBarLabelStyle: { fontSize: 11, lineHeight: 15 },
+        tabBarLabelStyle: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
       }}
     >
       <Tabs.Screen

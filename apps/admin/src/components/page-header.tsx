@@ -5,9 +5,9 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
-    <header className="mb-8">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
+    <header className="mb-8 border-b border-border pb-6">
+      <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+      {description ? <p className="mt-1.5 text-base text-muted">{description}</p> : null}
     </header>
   );
 }

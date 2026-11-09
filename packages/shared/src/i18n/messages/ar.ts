@@ -6,6 +6,10 @@ export const ar: Messages = {
     tagline: 'مدينتك في جيبك',
   },
   common: {
+    darkMode: 'الوضع الداكن',
+    lightMode: 'الوضع الفاتح',
+    showPassword: 'إظهار كلمة المرور',
+    hidePassword: 'إخفاء كلمة المرور',
     search: 'بحث',
     noResults: 'لا توجد نتائج',
     loading: 'جارٍ التحميل…',
@@ -23,6 +27,12 @@ export const ar: Messages = {
     notices: 'لوحة الإعلانات',
   },
   home: {
+    quickActions: 'إجراءات سريعة',
+    reportIssueHint: 'حفر، إنارة، نفايات والمزيد',
+    myReportsHint: 'تابع حالة بلاغاتك',
+    noticeBoardHint: 'تحديثات رسمية من مدينتك',
+    eventsHint: 'ما يحدث بالقرب منك',
+    myAccountHint: 'التفاصيل واللغة والإعدادات',
     title: 'كيف يمكننا المساعدة؟',
     reportIssue: 'الإبلاغ عن مشكلة',
     myReports: 'بلاغاتي',

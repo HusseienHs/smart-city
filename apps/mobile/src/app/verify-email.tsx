@@ -64,7 +64,7 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <Screen title={t('auth.signUpTitle')}>
+    <Screen icon="mail-unread-outline" title={t('auth.signUpTitle')}>
       <EmptyState
         icon="mail-outline"
         title={t('auth.checkEmailTitle')}
@@ -90,6 +90,7 @@ export default function VerifyEmailScreen() {
         {knownEmail ? null : (
           <TextField
             label={t('auth.email')}
+            icon="mail-outline"
             value={typedEmail}
             onChangeText={(value) => {
               setTypedEmail(value);

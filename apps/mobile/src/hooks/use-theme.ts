@@ -1,7 +1,9 @@
 import { colorSchemes, type ThemeColors } from '@smart-city/shared';
-import { useColorScheme } from 'react-native';
 
+import { useAppTheme } from '@/lib/theme';
+
+/** Colors of the theme the user chose (light unless dark mode is turned on in the profile). */
 export function useThemeColors(): ThemeColors {
-  const scheme = useColorScheme();
-  return colorSchemes[scheme === 'dark' ? 'dark' : 'light'];
+  const { scheme } = useAppTheme();
+  return colorSchemes[scheme];
 }

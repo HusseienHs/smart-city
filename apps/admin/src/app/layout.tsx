@@ -3,6 +3,8 @@ import { translate } from '@smart-city/shared/i18n';
 import type { Metadata } from 'next';
 import { Rubik } from 'next/font/google';
 
+import { THEME_SCRIPT } from '@/lib/theme';
+
 import './globals.css';
 
 // Rubik covers Hebrew, Arabic and Latin, so all three languages share one typeface.
@@ -25,7 +27,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang={locale} dir={getTextDirection(locale)} className={`${rubik.variable} h-full`}>
+    // suppressHydrationWarning: the theme script below may set data-theme before React hydrates.
+    <html
+      lang={locale}
+      dir={getTextDirection(locale)}
+      className={`${rubik.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Applies the saved theme before the first paint, so the page never flashes. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full font-sans antialiased">{children}</body>
     </html>
   );

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { PublishedAnnouncement } from '@smart-city/api';
-import { spacing } from '@smart-city/shared';
+import { radii, spacing } from '@smart-city/shared';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -65,9 +65,9 @@ export default function NoticeBoardScreen() {
       </Text>
       <Text muted>{t('notices.subtitle')}</Text>
       {ready ? (
-        <View style={styles.city}>
-          <Ionicons name="location-outline" size={16} color={colors.primary} />
-          <Text variant="caption" style={{ color: colors.primary }}>
+        <View style={[styles.city, { backgroundColor: colors.primarySoft }]}>
+          <Ionicons name="location" size={14} color={colors.primary} />
+          <Text variant="caption" style={{ color: colors.primary, fontWeight: '600' }}>
             {cityName}
           </Text>
         </View>
@@ -149,8 +149,16 @@ export default function NoticeBoardScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: spacing.lg, gap: spacing.md },
+  content: { padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxxl },
   header: { gap: spacing.sm, marginBottom: spacing.sm },
-  city: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  city: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: radii.full,
+  },
   gap: { gap: spacing.md },
 });

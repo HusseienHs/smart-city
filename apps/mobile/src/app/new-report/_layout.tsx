@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { LoadingState } from '@/components/load-state';
+import { stackScreenOptions } from '@/components/screen-header';
 import { SignInRequired } from '@/components/sign-in-required';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -39,16 +40,7 @@ export default function NewReportLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: true,
-        headerBackButtonDisplayMode: 'minimal',
-        headerTintColor: colors.primary,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTitleStyle: { color: colors.text },
-        headerShadowVisible: false,
-      }}
-    >
+    <Stack screenOptions={stackScreenOptions(colors)}>
       <Stack.Screen
         name="category"
         options={{

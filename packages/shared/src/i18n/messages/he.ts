@@ -6,6 +6,10 @@ export const he: Messages = {
     tagline: 'העיר שלך, בכף היד',
   },
   common: {
+    darkMode: 'מצב כהה',
+    lightMode: 'מצב בהיר',
+    showPassword: 'הצגת סיסמה',
+    hidePassword: 'הסתרת סיסמה',
     search: 'חיפוש',
     noResults: 'לא נמצאו תוצאות',
     loading: 'טוען…',
@@ -23,6 +27,12 @@ export const he: Messages = {
     notices: 'לוח מודעות',
   },
   home: {
+    quickActions: 'פעולות מהירות',
+    reportIssueHint: 'בורות, תאורה, פסולת ועוד',
+    myReportsHint: 'מעקב אחר סטטוס הדיווחים שלך',
+    noticeBoardHint: 'עדכונים רשמיים מהעיר שלך',
+    eventsHint: 'מה קורה בסביבתך',
+    myAccountHint: 'פרטים, שפה והגדרות',
     title: 'כיצד נוכל לעזור?',
     reportIssue: 'דיווח על מפגע',
     myReports: 'הדיווחים שלי',

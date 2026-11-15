@@ -1,8 +1,8 @@
 import { spacing } from '@smart-city/shared';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch } from 'react-native';
 
 import { Notice } from '@/components/report/notice';
-import { SettingsRow } from '@/components/settings-row';
+import { SettingsGroup, SettingsRow } from '@/components/settings-row';
 import { Text } from '@/components/text';
 import { useI18n } from '@/lib/i18n';
 
@@ -16,7 +16,7 @@ export default function NotificationsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text muted>{t('profile.notificationsHint')}</Text>
-      <View>
+      <SettingsGroup>
         <SettingsRow
           label={t('profile.emailNotifications')}
           icon="mail-outline"
@@ -36,7 +36,7 @@ export default function NotificationsScreen() {
             <Switch value={false} disabled accessibilityLabel={t('profile.pushNotifications')} />
           }
         />
-      </View>
+      </SettingsGroup>
       <Notice message={t('profile.notificationsUnavailable')} />
     </ScrollView>
   );

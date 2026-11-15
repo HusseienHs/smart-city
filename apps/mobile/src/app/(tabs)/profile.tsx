@@ -1,14 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getMyProfile, type MyProfile } from '@smart-city/api';
-import { spacing } from '@smart-city/shared';
+import { radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Notice } from '@/components/report/notice';
-import { SectionHeader, SettingsRow } from '@/components/settings-row';
+import { SectionHeader, SettingsGroup, SettingsRow } from '@/components/settings-row';
 import { Text } from '@/components/text';
 import { useAsync } from '@/hooks/use-async';
 import { useThemeColors } from '@/hooks/use-theme';
@@ -16,11 +16,13 @@ import { signOut, useAuth } from '@/lib/auth';
 import { localizedName, useCities, useNeighborhoods } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { getSupabase } from '@/lib/supabase';
+import { useAppTheme } from '@/lib/theme';
 
 /** The citizen's profile hub: reports, home area, account settings and sign-out. */
 export default function ProfileScreen() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
+  const { scheme, setScheme } = useAppTheme();
   const { user, isPreview, exitPreview } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<MessageKey | null>(null);
@@ -56,6 +58,10 @@ export default function ProfileScreen() {
     .map((item) => localizedName(item.name, locale))
     .join(', ');
 
+  function toggleDarkMode() {
+    setScheme(scheme === 'dark' ? 'light' : 'dark');
+  }
+
   async function handleSignOut() {
     setSignOutError(null);
     // Preview has no session to end; a real session is always signed out properly.
@@ -70,25 +76,48 @@ export default function ProfileScreen() {
     if (!result.ok) setSignOutError('profile.signOutError');
   }
 
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+
   return (
-    <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.surface }]}>
+    <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text variant="title" accessibilityRole="header">
-            {name ? t('profile.greeting', { name }) : t('profile.greetingNoName')}
-          </Text>
-          {user ? (
-            <View style={styles.inline}>
-              <Ionicons name="location-outline" size={18} color={colors.textMuted} />
-              <Text muted>{homeArea || t('profile.homeAreaNotSet')}</Text>
-            </View>
-          ) : null}
-          {isPreview && !user ? <Notice message={t('auth.previewNotice')} /> : null}
+        <Text variant="title" accessibilityRole="header" style={styles.pageTitle}>
+          {t('mobileTabs.profile')}
+        </Text>
+
+        <View
+          style={[styles.identity, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            {initials ? (
+              <Text style={[styles.initials, { color: colors.onPrimary }]}>{initials}</Text>
+            ) : (
+              <Ionicons name="person" size={28} color={colors.onPrimary} />
+            )}
+          </View>
+          <View style={styles.identityText}>
+            <Text variant="heading" numberOfLines={1}>
+              {name ? t('profile.greeting', { name }) : t('profile.greetingNoName')}
+            </Text>
+            {user ? (
+              <View style={styles.inline}>
+                <Ionicons name="location-outline" size={15} color={colors.textMuted} />
+                <Text variant="caption" muted numberOfLines={1} style={styles.flex}>
+                  {homeArea || t('profile.homeAreaNotSet')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
+        {isPreview && !user ? <Notice message={t('auth.previewNotice')} /> : null}
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.list}>
+        <View style={styles.sectionGap} />
+        <SettingsGroup>
           <SettingsRow
             label={t('profile.myReports')}
             icon="clipboard-outline"
@@ -101,8 +130,10 @@ export default function ProfileScreen() {
             onPress={() => router.push('/account/details')}
             last
           />
+        </SettingsGroup>
 
-          <SectionHeader title={t('profile.accountSettings')} />
+        <SectionHeader title={t('profile.accountSettings')} />
+        <SettingsGroup>
           <SettingsRow
             label={t('profile.personalDetails')}
             icon="person-outline"
@@ -115,23 +146,43 @@ export default function ProfileScreen() {
             onPress={() => router.push('/account/language')}
           />
           <SettingsRow
+            label={t('common.darkMode')}
+            icon={scheme === 'dark' ? 'moon' : 'moon-outline'}
+            onPress={toggleDarkMode}
+            accessory={
+              <Switch
+                value={scheme === 'dark'}
+                onValueChange={toggleDarkMode}
+                trackColor={{ true: colors.primary, false: colors.borderStrong }}
+                accessibilityLabel={t('common.darkMode')}
+              />
+            }
+          />
+          <SettingsRow
             label={t('profile.notifications')}
             icon="notifications-outline"
             detail={t('common.comingSoon')}
             onPress={() => router.push('/account/notifications')}
             last
           />
+        </SettingsGroup>
 
-          <SectionHeader title={t('profile.general')} />
+        <SectionHeader title={t('profile.general')} />
+        <SettingsGroup>
           <SettingsRow
             label={signingOut ? t('profile.signingOut') : t('profile.signOut')}
             icon="log-out-outline"
             onPress={handleSignOut}
             loading={signingOut}
+            tone="danger"
             last
           />
-          {signOutError ? <Notice tone="error" message={t(signOutError)} /> : null}
-        </View>
+        </SettingsGroup>
+        {signOutError ? (
+          <View style={styles.sectionGap}>
+            <Notice tone="error" message={t(signOutError)} />
+          </View>
+        ) : null}
 
         <Text variant="caption" muted style={styles.footer}>
           {t('app.name')}
@@ -143,15 +194,27 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { paddingBottom: spacing.xxl },
-  header: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxxl,
-    paddingBottom: spacing.xl,
+  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl },
+  pageTitle: { marginBottom: spacing.lg },
+  identity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
   },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: { fontSize: 22, fontWeight: '700' },
+  identityText: { flex: 1, gap: spacing.xs },
   inline: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  divider: { height: StyleSheet.hairlineWidth },
-  list: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+  flex: { flex: 1 },
+  sectionGap: { marginTop: spacing.lg },
   footer: { textAlign: 'center', marginTop: spacing.xxl },
 });

@@ -1,36 +1,55 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /*
  * Brand tokens – mirror of packages/shared/src/design-tokens.ts (keep in sync).
  * Components use logical utilities (ms-/me-/ps-/pe-/start-/end-) so layouts flip
  * automatically between RTL (Hebrew, Arabic) and LTR (English).
  */
 :root {
-  --background: #f7f8fa;
+  --background: #f6f8fa;
   --surface: #ffffff;
-  --surface-muted: #eff1f5;
-  --border: #e2e5eb;
-  --foreground: #12151c;
-  --muted: #6b7280;
-  --primary: #007072;
-  --primary-pressed: #005a5c;
-  --primary-soft: #f3f9f9;
+  --surface-muted: #eef1f5;
+  --border: #e2e7ed;
+  --border-strong: #cbd2db;
+  --foreground: #131820;
+  --muted: #64707f;
+  --primary: #0b8a84;
+  --primary-pressed: #077069;
+  --primary-soft: #effaf9;
+  --primary-strong: #085954;
   --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0c10;
-    --surface: #12151c;
-    --surface-muted: #1f2430;
-    --border: #1f2430;
-    --foreground: #f7f8fa;
-    --muted: #9aa1ae;
-    --primary: #1a8a8b;
-    --primary-pressed: #007072;
-    --primary-soft: #0e2526;
-    --danger: #f87171;
-  }
+/* Dark mode is opt-in: the sidebar toggle sets data-theme="dark" on <html>. */
+:root[data-theme='dark'] {
+  --background: #0a0d12;
+  --surface: #131820;
+  --surface-muted: #1e2530;
+  --border: #1e2530;
+  --border-strong: #343d49;
+  --foreground: #f6f8fa;
+  --muted: #94a0b0;
+  --primary: #2faea6;
+  --primary-pressed: #0b8a84;
+  --primary-soft: #0e2a29;
+  --primary-strong: #6fcbc3;
+  --danger: #f87171;
+  --danger-soft: #2a1414;
+  --success: #4ade80;
+  --success-soft: #0f2417;
+  --warning: #fbbf24;
+  --warning-soft: #2a2010;
+  --info: #60a5fa;
+  --info-soft: #111e33;
 }
 
 @theme inline {
@@ -43,7 +62,17 @@
   --color-primary: var(--primary);
   --color-primary-pressed: var(--primary-pressed);
   --color-primary-soft: var(--primary-soft);
+  --color-primary-strong: var(--primary-strong);
+  --color-border-strong: var(--border-strong);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --shadow-card: 0 1px 2px rgb(15 26 42 / 0.04), 0 1px 3px rgb(15 26 42 / 0.06);
   --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
 }
 

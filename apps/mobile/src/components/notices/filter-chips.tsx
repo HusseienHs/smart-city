@@ -59,10 +59,12 @@ export function FilterChips({ value, counts, onChange }: FilterChipsProps) {
 const styles = StyleSheet.create({
   row: { gap: spacing.sm, paddingVertical: spacing.xs },
   chip: {
+    minHeight: 36,
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderRadius: radii.full,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
   },
   text: { fontWeight: '600' },
   pressed: { opacity: 0.7 },

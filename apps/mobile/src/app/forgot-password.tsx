@@ -6,10 +6,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { EmptyState } from '@/components/empty-state';
+import { Notice } from '@/components/report/notice';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
-import { useThemeColors } from '@/hooks/use-theme';
 import { requestPasswordReset } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/env';
 import { useI18n } from '@/lib/i18n';
@@ -18,7 +18,6 @@ const emailSchema = signInSchema.shape.email;
 
 export default function ForgotPasswordScreen() {
   const { t } = useI18n();
-  const colors = useThemeColors();
   const params = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState(params.email ?? '');
   const [emailError, setEmailError] = useState<MessageKey | null>(null);
@@ -45,7 +44,7 @@ export default function ForgotPasswordScreen() {
 
   if (sentTo) {
     return (
-      <Screen title={t('auth.forgotPasswordTitle')}>
+      <Screen icon="key-outline" title={t('auth.forgotPasswordTitle')}>
         <EmptyState
           icon="mail-outline"
           title={t('auth.resetLinkSentTitle')}
@@ -60,12 +59,17 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <Screen title={t('auth.forgotPasswordTitle')} subtitle={t('auth.forgotPasswordSubtitle')}>
+    <Screen
+      icon="key-outline"
+      title={t('auth.forgotPasswordTitle')}
+      subtitle={t('auth.forgotPasswordSubtitle')}
+    >
       {!isSupabaseConfigured ? <Text muted>{t('auth.notConfigured')}</Text> : null}
 
       <View style={styles.form}>
         <TextField
           label={t('auth.email')}
+          icon="mail-outline"
           value={email}
           onChangeText={setEmail}
           error={emailError ? t(emailError) : undefined}
@@ -77,11 +81,7 @@ export default function ForgotPasswordScreen() {
           onSubmitEditing={handleSubmit}
         />
 
-        {formError ? (
-          <Text style={{ color: colors.danger }} accessibilityLiveRegion="polite">
-            {t(formError)}
-          </Text>
-        ) : null}
+        {formError ? <Notice tone="error" message={t(formError)} /> : null}
 
         <Button
           title={t('auth.sendResetLink')}

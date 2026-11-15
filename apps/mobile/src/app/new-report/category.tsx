@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
+import { elevation, radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -137,15 +137,24 @@ export default function CategoryStep() {
                 style={({ pressed }) => [
                   styles.card,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: selected ? colors.primarySoft : colors.surface,
                     borderColor: selected ? colors.primary : colors.border,
-                    borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
+                    shadowColor: colors.shadow,
                   },
                   pressed && styles.pressed,
                 ]}
               >
-                <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name={CATEGORY_ICONS[category]} size={26} color={colors.primary} />
+                <View
+                  style={[
+                    styles.icon,
+                    { backgroundColor: selected ? colors.primary : colors.primarySoft },
+                  ]}
+                >
+                  <Ionicons
+                    name={CATEGORY_ICONS[category]}
+                    size={26}
+                    color={selected ? colors.onPrimary : colors.primary}
+                  />
                 </View>
                 <Text style={styles.label}>{label}</Text>
                 {selected ? (
@@ -176,7 +185,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   cityName: { fontWeight: '600' },
   flex: { flex: 1 },
@@ -189,6 +198,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     borderRadius: radii.lg,
+    borderWidth: 2,
+    ...elevation.sm,
   },
   icon: {
     width: 52,
@@ -199,5 +210,5 @@ const styles = StyleSheet.create({
   },
   label: { textAlign: 'center', fontWeight: '600' },
   check: { position: 'absolute', top: spacing.sm, end: spacing.sm },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

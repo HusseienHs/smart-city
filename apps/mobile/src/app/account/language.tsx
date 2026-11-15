@@ -6,7 +6,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Notice } from '@/components/report/notice';
-import { SettingsRow } from '@/components/settings-row';
+import { SettingsGroup, SettingsRow } from '@/components/settings-row';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -47,26 +47,28 @@ export default function LanguageScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <Text muted>{t('language.hint')}</Text>
       <View accessibilityRole="radiogroup">
-        {SUPPORTED_LOCALES.map((option, index) => {
-          const selected = option === locale;
-          return (
-            <SettingsRow
-              key={option}
-              // Each language is shown in its own name and script.
-              label={t(`language.${option}`)}
-              icon="globe-outline"
-              onPress={() => choose(option)}
-              last={index === SUPPORTED_LOCALES.length - 1}
-              accessory={
-                <Ionicons
-                  name={selected ? 'radio-button-on' : 'radio-button-off'}
-                  size={24}
-                  color={colors.primary}
-                />
-              }
-            />
-          );
-        })}
+        <SettingsGroup>
+          {SUPPORTED_LOCALES.map((option, index) => {
+            const selected = option === locale;
+            return (
+              <SettingsRow
+                key={option}
+                // Each language is shown in its own name and script.
+                label={t(`language.${option}`)}
+                icon="globe-outline"
+                onPress={() => choose(option)}
+                last={index === SUPPORTED_LOCALES.length - 1}
+                accessory={
+                  <Ionicons
+                    name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={24}
+                    color={colors.primary}
+                  />
+                }
+              />
+            );
+          })}
+        </SettingsGroup>
       </View>
 
       {sync.status === 'syncing' ? (

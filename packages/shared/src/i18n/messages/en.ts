@@ -8,6 +8,10 @@ export const en = {
     tagline: 'Your city, in your pocket',
   },
   common: {
+    darkMode: 'Dark mode',
+    lightMode: 'Light mode',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
     search: 'Search',
     noResults: 'No matches',
     loading: 'Loading…',
@@ -25,6 +29,12 @@ export const en = {
     notices: 'Notice Board',
   },
   home: {
+    quickActions: 'Quick actions',
+    reportIssueHint: 'Potholes, lighting, waste and more',
+    myReportsHint: 'Track the status of your reports',
+    noticeBoardHint: 'Official updates from your city',
+    eventsHint: 'What’s happening near you',
+    myAccountHint: 'Details, language and settings',
     title: 'How can we help?',
     reportIssue: 'Report an issue',
     myReports: 'My reports',

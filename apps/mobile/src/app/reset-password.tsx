@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
+import { Notice } from '@/components/report/notice';
 import { Screen } from '@/components/screen';
-import { Text } from '@/components/text';
 import { TextField } from '@/components/text-field';
-import { useThemeColors } from '@/hooks/use-theme';
 import { signOut, updatePassword, useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 
@@ -19,7 +18,6 @@ const passwordSchema = signUpSchema.shape.password;
  */
 export default function ResetPasswordScreen() {
   const { t } = useI18n();
-  const colors = useThemeColors();
   const { finishPasswordRecovery } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -58,10 +56,15 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <Screen title={t('auth.resetPasswordTitle')} subtitle={t('auth.resetPasswordSubtitle')}>
+    <Screen
+      icon="key-outline"
+      title={t('auth.resetPasswordTitle')}
+      subtitle={t('auth.resetPasswordSubtitle')}
+    >
       <View style={styles.form}>
         <TextField
           label={t('auth.newPassword')}
+          icon="lock-closed-outline"
           value={password}
           onChangeText={setPassword}
           error={passwordError ? t(passwordError) : undefined}
@@ -72,6 +75,7 @@ export default function ResetPasswordScreen() {
         />
         <TextField
           label={t('auth.confirmPassword')}
+          icon="lock-closed-outline"
           value={confirmation}
           onChangeText={setConfirmation}
           error={confirmationError ? t(confirmationError) : undefined}
@@ -82,11 +86,7 @@ export default function ResetPasswordScreen() {
           onSubmitEditing={handleSubmit}
         />
 
-        {formError ? (
-          <Text style={{ color: colors.danger }} accessibilityLiveRegion="polite">
-            {t(formError)}
-          </Text>
-        ) : null}
+        {formError ? <Notice tone="error" message={t(formError)} /> : null}
 
         <Button title={t('auth.updatePassword')} onPress={handleSubmit} loading={submitting} />
         <Button

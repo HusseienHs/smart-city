@@ -1,18 +1,24 @@
 import type { ThemeColors } from '@smart-city/shared';
 
 /**
- * Native header options for screens pushed on the root stack (which hides headers by default):
- * back button only, teal tint, white bar without shadow.
+ * Shared look of native stack headers: the bar blends into the page background (no shadow),
+ * a minimal back button in the brand color and a bold title.
  */
-export function screenHeaderOptions(colors: ThemeColors, title: string) {
+export function stackScreenOptions(colors: ThemeColors) {
   return {
     headerShown: true,
-    title,
     headerBackButtonDisplayMode: 'minimal',
     headerTintColor: colors.primary,
-    headerStyle: { backgroundColor: colors.surface },
-    headerTitleStyle: { color: colors.text },
+    headerStyle: { backgroundColor: colors.background },
+    headerTitleStyle: { color: colors.text, fontWeight: '700', fontSize: 17 },
     headerShadowVisible: false,
-    contentStyle: { backgroundColor: colors.surface },
+    contentStyle: { backgroundColor: colors.background },
   } as const;
+}
+
+/**
+ * Native header options for screens pushed on the root stack (which hides headers by default).
+ */
+export function screenHeaderOptions(colors: ThemeColors, title: string) {
+  return { ...stackScreenOptions(colors), title } as const;
 }

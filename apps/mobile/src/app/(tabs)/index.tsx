@@ -1,136 +1,209 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
+import { elevation, radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
-import { Image, type ImageSource } from 'expo-image';
+import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/button';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
 
-interface Favorite {
+interface QuickAction {
   label: MessageKey;
-  /** A photo, or (for tiles without one) an icon on the brand tint. */
-  image?: ImageSource;
-  icon?: ComponentProps<typeof Ionicons>['name'];
+  hint: MessageKey;
+  icon: ComponentProps<typeof Ionicons>['name'];
   href: Href;
 }
 
-// Photos: see assets/images/CREDITS.md. The city map tile was replaced by the Notice Board
-// (the map isn't built yet; its tab became the Notice Board).
-const FAVORITES: readonly Favorite[] = [
-  { label: 'home.noticeBoard', icon: 'megaphone', href: '/notices' },
-  { label: 'home.events', image: require('@/assets/images/home-events.jpg'), href: '/events' },
+const QUICK_ACTIONS: readonly QuickAction[] = [
+  {
+    label: 'home.myReports',
+    hint: 'home.myReportsHint',
+    icon: 'clipboard-outline',
+    href: '/my-reports',
+  },
+  {
+    label: 'home.noticeBoard',
+    hint: 'home.noticeBoardHint',
+    icon: 'megaphone-outline',
+    href: '/notices',
+  },
+  { label: 'home.events', hint: 'home.eventsHint', icon: 'calendar-outline', href: '/events' },
   {
     label: 'home.myAccount',
-    image: require('@/assets/images/home-account.jpg'),
+    hint: 'home.myAccountHint',
+    icon: 'person-circle-outline',
     href: '/profile',
   },
 ];
 
+/** Home: the main task (report an issue) up front, then quick links to everything else. */
 export default function HomeScreen() {
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
   const colors = useThemeColors();
+  const arrow = direction === 'rtl' ? 'arrow-back' : 'arrow-forward';
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.surface }]}>
-      <ScrollView>
-        <Text variant="title" accessibilityRole="header" style={styles.title}>
-          {t('home.title')}
-        </Text>
-
-        <Image
-          source={require('@/assets/images/home-hero.jpg')}
-          style={styles.hero}
-          contentFit="cover"
-          accessible={false}
-        />
-
-        <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
-          <View style={styles.actions}>
-            <Button title={t('home.reportIssue')} onPress={() => router.push('/report')} />
-            <Button
-              title={t('home.myReports')}
-              variant="soft"
-              onPress={() => router.push('/my-reports')}
-            />
+    <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.brandRow}>
+            <View style={[styles.logo, { backgroundColor: colors.primary }]}>
+              <Ionicons name="business" size={16} color={colors.onPrimary} />
+            </View>
+            <Text variant="label" style={{ color: colors.primary }}>
+              {t('app.name')}
+            </Text>
           </View>
-
-          <Text style={styles.sectionLabel}>{t('home.favorites')}</Text>
+          <Text variant="display" accessibilityRole="header">
+            {t('home.title')}
+          </Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.favorites}
+        {/* Primary action: a large photo card that starts a report. */}
+        <Pressable
+          onPress={() => router.push('/report')}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('home.reportIssue')}. ${t('home.reportIssueHint')}`}
+          style={({ pressed }) => [
+            styles.hero,
+            { backgroundColor: colors.primaryStrong, shadowColor: colors.shadow },
+            pressed && styles.pressed,
+          ]}
         >
-          {FAVORITES.map((favorite) => (
+          <Image
+            source={require('@/assets/images/home-hero.jpg')}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            accessible={false}
+          />
+          <View style={styles.heroShade} />
+          <View style={styles.heroBody}>
+            <View style={styles.heroBadge}>
+              <Ionicons name="flash" size={14} color="#FFFFFF" />
+              <Text variant="caption" style={styles.heroBadgeText}>
+                {t('app.tagline')}
+              </Text>
+            </View>
+            <View style={styles.heroFooter}>
+              <View style={styles.flex}>
+                <Text variant="heading" style={styles.onImage}>
+                  {t('home.reportIssue')}
+                </Text>
+                <Text variant="caption" style={styles.onImageMuted}>
+                  {t('home.reportIssueHint')}
+                </Text>
+              </View>
+              <View style={[styles.heroCta, { backgroundColor: colors.primary }]}>
+                <Ionicons name={arrow} size={22} color={colors.onPrimary} />
+              </View>
+            </View>
+          </View>
+        </Pressable>
+
+        <Text variant="overline" muted accessibilityRole="header" style={styles.sectionLabel}>
+          {t('home.quickActions')}
+        </Text>
+
+        <View style={styles.grid}>
+          {QUICK_ACTIONS.map((action) => (
             <Pressable
-              key={favorite.label}
-              onPress={() => router.push(favorite.href)}
+              key={action.label}
+              onPress={() => router.push(action.href)}
               accessibilityRole="button"
-              accessibilityLabel={t(favorite.label)}
-              style={({ pressed }) => [styles.favorite, pressed && styles.pressed]}
+              accessibilityLabel={`${t(action.label)}. ${t(action.hint)}`}
+              style={({ pressed }) => [
+                styles.tile,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor: colors.shadow,
+                },
+                pressed && styles.pressed,
+              ]}
             >
-              {favorite.image ? (
-                <Image
-                  source={favorite.image}
-                  style={[styles.tile, { backgroundColor: colors.primarySoft }]}
-                  contentFit="cover"
-                  accessible={false}
-                />
-              ) : (
-                <View
-                  style={[styles.tile, styles.iconTile, { backgroundColor: colors.primarySoft }]}
-                >
-                  <Ionicons name={favorite.icon ?? 'apps'} size={48} color={colors.primary} />
-                </View>
-              )}
-              <Text style={styles.favoriteLabel}>{t(favorite.label)}</Text>
+              <View style={[styles.tileIcon, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name={action.icon} size={22} color={colors.primary} />
+              </View>
+              <View style={styles.tileText}>
+                <Text variant="subheading" numberOfLines={1}>
+                  {t(action.label)}
+                </Text>
+                <Text variant="caption" muted numberOfLines={2}>
+                  {t(action.hint)}
+                </Text>
+              </View>
             </Pressable>
           ))}
-        </ScrollView>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const TILE_SIZE = 130;
-const SHEET_RADIUS = radii.xl;
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  title: {
-    fontSize: 32,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
+  content: { padding: spacing.xl, gap: spacing.lg, paddingBottom: spacing.xxxl },
+  header: { gap: spacing.sm, marginBottom: spacing.xs },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  logo: {
+    width: 26,
+    height: 26,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  hero: { width: '100%', height: 220 },
-  // The white sheet overlaps the bottom of the photo with rounded top corners.
-  sheet: {
-    marginTop: -SHEET_RADIUS,
-    borderTopStartRadius: SHEET_RADIUS,
-    borderTopEndRadius: SHEET_RADIUS,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
-    gap: spacing.xl,
+  hero: {
+    height: 220,
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    ...elevation.md,
   },
-  actions: { gap: spacing.md },
-  sectionLabel: { fontSize: 16 },
-  favorites: {
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+  heroShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8, 20, 28, 0.45)' },
+  heroBody: { flex: 1, justifyContent: 'space-between', padding: spacing.lg },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: radii.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  favorite: { width: TILE_SIZE, gap: spacing.md, alignItems: 'center' },
-  tile: { width: TILE_SIZE, height: TILE_SIZE, borderRadius: radii.lg },
-  iconTile: { alignItems: 'center', justifyContent: 'center' },
-  favoriteLabel: { fontSize: 16, textAlign: 'center' },
-  pressed: { opacity: 0.7 },
+  heroBadgeText: { color: '#FFFFFF', fontWeight: '600' },
+  heroFooter: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
+  onImage: { color: '#FFFFFF' },
+  onImageMuted: { color: 'rgba(255, 255, 255, 0.85)' },
+  heroCta: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flex: { flex: 1, gap: 2 },
+  sectionLabel: { marginTop: spacing.sm },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  tile: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    ...elevation.sm,
+  },
+  tileIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileText: { gap: 2 },
+  pressed: { opacity: 0.88, transform: [{ scale: 0.985 }] },
 });

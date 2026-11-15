@@ -13,40 +13,50 @@ export function ReportTabButton({
   const colors = useThemeColors();
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={onPress}
-        onLongPress={onLongPress}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        hitSlop={8}
-        style={({ pressed }) => [
-          styles.button,
-          {
-            backgroundColor: pressed ? colors.primaryPressed : colors.primary,
-            shadowColor: colors.primary,
-          },
-        ]}
-      >
-        <Ionicons name="add" size={32} color={colors.onPrimary} />
-      </Pressable>
+      {/* The ring in the tab bar color makes the button look cut into the bar. */}
+      <View style={[styles.ring, { backgroundColor: colors.surface }]}>
+        <Pressable
+          onPress={onPress}
+          onLongPress={onLongPress}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.button,
+            {
+              backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+              shadowColor: colors.primary,
+            },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Ionicons name="add" size={30} color={colors.onPrimary} />
+        </Pressable>
+      </View>
     </View>
   );
 }
 
-const SIZE = 60;
+const SIZE = 58;
+const RING = 5;
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center' },
+  ring: {
+    padding: RING,
+    borderRadius: (SIZE + RING * 2) / 2,
+    marginTop: -(SIZE / 2.4),
+  },
   button: {
     width: SIZE,
     height: SIZE,
     borderRadius: SIZE / 2,
-    marginTop: -SIZE / 3,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 6,
   },
+  pressed: { transform: [{ scale: 0.95 }] },
 });

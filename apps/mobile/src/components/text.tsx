@@ -1,8 +1,9 @@
+import { typography } from '@smart-city/shared';
 import { Text as RNText, StyleSheet, type TextProps as RNTextProps } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
 
-type Variant = 'title' | 'heading' | 'body' | 'caption';
+type Variant = keyof typeof typography;
 
 export interface TextProps extends RNTextProps {
   variant?: Variant;
@@ -27,8 +28,7 @@ export function Text({ variant = 'body', muted = false, style, ...props }: TextP
 const styles = StyleSheet.create({
   // `writingDirection: 'auto'` lets Hebrew/Arabic and English mix correctly per paragraph.
   base: { writingDirection: 'auto', textAlign: 'auto' },
-  title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5 },
-  heading: { fontSize: 20, fontWeight: '600' },
-  body: { fontSize: 16, lineHeight: 22 },
-  caption: { fontSize: 13, lineHeight: 18 },
+  ...typography,
+  // Uppercase only affects Latin scripts; Hebrew and Arabic are unchanged.
+  overline: { ...typography.overline, textTransform: 'uppercase' },
 });

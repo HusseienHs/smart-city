@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { PublishedAnnouncement } from '@smart-city/api';
-import { radii, spacing } from '@smart-city/shared';
+import { elevation, radii, spacing } from '@smart-city/shared';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -47,6 +47,7 @@ export function AnnouncementCard({
         styles.card,
         {
           backgroundColor: colors.surface,
+          shadowColor: colors.shadow,
           borderColor: highlighted ? accent : colors.border,
           borderStartColor: highlighted ? accent : colors.border,
           borderStartWidth: highlighted ? 4 : StyleSheet.hairlineWidth,
@@ -95,7 +96,12 @@ export function AnnouncementCard({
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  card: {
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    ...elevation.sm,
+  },
   image: { width: '100%', aspectRatio: 16 / 9 },
   body: { padding: spacing.lg, gap: spacing.sm },
   meta: {
@@ -104,8 +110,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  title: { fontSize: 17, lineHeight: 23, fontWeight: '700' },
+  title: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   flex: { flex: 1 },
-  pressed: { opacity: 0.75 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
 });

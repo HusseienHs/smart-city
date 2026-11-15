@@ -1,4 +1,4 @@
-import { spacing } from '@smart-city/shared';
+import { elevation, spacing } from '@smart-city/shared';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,7 +32,7 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
       >
         {step ? <StepProgress step={step} /> : null}
         <View style={styles.header}>
-          <Text variant="heading" accessibilityRole="header">
+          <Text variant="title" accessibilityRole="header">
             {title}
           </Text>
           {hint ? <Text muted>{hint}</Text> : null}
@@ -44,7 +44,11 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
           edges={['bottom']}
           style={[
             styles.footer,
-            { backgroundColor: colors.surface, borderTopColor: colors.border },
+            {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
+              shadowColor: colors.shadow,
+            },
           ]}
         >
           {footer}
@@ -56,13 +60,16 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: spacing.lg, gap: spacing.lg },
-  header: { gap: spacing.xs },
+  content: { padding: spacing.xl, gap: spacing.lg, paddingBottom: spacing.xxl },
+  header: { gap: spacing.xs, marginTop: spacing.sm },
   footer: {
     gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
+    ...elevation.lg,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
   },
 });

@@ -10,13 +10,14 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet, useColorScheme, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PendingPhotoRecovery } from '@/components/report/pending-photo-recovery';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { ReportDraftProvider } from '@/lib/report-draft-context';
+import { AppThemeProvider, useAppTheme } from '@/lib/theme';
 
 // Keep the splash screen up until the stored session is restored, so a signed-in user never
 // sees the sign-up screen flash by.
@@ -98,19 +99,27 @@ function RootNavigator() {
 
 const styles = StyleSheet.create({ root: { flex: 1 } });
 
-export default function RootLayout() {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+/** Navigation colors and the status bar follow the theme the user chose. */
+function ThemedApp() {
+  const { scheme } = useAppTheme();
+  return (
+    <ThemeProvider value={navigationTheme(scheme)}>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <RootNavigator />
+    </ThemeProvider>
+  );
+}
 
+export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <I18nProvider>
-        <AuthProvider>
-          <ThemeProvider value={navigationTheme(scheme)}>
-            <StatusBar style="auto" />
-            <RootNavigator />
-          </ThemeProvider>
-        </AuthProvider>
-      </I18nProvider>
+      <AppThemeProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <ThemedApp />
+          </AuthProvider>
+        </I18nProvider>
+      </AppThemeProvider>
     </SafeAreaProvider>
   );
 }

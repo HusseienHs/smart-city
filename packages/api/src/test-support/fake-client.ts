@@ -21,6 +21,8 @@ export interface FakeResponse {
     __isStorageError?: true;
   } | null;
   status?: number;
+  /** The total row count, for queries made with `{ count: 'exact' }`. */
+  count?: number | null;
 }
 
 export interface FakeClientOptions {
@@ -54,6 +56,7 @@ export function fakeClient(
           data: current.data ?? null,
           error: current.error ?? null,
           status: current.status ?? 200,
+          count: current.count ?? null,
         });
   };
 
@@ -73,6 +76,10 @@ export function fakeClient(
       return {
         upload: (...args: unknown[]) => {
           calls.push({ method: 'storage.upload', args });
+          return settle();
+        },
+        createSignedUrls: (...args: unknown[]) => {
+          calls.push({ method: 'storage.createSignedUrls', args });
           return settle();
         },
         // Synchronous and offline, like storage-js: only builds the URL.

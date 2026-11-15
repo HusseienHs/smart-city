@@ -1,103 +1,138 @@
-import { DEFAULT_LOCALE, REPORT_STATUSES } from '@smart-city/shared';
-import { createTranslator, type MessageKey } from '@smart-city/shared/i18n';
+import { REPORT_STATUSES } from '@smart-city/shared';
+import type { MessageKey } from '@smart-city/shared/i18n';
+import Link from 'next/link';
 
-import { PageHeader } from '@/components/page-header';
-import { isSupabaseConfigured } from '@/lib/env';
+import { ModuleGuard } from '@/components/module-guard';
+import { moduleMetadata } from '@/components/module-placeholder';
+import { ReportStatusBadge } from '@/components/report-status-badge';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { KpiTile } from '@/components/ui/kpi-tile';
+import { PageHeader } from '@/components/ui/page-header';
+import { Panel } from '@/components/ui/panel';
+import { canAccessModule } from '@/lib/auth/permissions';
+import { roleLabel } from '@/lib/auth/role-label';
+import { requireStaff } from '@/lib/auth/staff-context';
+import { localizedText } from '@/lib/i18n/localized-text';
+import { localizedHref } from '@/lib/i18n/routing';
+import { getLocale, getTranslator } from '@/lib/i18n/server';
+import { moduleDescriptionKey, NAV_MODULES } from '@/lib/navigation';
 
-const t = createTranslator(DEFAULT_LOCALE);
-
-/** Each KPI with its icon (SVG path, 24×24 stroke) and accent classes. */
-const KPIS: readonly { label: MessageKey; icon: string; accent: string }[] = [
-  {
-    label: 'adminOverview.totalReports',
-    icon: 'M9 5h6M9 3h6v4H9zM5 5h2v16h10V5h2v16H5z',
-    accent: 'bg-primary-soft text-primary',
-  },
-  {
-    label: 'adminOverview.pendingReports',
-    icon: 'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    accent: 'bg-warning-soft text-warning',
-  },
-  {
-    label: 'adminOverview.resolvedReports',
-    icon: 'M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    accent: 'bg-success-soft text-success',
-  },
-  {
-    label: 'adminOverview.avgResolutionTime',
-    icon: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
-    accent: 'bg-info-soft text-info',
-  },
+const KPIS: readonly { label: MessageKey; icon: IconName }[] = [
+  { label: 'adminOverview.totalReports', icon: 'reports' },
+  { label: 'adminOverview.pendingReports', icon: 'clock' },
+  { label: 'adminOverview.resolvedReports', icon: 'check' },
+  { label: 'adminOverview.avgResolutionTime', icon: 'analytics' },
 ];
+
+export function generateMetadata() {
+  return moduleMetadata('overview');
+}
 
 export default function OverviewPage() {
   return (
+    <ModuleGuard module="overview">
+      <Overview />
+    </ModuleGuard>
+  );
+}
+
+async function Overview() {
+  const staff = await requireStaff();
+  const locale = await getLocale();
+  const t = await getTranslator();
+  const seesReports = canAccessModule(staff.role, 'reports');
+  const modules = NAV_MODULES.filter(
+    (entry) => entry.id !== 'overview' && canAccessModule(staff.role, entry.id),
+  );
+
+  return (
     <>
-      <PageHeader title={t('adminNav.overview')} description={t('adminOverview.subtitle')} />
+      <PageHeader
+        title={t('adminNav.overview')}
+        description={t('adminOverview.subtitle')}
+        meta={
+          <>
+            {staff.active ? (
+              <Badge tone="primary">{localizedText(staff.active.municipality_name, locale)}</Badge>
+            ) : null}
+            <Badge>{roleLabel(t, staff.role)}</Badge>
+          </>
+        }
+      />
 
-      <p
-        role="status"
-        className={`mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
-          isSupabaseConfigured ? 'bg-success-soft text-success' : 'bg-surface-muted text-muted'
-        }`}
-      >
-        <span
-          className={`size-2 rounded-full ${isSupabaseConfigured ? 'bg-success' : 'bg-muted'}`}
-          aria-hidden
-        />
-        {isSupabaseConfigured ? t('backend.connected') : t('backend.notConfigured')}
-      </p>
+      {seesReports ? (
+        <>
+          {/* No metric is shown until real data exists (Phase 2.8). */}
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {KPIS.map((kpi) => (
+              <KpiTile
+                key={kpi.label}
+                label={t(kpi.label)}
+                value={null}
+                icon={kpi.icon}
+                hint={t('adminOverview.kpiUnavailable')}
+              />
+            ))}
+          </section>
+          <p className="mt-3 text-sm text-muted">{t('adminOverview.noData')}</p>
+        </>
+      ) : (
+        <Alert tone="info">{t('adminAuth.platformNoMunicipality')}</Alert>
+      )}
 
-      {/* KPI values are intentionally empty: no metric is shown until real data exists. */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPIS.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-border bg-surface p-5 shadow-card"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-muted">{t(kpi.label)}</p>
-              <span
-                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${kpi.accent}`}
-                aria-hidden
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="size-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.75}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-3">
+        <Panel
+          className="xl:col-span-2"
+          title={t('adminOverview.modules')}
+          description={t('adminOverview.modulesHint')}
+          flush
+        >
+          <ul className="divide-y divide-border">
+            {modules.map((entry) => (
+              <li key={entry.id}>
+                <Link
+                  href={localizedHref(locale, entry.path)}
+                  className="group flex items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-surface-subtle"
                 >
-                  <path d={kpi.icon} />
-                </svg>
-              </span>
-            </div>
-            <p className="mt-3 text-3xl font-bold tabular-nums">—</p>
-          </div>
-        ))}
-      </section>
-      <p className="mt-3 text-sm text-muted">{t('adminOverview.noData')}</p>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-subtle text-foreground-secondary transition-colors group-hover:border-primary-soft-border group-hover:bg-primary-soft group-hover:text-primary">
+                    <Icon name={entry.icon} className="size-[18px]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-foreground">{t(entry.label)}</span>
+                    <span className="block truncate text-sm text-muted">
+                      {t(moduleDescriptionKey(entry.id))}
+                    </span>
+                  </span>
+                  <Badge className="max-sm:hidden">
+                    {t('adminPlaceholder.phase', { phase: entry.phase })}
+                  </Badge>
+                  <Icon
+                    name="chevronEnd"
+                    className="size-4 text-subtle transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Panel>
 
-      <section className="mt-8 rounded-2xl border border-border bg-surface p-6 shadow-card">
-        <h2 className="mb-5 text-lg font-semibold">{t('adminOverview.statusWorkflow')}</h2>
-        <ol className="flex flex-wrap items-center gap-y-3">
-          {REPORT_STATUSES.map((status, index) => (
-            <li key={status} className="flex items-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-muted py-1 ps-1 pe-3 text-sm font-medium">
-                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white tabular-nums">
-                  {index + 1}
-                </span>
-                {t(`reportStatus.${status}`)}
-              </span>
-              {index < REPORT_STATUSES.length - 1 ? (
-                <span className="mx-1.5 h-px w-5 bg-border-strong" aria-hidden />
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </section>
+        {seesReports ? (
+          <Panel
+            title={t('adminOverview.statusWorkflow')}
+            description={t('adminOverview.statusWorkflowHint')}
+          >
+            <ul className="flex flex-wrap gap-2">
+              {REPORT_STATUSES.map((status) => (
+                <li key={status}>
+                  <ReportStatusBadge status={status} label={t(`reportStatus.${status}`)} />
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        ) : null}
+      </div>
     </>
   );
 }

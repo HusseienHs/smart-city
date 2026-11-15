@@ -69,10 +69,42 @@ describe('localizedTextSchema', () => {
 });
 
 describe('assignReportSchema', () => {
-  it('requires a department or an assignee', () => {
-    const reportId = '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e';
-    expect(assignReportSchema.safeParse({ reportId }).success).toBe(false);
-    expect(assignReportSchema.safeParse({ reportId, departmentId: reportId }).success).toBe(true);
+  const reportId = '6f1f2b9e-6a8f-4d0e-9c8e-1d2a3b4c5d6e';
+  const departmentId = '8b3c4d5e-2f3a-4b5c-9d0e-1f2a3b4c5d6e';
+  const assigneeId = '3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f';
+  const parse = (input: Record<string, unknown>) => assignReportSchema.safeParse(input);
+  const issuePaths = (input: Record<string, unknown>) => {
+    const result = parse(input);
+    return result.success ? [] : result.error.issues.map((issue) => issue.path.join('.'));
+  };
+
+  it('routes to a department, optionally with an assignee and a priority', () => {
+    expect(parse({ reportId, departmentId }).success).toBe(true);
+    expect(parse({ reportId, departmentId, assigneeId }).success).toBe(true);
+    expect(parse({ reportId, departmentId, assigneeId, priority: 'urgent' }).success).toBe(true);
+    // Explicitly no assignee: the department picks one later.
+    expect(parse({ reportId, departmentId, assigneeId: null }).success).toBe(true);
+  });
+
+  it('departmentId null returns the report to intake', () => {
+    expect(parse({ reportId, departmentId: null }).success).toBe(true);
+    expect(parse({ reportId, departmentId: null, priority: 'high' }).success).toBe(true);
+  });
+
+  it('an assignee requires a department', () => {
+    expect(issuePaths({ reportId, departmentId: null, assigneeId })).toEqual(['assigneeId']);
+  });
+
+  it('the department must be stated explicitly (never assumed)', () => {
+    expect(parse({ reportId }).success).toBe(false);
+    expect(parse({ reportId, assigneeId }).success).toBe(false);
+  });
+
+  it('rejects malformed ids and unknown priorities', () => {
+    expect(parse({ reportId: 'x', departmentId }).success).toBe(false);
+    expect(parse({ reportId, departmentId: 'roads' }).success).toBe(false);
+    expect(parse({ reportId, departmentId, assigneeId: 'dana' }).success).toBe(false);
+    expect(parse({ reportId, departmentId, priority: 'asap' }).success).toBe(false);
   });
 });
 

@@ -1,12 +1,17 @@
-import { Sidebar } from '@/components/sidebar';
+import { Suspense } from 'react';
 
-export default function DashboardLayout({ children }: LayoutProps<'/'>) {
+import { AppShell } from '@/components/shell/app-shell';
+import { ShellSkeleton } from '@/components/shell/shell-skeleton';
+
+/**
+ * Every dashboard page renders inside AppShell, which verifies the session and staff
+ * membership on the server before anything — chrome or page — is rendered. The Suspense
+ * fallback is the only prerendered part, and it holds no data.
+ */
+export default function DashboardLayout({ children }: LayoutProps<'/[locale]'>) {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-x-hidden px-6 py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl">{children}</div>
-      </main>
-    </div>
+    <Suspense fallback={<ShellSkeleton />}>
+      <AppShell>{children}</AppShell>
+    </Suspense>
   );
 }

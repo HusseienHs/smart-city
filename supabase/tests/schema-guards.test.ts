@@ -246,6 +246,10 @@ describe('schema security invariants', () => {
         'get_audit_log',
         'get_colleagues',
         'get_my_staff_invitations',
+        // Admin dashboard staff context: own active memberships only (20261108000200).
+        'get_my_staff_memberships',
+        // Admin dashboard staff directory: municipality admins only (20261108000300).
+        'get_municipality_staff',
         'get_my_report_attachments',
         'get_my_report_comments',
         'get_my_report_updates',

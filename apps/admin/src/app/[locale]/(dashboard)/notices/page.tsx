@@ -1,5 +1,9 @@
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { moduleMetadata, ModulePlaceholder } from '@/components/module-placeholder';
 
-export default function Page() {
-  return <SectionPlaceholder titleKey="adminNav.announcements" />;
+export function generateMetadata() {
+  return moduleMetadata('notices');
+}
+
+export default function NoticesPage() {
+  return <ModulePlaceholder module="notices" />;
 }

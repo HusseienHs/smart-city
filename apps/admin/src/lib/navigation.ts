@@ -1,32 +1,146 @@
 import type { MessageKey } from '@smart-city/shared/i18n';
 
-export interface NavItem {
-  href: string;
+import type { IconName } from '@/components/ui/icon';
+
+/**
+ * The dashboard's information architecture: three groups, twelve top-level modules.
+ * The single source for the sidebar, breadcrumbs, page titles and module placeholders.
+ *
+ * Role-based visibility is added with staff access in Phase 2.2. It will hide what a role
+ * cannot use; the database (RLS) remains the authority on what data anyone can see.
+ */
+
+export type ModuleId =
+  | 'overview'
+  | 'reports'
+  | 'map'
+  | 'notices'
+  | 'events'
+  | 'employees'
+  | 'departments'
+  | 'analytics'
+  | 'settings'
+  | 'roles'
+  | 'account'
+  | 'auditLog';
+
+export type NavGroupId = 'workspace' | 'organization' | 'configuration';
+
+export interface NavModule {
+  id: ModuleId;
+  /** Path without the locale prefix. */
+  path: string;
   label: MessageKey;
-  /** SVG path data (24×24 viewBox, stroke icons). */
-  icon: string;
+  icon: IconName;
+  /** The roadmap phase that delivers the module. */
+  phase: string;
+  /** True when the module needs database/API work that does not exist yet. */
+  requiresBackend?: boolean;
 }
 
-export const ADMIN_NAV: readonly NavItem[] = [
-  { href: '/', label: 'adminNav.overview', icon: 'M3 12l9-9 9 9M5 10v10h14V10' },
-  { href: '/reports', label: 'adminNav.reports', icon: 'M9 5h6M9 3h6v4H9zM5 5h2v16h10V5h2v16H5z' },
-  { href: '/map', label: 'adminNav.map', icon: 'M9 4l6 2 6-2v14l-6 2-6-2-6 2V6zM9 4v14M15 6v14' },
-  { href: '/departments', label: 'adminNav.departments', icon: 'M4 21V5l8-3 8 3v16M9 21v-5h6v5' },
+export interface NavGroup {
+  id: NavGroupId;
+  label: MessageKey;
+  modules: readonly NavModule[];
+}
+
+export const NAV_GROUPS: readonly NavGroup[] = [
   {
-    href: '/employees',
-    label: 'adminNav.employees',
-    icon: 'M16 19a4 4 0 00-8 0M12 11a3 3 0 100-6 3 3 0 000 6',
+    id: 'workspace',
+    label: 'adminNav.groups.workspace',
+    modules: [
+      { id: 'overview', path: '/', label: 'adminNav.overview', icon: 'overview', phase: '2.8' },
+      { id: 'reports', path: '/reports', label: 'adminNav.reports', icon: 'reports', phase: '2.3' },
+      { id: 'map', path: '/map', label: 'adminNav.map', icon: 'map', phase: '2.8' },
+      { id: 'notices', path: '/notices', label: 'adminNav.notices', icon: 'notices', phase: '2.6' },
+      {
+        id: 'events',
+        path: '/events',
+        label: 'adminNav.events',
+        icon: 'events',
+        phase: '2.9',
+        requiresBackend: true,
+      },
+    ],
   },
   {
-    href: '/announcements',
-    label: 'adminNav.announcements',
-    icon: 'M4 10v4h3l6 4V6L7 10zM17 9a3 3 0 010 6',
+    id: 'organization',
+    label: 'adminNav.groups.organization',
+    modules: [
+      {
+        id: 'employees',
+        path: '/employees',
+        label: 'adminNav.employees',
+        icon: 'employees',
+        phase: '2.5',
+      },
+      {
+        id: 'departments',
+        path: '/departments',
+        label: 'adminNav.departments',
+        icon: 'departments',
+        phase: '2.5',
+      },
+      {
+        id: 'analytics',
+        path: '/analytics',
+        label: 'adminNav.analytics',
+        icon: 'analytics',
+        phase: '2.9',
+        requiresBackend: true,
+      },
+    ],
   },
-  { href: '/events', label: 'adminNav.events', icon: 'M4 6h16v14H4zM8 3v4M16 3v4M4 10h16' },
-  { href: '/analytics', label: 'adminNav.analytics', icon: 'M4 20V10M10 20V4M16 20v-7M22 20H2' },
   {
-    href: '/settings',
-    label: 'adminNav.settings',
-    icon: 'M12 15a3 3 0 100-6 3 3 0 000 6zM4 12h2M18 12h2M12 4v2M12 18v2',
+    id: 'configuration',
+    label: 'adminNav.groups.configuration',
+    modules: [
+      {
+        id: 'settings',
+        path: '/settings',
+        label: 'adminNav.settings',
+        icon: 'settings',
+        phase: '2.7',
+      },
+      { id: 'roles', path: '/roles', label: 'adminNav.roles', icon: 'roles', phase: '2.5' },
+      { id: 'account', path: '/account', label: 'adminNav.account', icon: 'account', phase: '2.7' },
+      {
+        id: 'auditLog',
+        path: '/audit-log',
+        label: 'adminNav.auditLog',
+        icon: 'auditLog',
+        phase: '2.7',
+      },
+    ],
   },
 ];
+
+export const NAV_MODULES: readonly NavModule[] = NAV_GROUPS.flatMap((group) => group.modules);
+
+export function getModule(id: ModuleId): NavModule {
+  const found = NAV_MODULES.find((entry) => entry.id === id);
+  if (!found) throw new Error(`Unknown dashboard module: ${id}`);
+  return found;
+}
+
+export function getModuleGroup(id: ModuleId): NavGroup {
+  const found = NAV_GROUPS.find((group) => group.modules.some((entry) => entry.id === id));
+  if (!found) throw new Error(`Dashboard module without a group: ${id}`);
+  return found;
+}
+
+/** The description of a module, shown under its page title. */
+export function moduleDescriptionKey(id: ModuleId): MessageKey {
+  return id === 'overview' ? 'adminOverview.subtitle' : `adminModules.${id}`;
+}
+
+/** Whether `path` (no locale prefix) is the module's page or one of its sub-pages. */
+export function isPathInModule(path: string, modulePath: string): boolean {
+  if (modulePath === '/') return path === '/';
+  return path === modulePath || path.startsWith(`${modulePath}/`);
+}
+
+/** The module that `path` (no locale prefix) belongs to, if any. */
+export function moduleForPath(path: string): NavModule | undefined {
+  return NAV_MODULES.find((entry) => isPathInModule(path, entry.path));
+}

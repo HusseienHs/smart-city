@@ -1,44 +1,52 @@
-import { DEFAULT_LOCALE, getTextDirection } from '@smart-city/shared';
-import { translate } from '@smart-city/shared/i18n';
+import { getTextDirection, SUPPORTED_LOCALES } from '@smart-city/shared';
 import type { Metadata } from 'next';
-import { Rubik } from 'next/font/google';
+import { IBM_Plex_Sans_Arabic, IBM_Plex_Sans_Hebrew } from 'next/font/google';
 
-import { THEME_SCRIPT } from '@/lib/theme';
+import { getLocale, getTranslator } from '@/lib/i18n/server';
 
-import './globals.css';
+import '../globals.css';
 
-// Rubik covers Hebrew, Arabic and Latin, so all three languages share one typeface.
-const rubik = Rubik({
-  variable: '--font-rubik',
-  subsets: ['latin', 'hebrew', 'arabic'],
+// IBM Plex Sans Hebrew provides Latin and Hebrew; IBM Plex Sans Arabic provides Arabic.
+// One type family, designed together, for all three languages. These calls register the
+// @font-face rules; globals.css names the families in its font stack (see the note there).
+const plexHebrew = IBM_Plex_Sans_Hebrew({
+  variable: '--font-plex-hebrew',
+  subsets: ['latin', 'hebrew'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
 });
 
-// The admin locale is fixed to the default (Hebrew) until per-user language
-// preferences arrive with authentication in Phase 2.
-const locale = DEFAULT_LOCALE;
+const plexArabic = IBM_Plex_Sans_Arabic({
+  variable: '--font-plex-arabic',
+  subsets: ['arabic'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  // Loaded on demand: only Arabic text uses it.
+  preload: false,
+});
 
-export const metadata: Metadata = {
-  title: {
-    default: translate(locale, 'app.name'),
-    template: `%s · ${translate(locale, 'app.name')}`,
-  },
-  robots: { index: false, follow: false },
-};
+/** Each language is rendered ahead of time: /he, /ar and /en. */
+export function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
+}
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  return {
+    title: { default: t('app.name'), template: `%s · ${t('app.name')}` },
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function RootLayout({ children }: LayoutProps<'/[locale]'>) {
+  const locale = await getLocale();
   return (
-    // suppressHydrationWarning: the theme script below may set data-theme before React hydrates.
     <html
       lang={locale}
       dir={getTextDirection(locale)}
-      className={`${rubik.variable} h-full`}
-      suppressHydrationWarning
+      className={`${plexHebrew.variable} ${plexArabic.variable} h-full`}
     >
-      <head>
-        {/* Applies the saved theme before the first paint, so the page never flashes. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
-      <body className="min-h-full font-sans antialiased">{children}</body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

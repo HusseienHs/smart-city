@@ -35,6 +35,28 @@ export async function runMaybeSingleQuery<T>(
   return settle(query);
 }
 
+interface CountedResponse<T> extends SupabaseResponse<T[]> {
+  count?: number | null;
+}
+
+/**
+ * Awaits a list query that requested `{ count: 'exact' }`: the rows and the total number of rows
+ * the caller may see (after Row Level Security), or throws an ApiError.
+ */
+export async function runCountedListQuery<T>(
+  query: PromiseLike<CountedResponse<T>>,
+): Promise<{ rows: T[]; total: number }> {
+  let response: CountedResponse<T>;
+  try {
+    response = await query;
+  } catch (error) {
+    throw toApiError(error);
+  }
+  if (response.error) throw fromSupabaseError(response.error, response.status);
+  const rows = response.data ?? [];
+  return { rows, total: response.count ?? rows.length };
+}
+
 /** Awaits a write without a returned body (e.g. a delete). Throws an ApiError on failure. */
 export async function runMutation(query: PromiseLike<SupabaseResponse<unknown>>): Promise<void> {
   await settle(query);

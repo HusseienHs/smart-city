@@ -1,82 +1,224 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
 /*
- * Brand tokens – mirror of packages/shared/src/design-tokens.ts (keep in sync).
- * Components use logical utilities (ms-/me-/ps-/pe-/start-/end-) so layouts flip
- * automatically between RTL (Hebrew, Arabic) and LTR (English).
+ * Smart City Admin — design tokens.
+ *
+ * The admin dashboard has its own enterprise palette (deep navy + restrained blue); the
+ * citizen app keeps the teal brand in packages/shared/src/design-tokens.ts. Components never
+ * use raw colors: only the semantic tokens below, exposed to Tailwind through @theme.
+ *
+ * Layout uses logical utilities only (ms-/me-/ps-/pe-/start-/end-/border-s/border-e,
+ * text-start), so every screen flips automatically between RTL (Hebrew, Arabic) and LTR.
+ *
+ * Light is the primary (and currently only) theme. Dark mode will be added as a second
+ * token set once it has been designed, not derived automatically.
  */
 :root {
-  --background: #f6f8fa;
-  --surface: #ffffff;
-  --surface-muted: #eef1f5;
-  --border: #e2e7ed;
-  --border-strong: #cbd2db;
-  --foreground: #131820;
-  --muted: #64707f;
-  --primary: #0b8a84;
-  --primary-pressed: #077069;
-  --primary-soft: #effaf9;
-  --primary-strong: #085954;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --success: #16a34a;
-  --success-soft: #f0fdf4;
-  --warning: #d97706;
-  --warning-soft: #fffbeb;
-  --info: #2563eb;
-  --info-soft: #eff6ff;
-}
+  color-scheme: light;
 
-/* Dark mode is opt-in: the sidebar toggle sets data-theme="dark" on <html>. */
-:root[data-theme='dark'] {
-  --background: #0a0d12;
-  --surface: #131820;
-  --surface-muted: #1e2530;
-  --border: #1e2530;
-  --border-strong: #343d49;
-  --foreground: #f6f8fa;
-  --muted: #94a0b0;
-  --primary: #2faea6;
-  --primary-pressed: #0b8a84;
-  --primary-soft: #0e2a29;
-  --primary-strong: #6fcbc3;
-  --danger: #f87171;
-  --danger-soft: #2a1414;
-  --success: #4ade80;
-  --success-soft: #0f2417;
-  --warning: #fbbf24;
-  --warning-soft: #2a2010;
-  --info: #60a5fa;
-  --info-soft: #111e33;
+  /* Surfaces */
+  --background: #f6f7f9;
+  --surface: #ffffff;
+  --surface-subtle: #f9fafb;
+  --surface-muted: #f1f3f6;
+  --border: #e3e6eb;
+  --border-strong: #cdd2da;
+
+  /* Text */
+  --foreground: #0f172a;
+  --foreground-secondary: #334155;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+
+  /* Brand: navy (navigation, headings) and blue (actions, focus, selection) */
+  --navy: #0b1f3a;
+  --navy-hover: #132a4b;
+  --navy-active: #1a3459;
+  --navy-border: #1d3352;
+  --navy-foreground: #c9d3e3;
+  --navy-muted: #7f92b0;
+  --navy-accent: #60a5fa;
+  --navy-success: #4ade80;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-pressed: #1e40af;
+  --primary-soft: #eff4ff;
+  --primary-soft-border: #c7d7fe;
+  --on-primary: #ffffff;
+
+  /* Semantic */
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --success-border: #abefc6;
+  --warning: #b45309;
+  --warning-soft: #fffaeb;
+  --warning-border: #fedf89;
+  --danger: #b91c1c;
+  --danger-hover: #991b1b;
+  --danger-soft: #fef3f2;
+  --danger-border: #fecdca;
+  --info: #0369a1;
+  --info-soft: #f0f9ff;
+  --info-border: #b9e6fe;
+  --violet: #6d28d9;
+  --violet-soft: #f5f3ff;
+  --violet-border: #ddd6fe;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --sidebar-rail-width: 72px;
+  --header-height: 56px;
+  --content-max-width: 1440px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-navy: var(--navy);
+  --color-navy-hover: var(--navy-hover);
+  --color-navy-active: var(--navy-active);
+  --color-navy-border: var(--navy-border);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-navy-muted: var(--navy-muted);
+  --color-navy-accent: var(--navy-accent);
+  --color-navy-success: var(--navy-success);
+
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-pressed: var(--primary-pressed);
   --color-primary-soft: var(--primary-soft);
-  --color-primary-strong: var(--primary-strong);
-  --color-border-strong: var(--border-strong);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
+  --color-primary-soft-border: var(--primary-soft-border);
+  --color-on-primary: var(--on-primary);
+
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
-  --shadow-card: 0 1px 2px rgb(15 26 42 / 0.04), 0 1px 3px rgb(15 26 42 / 0.06);
-  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --color-info-border: var(--info-border);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-border: var(--violet-border);
+
+  /*
+   * IBM Plex Sans Hebrew carries Latin + Hebrew; IBM Plex Sans Arabic fills in Arabic.
+   * The families are named directly (their @font-face rules come from next/font in the root
+   * layout) rather than through next/font's variables: each variable also appends a local
+   * Arial fallback, and since Arial has Arabic glyphs, Arabic text would stop there and never
+   * reach Plex Arabic.
+   */
+  --font-sans: 'IBM Plex Sans Hebrew', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+/*
+ * Dashboard type scale (denser than Tailwind's defaults; body text is 14px).
+ * 12 / 13 / 14 / 16 / 18 / 20 / 24 / 30.
+ */
+@theme {
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 6px 16px -4px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-lg: 0 16px 40px -12px rgb(15 23 42 / 0.25);
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-popover-in: popover-in 140ms var(--ease-standard);
+
+  @keyframes popover-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Arabic letters join: letter-spacing would break the script. */
+  html[lang='ar'] * {
+    letter-spacing: normal !important;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--primary-soft-border);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-border) transparent;
 }

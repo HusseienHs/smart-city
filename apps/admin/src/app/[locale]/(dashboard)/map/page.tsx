@@ -1,5 +1,9 @@
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { moduleMetadata, ModulePlaceholder } from '@/components/module-placeholder';
 
-export default function Page() {
-  return <SectionPlaceholder titleKey="adminNav.map" />;
+export function generateMetadata() {
+  return moduleMetadata('map');
+}
+
+export default function MapPage() {
+  return <ModulePlaceholder module="map" />;
 }

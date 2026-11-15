@@ -1188,6 +1188,19 @@ export type Database = {
           role: Database["public"]["Enums"]["staff_role"]
         }[]
       }
+      get_municipality_staff: {
+        Args: { p_municipality_id: string }
+        Returns: {
+          created_at: string
+          department_id: string
+          employee_id: string
+          full_name: string
+          is_active: boolean
+          job_title: string
+          role: Database["public"]["Enums"]["staff_role"]
+          updated_at: string
+        }[]
+      }
       get_my_report_attachments: {
         Args: { p_report_id: string }
         Returns: {
@@ -1242,6 +1255,20 @@ export type Database = {
           id: string
           municipality_id: string
           municipality_name: Json
+          role: Database["public"]["Enums"]["staff_role"]
+        }[]
+      }
+      get_my_staff_memberships: {
+        Args: never
+        Returns: {
+          department_id: string
+          department_name: Json
+          employee_id: string
+          job_title: string
+          municipality_code: string
+          municipality_id: string
+          municipality_name: Json
+          municipality_status: Database["public"]["Enums"]["municipality_status"]
           role: Database["public"]["Enums"]["staff_role"]
         }[]
       }

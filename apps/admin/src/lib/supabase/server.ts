@@ -27,7 +27,7 @@ export async function createSupabaseServerClient(): Promise<SmartCityClient> {
           }
         } catch {
           // Called from a Server Component, where cookies are read-only. Safe to ignore:
-          // the session refresh proxy (added with authentication in Phase 2) persists them.
+          // the proxy (src/proxy.ts) refreshes the session before any page renders.
         }
       },
     },

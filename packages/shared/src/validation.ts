@@ -103,16 +103,24 @@ export const updateReportStatusSchema = z
   });
 export type UpdateReportStatusInput = z.infer<typeof updateReportStatusSchema>;
 
+/**
+ * Mirrors `public.assign_report(p_report_id, p_department_id, p_assignee_id, p_priority)`.
+ * The database remains the authority (roles, department membership, report state).
+ *
+ * - `departmentId` is always given explicitly: a department id routes the report there, and
+ *   `null` returns it to the intake queue.
+ * - `assigneeId` (an employees.id) requires a department: there is no assignee without one.
+ */
 export const assignReportSchema = z
   .object({
     reportId: z.uuid(),
-    departmentId: z.uuid().optional(),
-    assigneeId: z.uuid().optional(),
+    departmentId: z.uuid().nullable(),
+    assigneeId: z.uuid().nullable().optional(),
     priority: z.enum(REPORT_PRIORITIES).optional(),
   })
-  .refine((value) => Boolean(value.departmentId ?? value.assigneeId), {
-    message: 'A department or an employee is required',
-    path: ['departmentId'],
+  .refine((value) => !value.assigneeId || value.departmentId !== null, {
+    message: 'An assignee requires a department',
+    path: ['assigneeId'],
   });
 export type AssignReportInput = z.infer<typeof assignReportSchema>;
 

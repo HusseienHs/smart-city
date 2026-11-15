@@ -1,9 +1,10 @@
-import { radii, spacing, type ReportStatus } from '@smart-city/shared';
+import { type ReportStatus } from '@smart-city/shared';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
+import { radii, spacing } from '@/theme/metrics';
 
 /** The accent and background of a status, so each one is recognizable at a glance. */
 export function useStatusColors(status: ReportStatus): { color: string; background: string } {

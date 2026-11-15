@@ -1,9 +1,9 @@
-import { spacing } from '@smart-city/shared';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
 import { apiErrorMessageKey } from '@/lib/api-error-message';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 import { Button } from './button';
 import { Notice } from './report/notice';

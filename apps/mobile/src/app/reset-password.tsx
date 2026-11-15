@@ -1,4 +1,4 @@
-import { signUpSchema, spacing } from '@smart-city/shared';
+import { signUpSchema } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -9,6 +9,7 @@ import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { signOut, updatePassword, useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 const passwordSchema = signUpSchema.shape.password;
 

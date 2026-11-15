@@ -1,5 +1,4 @@
 import { getMyPhone, getMyProfile, type MyProfile } from '@smart-city/api';
-import { spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -24,6 +23,7 @@ import {
   type PersonalDetailsErrors,
 } from '@/lib/personal-details';
 import { getSupabase } from '@/lib/supabase';
+import { spacing } from '@/theme/metrics';
 
 interface LoadedDetails {
   profile: MyProfile | null;

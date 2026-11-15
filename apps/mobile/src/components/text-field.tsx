@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
+import { useFont } from '@/theme';
+import { radius as radii, spacing } from '@/theme/metrics';
 
 import { Text } from './text';
 
@@ -34,6 +35,7 @@ export function TextField({
 }: TextFieldProps) {
   const colors = useThemeColors();
   const { t } = useI18n();
+  const font = useFont();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const isPassword = Boolean(secureTextEntry);
@@ -77,7 +79,12 @@ export function TextField({
             setFocused(false);
             onBlur?.(event);
           }}
-          style={[styles.input, isMultiline && styles.multiline, { color: colors.text }]}
+          style={[
+            styles.input,
+            isMultiline && styles.multiline,
+            { color: colors.text },
+            font('400'),
+          ]}
           {...inputProps}
         />
         {isPassword ? (
@@ -121,8 +128,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
+    minHeight: 54,
+    paddingHorizontal: spacing.md + 2,
     borderRadius: radii.md,
     borderWidth: 1.5,
   },

@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { PublishedAnnouncement } from '@smart-city/api';
-import { elevation, radii, spacing } from '@smart-city/shared';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,6 +10,7 @@ import { localizedName } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { formatReportDate } from '@/lib/my-reports';
 import { announcementSummary, isHighlighted, noticeImageUrl } from '@/lib/notice-board';
+import { elevation, radii, spacing } from '@/theme/metrics';
 
 import { SeverityBadge, useSeverityColor } from './severity-badge';
 

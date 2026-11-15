@@ -30,6 +30,30 @@ export const palette = {
     900: '#131820',
     950: '#0A0D12',
   },
+  /**
+   * Midnight Navy: deep, slightly blue-green ink for hero overlays, dark surfaces and text.
+   * Added for the mobile premium theme; not (yet) used by the admin app.
+   */
+  navy: {
+    50: '#EEF3F8',
+    100: '#D5E0EB',
+    200: '#AABFD3',
+    300: '#7B97B4',
+    400: '#4F7090',
+    500: '#2E4E6E',
+    600: '#1D3A57',
+    700: '#142C45',
+    800: '#0E2136',
+    900: '#0A1828',
+    950: '#06101C',
+  },
+  /** Ivory: warm off-white page surfaces (mobile premium theme). */
+  ivory: {
+    50: '#FBFAF7',
+    100: '#F5F3EE',
+    200: '#EAE6DD',
+    300: '#D9D3C6',
+  },
   success: '#16A34A',
   warning: '#D97706',
   danger: '#DC2626',

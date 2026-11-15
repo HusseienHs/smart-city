@@ -1,16 +1,24 @@
-import type { ThemeColors } from '@smart-city/shared';
+import { useThemeColors } from '@/hooks/use-theme';
+import { useFont } from '@/theme';
 
 /**
  * Shared look of native stack headers: the bar blends into the page background (no shadow),
- * a minimal back button in the brand color and a bold title.
+ * a minimal back button in the brand color and a bold title in the app font.
  */
-export function stackScreenOptions(colors: ThemeColors) {
+export function useStackScreenOptions() {
+  const colors = useThemeColors();
+  const font = useFont();
+  const title = font('700');
   return {
     headerShown: true,
     headerBackButtonDisplayMode: 'minimal',
     headerTintColor: colors.primary,
     headerStyle: { backgroundColor: colors.background },
-    headerTitleStyle: { color: colors.text, fontWeight: '700', fontSize: 17 },
+    headerTitleStyle: {
+      color: colors.text,
+      fontSize: 17,
+      ...(title.fontFamily ? { fontFamily: title.fontFamily } : { fontWeight: '700' as const }),
+    },
     headerShadowVisible: false,
     contentStyle: { backgroundColor: colors.background },
   } as const;
@@ -19,6 +27,6 @@ export function stackScreenOptions(colors: ThemeColors) {
 /**
  * Native header options for screens pushed on the root stack (which hides headers by default).
  */
-export function screenHeaderOptions(colors: ThemeColors, title: string) {
-  return { ...stackScreenOptions(colors), title } as const;
+export function useScreenHeaderOptions(title: string) {
+  return { ...useStackScreenOptions(), title } as const;
 }

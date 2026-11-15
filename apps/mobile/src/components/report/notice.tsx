@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
+import { radii, spacing } from '@/theme/metrics';
 
 interface NoticeProps {
   message: string;

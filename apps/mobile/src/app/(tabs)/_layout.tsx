@@ -1,91 +1,121 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { elevation } from '@smart-city/shared';
-import { Tabs, type BottomTabNavigationOptions } from 'expo-router/tabs';
-import type { ComponentProps } from 'react';
+import { Tabs } from 'expo-router/tabs';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TabButton } from '@/components/navigation/tab-button';
 import { ReportTabButton } from '@/components/report-tab-button';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-type TabBarIcon = NonNullable<BottomTabNavigationOptions['tabBarIcon']>;
-
-function TabIcon({ name, focused, size }: { name: IconName; focused: boolean; size: number }) {
-  const colors = useThemeColors();
-  return <Ionicons name={name} size={size} color={focused ? colors.primary : colors.textMuted} />;
-}
-
-function tabIcon(name: IconName, focusedName: IconName): TabBarIcon {
-  return function renderTabIcon({ size, focused }) {
-    return <TabIcon name={focused ? focusedName : name} focused={focused} size={size} />;
-  };
-}
+import { UpdatesProvider, useUpdates } from '@/lib/updates-context';
+import { layout, radius, shadow } from '@/theme/metrics';
 
 /**
- * Room for the icon and a full line of label text. The default (49) left the label a 10 px box,
- * which cut off the bottom of the text. The bottom safe-area inset (gesture bar) is added on top.
+ * Home · Explore · New report · Updates · Account. The bar mirrors in RTL (Home on the right).
+ *
+ * Route names stay stable for deep links: `notices` is shown as "Updates", `profile` as
+ * "Account"; `events` is kept (hidden) and forwards to Updates.
  */
-const TAB_BAR_HEIGHT = 64;
-
-export default function TabsLayout() {
+function TabsNavigator() {
   const { t } = useI18n();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { hasUnseen } = useUpdates();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          height: TAB_BAR_HEIGHT + insets.bottom,
-          paddingTop: 8,
+          borderTopLeftRadius: radius.xl,
+          borderTopRightRadius: radius.xl,
+          height: layout.tabBarHeight + insets.bottom + 8,
+          paddingTop: 6,
           shadowColor: colors.shadow,
-          ...elevation.md,
+          ...shadow.raised,
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.08,
         },
-        tabBarLabelStyle: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('mobileTabs.home'), tabBarIcon: tabIcon('home-outline', 'home') }}
+        options={{
+          title: t('citizen.nav.home'),
+          tabBarButton: (props) => (
+            <TabButton
+              {...props}
+              label={t('citizen.nav.home')}
+              icon="home-outline"
+              activeIcon="home"
+            />
+          ),
+        }}
       />
       <Tabs.Screen
-        name="notices"
+        name="explore"
         options={{
-          title: t('mobileTabs.notices'),
-          tabBarIcon: tabIcon('megaphone-outline', 'megaphone'),
+          title: t('citizen.nav.explore'),
+          tabBarButton: (props) => (
+            <TabButton
+              {...props}
+              label={t('citizen.nav.explore')}
+              icon="map-outline"
+              activeIcon="map"
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="report"
         options={{
-          title: t('mobileTabs.report'),
-          tabBarAccessibilityLabel: t('mobileTabs.report'),
-          tabBarButton: (props) => <ReportTabButton {...props} />,
+          title: t('citizen.nav.newReport'),
+          tabBarButton: (props) => (
+            <ReportTabButton {...props} label={t('citizen.nav.newReport')} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="events"
+        name="notices"
         options={{
-          title: t('mobileTabs.events'),
-          tabBarIcon: tabIcon('calendar-outline', 'calendar'),
+          title: t('citizen.nav.updates'),
+          tabBarButton: (props) => (
+            <TabButton
+              {...props}
+              label={t('citizen.nav.updates')}
+              icon="notifications-outline"
+              activeIcon="notifications"
+              dot={hasUnseen}
+              dotLabel={t('citizen.home.updatesNew')}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('mobileTabs.profile'),
-          tabBarIcon: tabIcon('person-circle-outline', 'person-circle'),
+          title: t('citizen.nav.account'),
+          tabBarButton: (props) => (
+            <TabButton
+              {...props}
+              label={t('citizen.nav.account')}
+              icon="person-outline"
+              activeIcon="person"
+            />
+          ),
         }}
       />
+      <Tabs.Screen name="events" options={{ href: null }} />
     </Tabs>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <UpdatesProvider>
+      <TabsNavigator />
+    </UpdatesProvider>
   );
 }

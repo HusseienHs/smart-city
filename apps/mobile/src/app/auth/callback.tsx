@@ -1,4 +1,3 @@
-import { spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import * as Linking from 'expo-linking';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
@@ -14,6 +13,7 @@ import { completeAuthCallback, useAuth } from '@/lib/auth';
 import { parseAuthCallbackUrl, type AuthCallbackParams } from '@/lib/auth-utils';
 import { isSupabaseConfigured } from '@/lib/env';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 type State = { status: 'working' } | { status: 'done' } | { status: 'failed'; error: MessageKey };
 

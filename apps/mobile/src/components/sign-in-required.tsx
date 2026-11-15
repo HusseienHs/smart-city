@@ -1,9 +1,9 @@
-import { spacing } from '@smart-city/shared';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 import { Button } from './button';
 import { EmptyState } from './empty-state';

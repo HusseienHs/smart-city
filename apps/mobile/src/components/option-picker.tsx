@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +11,8 @@ import {
 
 import { useThemeColors } from '@/hooks/use-theme';
 import { filterOptions } from '@/lib/option-search';
+import { useFont } from '@/theme';
+import { radius as radii, spacing } from '@/theme/metrics';
 
 import { Text } from './text';
 
@@ -61,6 +62,7 @@ export function OptionPicker({
   disabled = false,
 }: OptionPickerProps) {
   const colors = useThemeColors();
+  const font = useFont();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const selected = options.find((option) => option.id === value);
@@ -148,7 +150,11 @@ export function OptionPicker({
                 accessibilityLabel={search.placeholder}
                 autoCorrect={false}
                 autoCapitalize="none"
-                style={[styles.search, { color: colors.text, borderBottomColor: colors.border }]}
+                style={[
+                  styles.search,
+                  { color: colors.text, borderBottomColor: colors.border },
+                  font('400'),
+                ]}
               />
               <ScrollView
                 style={styles.scroll}

@@ -1,17 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { spacing } from '@smart-city/shared';
 import { router, Stack } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { LoadingState } from '@/components/load-state';
-import { stackScreenOptions } from '@/components/screen-header';
+import { useStackScreenOptions } from '@/components/screen-header';
 import { SignInRequired } from '@/components/sign-in-required';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { useReportDraft } from '@/lib/report-draft-context';
+import { spacing } from '@/theme/metrics';
 
 // Opening any step directly (e.g. a deep link) still puts the category step underneath it.
 export const unstable_settings = { initialRouteName: 'category' };
@@ -23,6 +23,7 @@ export const unstable_settings = { initialRouteName: 'category' };
 export default function NewReportLayout() {
   const { t } = useI18n();
   const colors = useThemeColors();
+  const stackOptions = useStackScreenOptions();
   const { user } = useAuth();
   const { restoring } = useReportDraft();
 
@@ -40,7 +41,7 @@ export default function NewReportLayout() {
   }
 
   return (
-    <Stack screenOptions={stackScreenOptions(colors)}>
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="category"
         options={{

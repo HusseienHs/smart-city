@@ -1,4 +1,3 @@
-import { elevation, spacing } from '@smart-city/shared';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import type { ReportStep } from '@/lib/report-draft';
+import { elevation, layout, spacing } from '@/theme/metrics';
 
 import { StepProgress } from './step-progress';
 
@@ -30,14 +30,16 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        {step ? <StepProgress step={step} /> : null}
-        <View style={styles.header}>
-          <Text variant="title" accessibilityRole="header">
-            {title}
-          </Text>
-          {hint ? <Text muted>{hint}</Text> : null}
+        <View style={styles.column}>
+          {step ? <StepProgress step={step} /> : null}
+          <View style={styles.header}>
+            <Text variant="title" accessibilityRole="header">
+              {title}
+            </Text>
+            {hint ? <Text muted>{hint}</Text> : null}
+          </View>
+          {children}
         </View>
-        {children}
       </ScrollView>
       {footer ? (
         <SafeAreaView
@@ -51,7 +53,7 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
             },
           ]}
         >
-          {footer}
+          <View style={styles.footerColumn}>{footer}</View>
         </SafeAreaView>
       ) : null}
     </View>
@@ -60,7 +62,9 @@ export function StepScreen({ step, title, hint, footer, children }: StepScreenPr
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: spacing.xl, gap: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: layout.gutterWide, paddingBottom: spacing.xxl },
+  column: { width: '100%', maxWidth: layout.maxWidth, alignSelf: 'center', gap: spacing.lg },
+  footerColumn: { width: '100%', maxWidth: layout.maxWidth, alignSelf: 'center', gap: spacing.sm },
   header: { gap: spacing.xs, marginTop: spacing.sm },
   footer: {
     gap: spacing.sm,

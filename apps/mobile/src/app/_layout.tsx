@@ -1,4 +1,4 @@
-import { colorSchemes } from '@smart-city/shared';
+import type { Locale } from '@smart-city/shared';
 import {
   DarkTheme,
   DefaultTheme,
@@ -7,6 +7,7 @@ import {
   ThemeProvider,
   type Theme,
 } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -18,16 +19,25 @@ import { AuthProvider, useAuth } from '@/lib/auth';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { ReportDraftProvider } from '@/lib/report-draft-context';
 import { AppThemeProvider, useAppTheme } from '@/lib/theme';
+import { appColorSchemes } from '@/theme/colors';
+import { FONT_SOURCES, fontsAvailable, setFontsAvailable } from '@/theme/fonts';
+import { fontFamilyFor } from '@/theme/typography';
 
 // Keep the splash screen up until the stored session is restored, so a signed-in user never
 // sees the sign-up screen flash by.
 void SplashScreen.preventAutoHideAsync();
 
-function navigationTheme(scheme: 'light' | 'dark'): Theme {
+function navigationTheme(scheme: 'light' | 'dark', locale: Locale): Theme {
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
-  const colors = colorSchemes[scheme];
+  const colors = appColorSchemes[scheme];
+  // Navigation text (tab labels, header titles) in the app font when it loaded.
+  const face = (weight: '400' | '500' | '600' | '700') =>
+    fontsAvailable()
+      ? { fontFamily: fontFamilyFor(locale, weight), fontWeight: 'normal' as const }
+      : base.fonts.regular && { ...base.fonts.regular, fontWeight: weight };
   return {
     ...base,
+    fonts: { regular: face('400'), medium: face('500'), bold: face('700'), heavy: face('700') },
     colors: {
       ...base.colors,
       primary: colors.primary,
@@ -102,24 +112,38 @@ const styles = StyleSheet.create({ root: { flex: 1 } });
 /** Navigation colors and the status bar follow the theme the user chose. */
 function ThemedApp() {
   const { scheme } = useAppTheme();
+  const { locale } = useI18n();
   return (
-    <ThemeProvider value={navigationTheme(scheme)}>
+    <ThemeProvider value={navigationTheme(scheme, locale)}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <RootNavigator />
     </ThemeProvider>
   );
 }
 
+/**
+ * Loads the bundled fonts while the splash screen is up. If they fail to load, the app still
+ * opens, in the system font.
+ */
+function FontGate({ children }: { children: React.ReactNode }) {
+  const [loaded, error] = useFonts(FONT_SOURCES);
+  if (!loaded && !error) return null;
+  setFontsAvailable(loaded && !error);
+  return children;
+}
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppThemeProvider>
-        <I18nProvider>
-          <AuthProvider>
-            <ThemedApp />
-          </AuthProvider>
-        </I18nProvider>
-      </AppThemeProvider>
+      <FontGate>
+        <AppThemeProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <ThemedApp />
+            </AuthProvider>
+          </I18nProvider>
+        </AppThemeProvider>
+      </FontGate>
     </SafeAreaProvider>
   );
 }

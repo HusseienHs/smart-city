@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
 import { DESCRIPTION_MAX_LENGTH, validateStep } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
+import { radii, spacing } from '@/theme/metrics';
 
 /** Step 2: description. */
 export default function DetailsStep() {

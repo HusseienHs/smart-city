@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getMyProfile, type MyProfile } from '@smart-city/api';
-import { radii, spacing } from '@smart-city/shared';
+import { palette } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -17,8 +17,11 @@ import { localizedName, useCities, useNeighborhoods } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { getSupabase } from '@/lib/supabase';
 import { useAppTheme } from '@/lib/theme';
+import { elevation, radii, spacing } from '@/theme/metrics';
 
-/** The citizen's profile hub: reports, home area, account settings and sign-out. */
+const IDENTITY_GRADIENT = `linear-gradient(135deg, ${palette.navy[800]} 0%, ${palette.navy[700]} 45%, ${palette.brand[700]} 100%)`;
+
+/** The citizen's account hub: reports, home area, settings, appearance and sign-out. */
 export default function ProfileScreen() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
@@ -87,27 +90,44 @@ export default function ProfileScreen() {
     <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text variant="title" accessibilityRole="header" style={styles.pageTitle}>
-          {t('mobileTabs.profile')}
+          {t('citizen.account.title')}
         </Text>
 
+        {/* Identity card: navy-to-teal, like the Home hero. */}
         <View
-          style={[styles.identity, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[
+            styles.identity,
+            {
+              backgroundColor: colors.hero,
+              backgroundImage: IDENTITY_GRADIENT,
+              shadowColor: colors.shadow,
+            },
+          ]}
         >
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+          <View
+            style={[
+              styles.avatar,
+              { backgroundColor: colors.glass, borderColor: colors.glassBorder },
+            ]}
+          >
             {initials ? (
-              <Text style={[styles.initials, { color: colors.onPrimary }]}>{initials}</Text>
+              <Text style={[styles.initials, { color: colors.onImage }]}>{initials}</Text>
             ) : (
-              <Ionicons name="person" size={28} color={colors.onPrimary} />
+              <Ionicons name="person" size={28} color={colors.onImage} />
             )}
           </View>
           <View style={styles.identityText}>
-            <Text variant="heading" numberOfLines={1}>
+            <Text variant="heading" numberOfLines={1} style={{ color: colors.onImage }}>
               {name ? t('profile.greeting', { name }) : t('profile.greetingNoName')}
             </Text>
             {user ? (
               <View style={styles.inline}>
-                <Ionicons name="location-outline" size={15} color={colors.textMuted} />
-                <Text variant="caption" muted numberOfLines={1} style={styles.flex}>
+                <Ionicons name="location-outline" size={15} color={colors.onImageMuted} />
+                <Text
+                  variant="caption"
+                  numberOfLines={1}
+                  style={[styles.flex, { color: colors.onImageMuted }]}
+                >
                   {homeArea || t('profile.homeAreaNotSet')}
                 </Text>
               </View>
@@ -146,6 +166,17 @@ export default function ProfileScreen() {
             onPress={() => router.push('/account/language')}
           />
           <SettingsRow
+            label={t('profile.notifications')}
+            icon="notifications-outline"
+            detail={t('common.comingSoon')}
+            onPress={() => router.push('/account/notifications')}
+            last
+          />
+        </SettingsGroup>
+
+        <SectionHeader title={t('citizen.account.appearance')} />
+        <SettingsGroup>
+          <SettingsRow
             label={t('common.darkMode')}
             icon={scheme === 'dark' ? 'moon' : 'moon-outline'}
             onPress={toggleDarkMode}
@@ -159,10 +190,10 @@ export default function ProfileScreen() {
             }
           />
           <SettingsRow
-            label={t('profile.notifications')}
-            icon="notifications-outline"
-            detail={t('common.comingSoon')}
-            onPress={() => router.push('/account/notifications')}
+            label={t('citizen.account.accessibility')}
+            icon="accessibility-outline"
+            detail={t('citizen.account.accessibilityHint')}
+            multilineDetail
             last
           />
         </SettingsGroup>
@@ -194,19 +225,27 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl },
+  scroll: {
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    padding: 20,
+    paddingBottom: spacing.xxxl,
+  },
   pageTitle: { marginBottom: spacing.lg },
   identity: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xl,
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    ...elevation.lg,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 64,
+    height: 64,
+    borderWidth: 1,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',

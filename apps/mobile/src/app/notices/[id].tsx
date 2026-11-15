@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { spacing } from '@smart-city/shared';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -8,7 +7,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/empty-state';
 import { LoadError, LoadingState } from '@/components/load-state';
 import { SeverityBadge, useSeverityColor } from '@/components/notices/severity-badge';
-import { screenHeaderOptions } from '@/components/screen-header';
+import { useScreenHeaderOptions } from '@/components/screen-header';
 import { SignInRequired } from '@/components/sign-in-required';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
@@ -17,6 +16,7 @@ import { localizedName } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
 import { formatReportDate } from '@/lib/my-reports';
 import { isHighlighted, noticeImageUrl, useAnnouncement } from '@/lib/notice-board';
+import { spacing } from '@/theme/metrics';
 
 /**
  * One announcement in full: image, severity, title, publication and expiry dates, municipality,
@@ -25,13 +25,14 @@ import { isHighlighted, noticeImageUrl, useAnnouncement } from '@/lib/notice-boa
 export default function AnnouncementScreen() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
+  const headerOptions = useScreenHeaderOptions(t('notices.detailsTitle'));
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const details = useAnnouncement(user?.id ?? null, id);
   const [imageFailed, setImageFailed] = useState(false);
   const loaded = details.status === 'success' ? details.data : null;
   const accent = useSeverityColor(loaded?.announcement.severity ?? 'info');
-  const header = <Stack.Screen options={screenHeaderOptions(colors, t('notices.detailsTitle'))} />;
+  const header = <Stack.Screen options={headerOptions} />;
 
   if (!user || !loaded) {
     return (

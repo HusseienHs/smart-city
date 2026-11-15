@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,6 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { isDraftStarted, REPORT_STEPS } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
+import { radii, spacing } from '@/theme/metrics';
 
 /** Entry point of the report flow (also reached from the home screen's report button). */
 export default function ReportScreen() {
@@ -26,7 +26,7 @@ export default function ReportScreen() {
   const submission = draft.submission;
 
   return (
-    <Screen title={t('mobileTabs.report')} subtitle={t('mobileScreens.reportSubtitle')}>
+    <Screen title={t('citizen.nav.newReport')} subtitle={t('mobileScreens.reportSubtitle')}>
       {!user ? (
         <SignInRequired />
       ) : restoring ? (

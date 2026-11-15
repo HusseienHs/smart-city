@@ -1,45 +1,62 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getMyReports } from '@smart-city/api';
-import { elevation, radii, spacing } from '@smart-city/shared';
 import { router, Stack } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
-import { LoadError, LoadingState } from '@/components/load-state';
+import { LoadError } from '@/components/load-state';
 import { CATEGORY_ICONS } from '@/components/report/category-icons';
 import { StatusBadge } from '@/components/report/status-badge';
-import { screenHeaderOptions } from '@/components/screen-header';
+import { useScreenHeaderOptions } from '@/components/screen-header';
 import { SignInRequired } from '@/components/sign-in-required';
 import { Text } from '@/components/text';
+import { ChipGroup } from '@/components/ui/chip-group';
+import { forwardChevron } from '@/components/ui/icon';
+import { IconBadge } from '@/components/ui/icon-badge';
+import { PressableCard } from '@/components/ui/pressable-card';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { useAsync } from '@/hooks/use-async';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
-import { formatReportDate, toReportCategory, type MyReport } from '@/lib/my-reports';
+import {
+  countMyReportFilters,
+  filterMyReports,
+  formatReportDate,
+  MY_REPORT_FILTERS,
+  toReportCategory,
+  type MyReport,
+  type MyReportFilter,
+} from '@/lib/my-reports';
 import { getSupabase } from '@/lib/supabase';
+import { layout, radius, shadow, spacing } from '@/theme/metrics';
 
-/** The citizen's own reports (`getMyReports`, own reports only, newest first). */
+/** The citizen's own reports (`getMyReports`, own reports only, newest first), filterable. */
 export default function MyReportsScreen() {
   const { t, locale, direction } = useI18n();
   const colors = useThemeColors();
+  const headerOptions = useScreenHeaderOptions(t('myReports.title'));
   const { user } = useAuth();
   const reports = useAsync<MyReport[]>(user?.id ?? null, () => getMyReports(getSupabase()));
-  const header = <Stack.Screen options={screenHeaderOptions(colors, t('myReports.title'))} />;
+  const [filter, setFilter] = useState<MyReportFilter>('all');
+  const header = <Stack.Screen options={headerOptions} />;
 
-  if (!user) {
+  const all = reports.status === 'success' ? reports.data : null;
+  const counts = useMemo(() => (all ? countMyReportFilters(all) : null), [all]);
+  const items = useMemo(() => (all ? filterMyReports(all, filter) : []), [all, filter]);
+
+  if (!user || reports.status !== 'success') {
     return (
       <View style={styles.content}>
         {header}
-        <SignInRequired />
-      </View>
-    );
-  }
-  if (reports.status !== 'success') {
-    return (
-      <View style={styles.content}>
-        {header}
-        {reports.status === 'loading' ? (
-          <LoadingState />
+        {!user ? (
+          <SignInRequired />
+        ) : reports.status !== 'error' ? (
+          <View style={styles.gap}>
+            <SkeletonCard lines={2} />
+            <SkeletonCard lines={2} />
+          </View>
         ) : (
           <LoadError error={reports.error} onRetry={reports.reload} />
         )}
@@ -47,7 +64,6 @@ export default function MyReportsScreen() {
     );
   }
 
-  const items = reports.data;
   return (
     <>
       {header}
@@ -57,50 +73,78 @@ export default function MyReportsScreen() {
         contentContainerStyle={styles.content}
         refreshing={false}
         onRefresh={reports.refresh}
+        ListHeaderComponent={
+          counts && counts.all > 0 ? (
+            <ChipGroup
+              value={filter}
+              onChange={setFilter}
+              accessibilityLabel={t('citizen.myReports.filterLabel')}
+              options={MY_REPORT_FILTERS.map((value) => ({
+                value,
+                label: t(`citizen.myReports.${value}`),
+                count: counts[value],
+              }))}
+            />
+          ) : undefined
+        }
         ListEmptyComponent={
-          <EmptyState icon="document-text-outline" title={t('myReports.empty')} />
+          counts && counts.all > 0 ? (
+            <EmptyState icon="filter-outline" title={t('citizen.myReports.emptyFilter')} />
+          ) : (
+            <EmptyState
+              icon="document-text-outline"
+              title={t('myReports.empty')}
+              description={t('citizen.home.summaryEmpty')}
+            />
+          )
         }
         renderItem={({ item }) => {
           const category = toReportCategory(item.category_code);
           const label = t(`reportCategory.${category}`);
+          const sent = t('citizen.myReports.sentOn', {
+            date: formatReportDate(item.created_at, locale),
+          });
           return (
-            <Pressable
+            <PressableCard
               onPress={() => router.push({ pathname: '/my-reports/[id]', params: { id: item.id } })}
-              accessibilityRole="button"
-              accessibilityLabel={`${label}, ${item.tracking_number}, ${t(`reportStatus.${item.status}`)}`}
-              style={({ pressed }) => [
+              accessibilityLabel={`${label}, ${item.tracking_number}, ${t(`reportStatus.${item.status}`)}, ${sent}`}
+              style={[
                 styles.row,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
                   shadowColor: colors.shadow,
                 },
-                pressed && styles.pressed,
               ]}
             >
-              <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
-                <Ionicons name={CATEGORY_ICONS[category]} size={22} color={colors.primary} />
-              </View>
+              <IconBadge icon={CATEGORY_ICONS[category]} size="lg" />
               <View style={styles.text}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {label}
-                </Text>
-                <Text variant="caption" muted style={styles.ltr}>
+                <View style={styles.top}>
+                  <Text variant="subheading" numberOfLines={1} style={styles.flex}>
+                    {label}
+                  </Text>
+                  <Ionicons
+                    name={forwardChevron(direction === 'rtl')}
+                    size={18}
+                    color={colors.textMuted}
+                  />
+                </View>
+                <Text variant="caption" style={[styles.ltr, { color: colors.primary }]}>
                   {item.tracking_number}
                 </Text>
-                <Text variant="caption" muted>
-                  {t('myReports.submittedOn', { date: formatReportDate(item.created_at, locale) })}
-                </Text>
-                <View style={styles.badge}>
+                {item.address ? (
+                  <Text variant="caption" muted numberOfLines={1}>
+                    {item.address}
+                  </Text>
+                ) : null}
+                <View style={styles.bottom}>
                   <StatusBadge status={item.status} />
+                  <Text variant="micro" muted>
+                    {sent}
+                  </Text>
                 </View>
               </View>
-              <Ionicons
-                name={direction === 'rtl' ? 'chevron-back' : 'chevron-forward'}
-                size={18}
-                color={colors.textMuted}
-              />
-            </Pressable>
+            </PressableCard>
           );
         }}
       />
@@ -109,28 +153,34 @@ export default function MyReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxxl },
+  content: {
+    width: '100%',
+    maxWidth: layout.maxWidth,
+    alignSelf: 'center',
+    padding: layout.gutterWide,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+  },
+  gap: { gap: spacing.md },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     padding: spacing.lg,
-    borderRadius: radii.lg,
+    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    ...elevation.sm,
+    ...shadow.card,
   },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.md,
+  text: { flex: 1, gap: 3 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  flex: { flex: 1 },
+  bottom: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
-  text: { flex: 1, gap: 2 },
-  title: { fontSize: 17, fontWeight: '600' },
-  badge: { marginTop: spacing.xs },
   // Tracking numbers are Latin/digits: keep them left-to-right in Hebrew and Arabic.
-  ltr: { writingDirection: 'ltr', alignSelf: 'flex-start' },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  ltr: { writingDirection: 'ltr', alignSelf: 'flex-start', fontWeight: '700' },
 });

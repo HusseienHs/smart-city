@@ -3,49 +3,72 @@ import type { BottomTabBarButtonProps } from 'expo-router/tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
+import { useMotion } from '@/theme';
+import { radius, shadow } from '@/theme/metrics';
 
-/** Raised, high-contrast center tab button so "Report" is always one tap away. */
+import { Text } from './text';
+
+/**
+ * Raised center tab button ("New report"): a teal disc cut into the tab bar, with its label
+ * underneath, so reporting is always one tap away.
+ */
 export function ReportTabButton({
   onPress,
   onLongPress,
   accessibilityLabel,
-}: BottomTabBarButtonProps) {
+  label,
+}: BottomTabBarButtonProps & { label: string }) {
   const colors = useThemeColors();
+  const { reduced, pressScale } = useMotion();
   return (
-    <View style={styles.container}>
-      {/* The ring in the tab bar color makes the button look cut into the bar. */}
-      <View style={[styles.ring, { backgroundColor: colors.surface }]}>
-        <Pressable
-          onPress={onPress}
-          onLongPress={onLongPress}
-          accessibilityRole="button"
-          accessibilityLabel={accessibilityLabel}
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.button,
-            {
-              backgroundColor: pressed ? colors.primaryPressed : colors.primary,
-              shadowColor: colors.primary,
-            },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Ionicons name="add" size={30} color={colors.onPrimary} />
-        </Pressable>
-      </View>
-    </View>
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress ?? undefined}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      hitSlop={6}
+      style={styles.container}
+    >
+      {({ pressed }) => (
+        <>
+          {/* The ring in the tab bar color makes the button look cut into the bar. */}
+          <View style={[styles.ring, { backgroundColor: colors.surface }]}>
+            <View
+              style={[
+                styles.button,
+                {
+                  backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                  shadowColor: colors.primary,
+                },
+                pressed && !reduced && { transform: [{ scale: pressScale }] },
+              ]}
+            >
+              <Ionicons name="paper-plane" size={26} color={colors.onPrimary} />
+            </View>
+          </View>
+          <Text
+            variant="micro"
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.3}
+            style={[styles.label, { color: colors.text }]}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }
 
-const SIZE = 58;
-const RING = 5;
+const SIZE = 60;
+const RING = 6;
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center' },
   ring: {
     padding: RING,
-    borderRadius: (SIZE + RING * 2) / 2,
-    marginTop: -(SIZE / 2.4),
+    borderRadius: radius.full,
+    marginTop: -(SIZE / 2.2),
   },
   button: {
     width: SIZE,
@@ -53,10 +76,8 @@ const styles = StyleSheet.create({
     borderRadius: SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    ...shadow.float,
+    shadowOpacity: 0.35,
   },
-  pressed: { transform: [{ scale: 0.95 }] },
+  label: { fontWeight: '700', marginTop: -2 },
 });

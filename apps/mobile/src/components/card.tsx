@@ -1,22 +1,34 @@
-import { elevation, radii, spacing } from '@smart-city/shared';
 import type { PropsWithChildren } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
+import { radius, shadow, spacing } from '@/theme/metrics';
+
+import { PressableCard } from './ui/pressable-card';
 
 interface CardProps extends PropsWithChildren {
   onPress?: () => void;
   accessibilityLabel?: string;
   /** Removes the inner padding (e.g. for edge-to-edge images or lists). */
   flush?: boolean;
+  /** `raised` adds a deeper shadow for the page's key card. */
+  elevation?: 'card' | 'raised';
   style?: StyleProp<ViewStyle>;
 }
 
-/** Surface with a hairline border and soft shadow; pressable when `onPress` is given. */
-export function Card({ onPress, accessibilityLabel, flush = false, style, children }: CardProps) {
+/** Premium surface: hairline border, soft navy shadow; pressable when `onPress` is given. */
+export function Card({
+  onPress,
+  accessibilityLabel,
+  flush = false,
+  elevation = 'card',
+  style,
+  children,
+}: CardProps) {
   const colors = useThemeColors();
   const base = [
     styles.card,
+    shadow[elevation],
     !flush && styles.padded,
     { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadow },
     style,
@@ -24,23 +36,13 @@ export function Card({ onPress, accessibilityLabel, flush = false, style, childr
 
   if (!onPress) return <View style={base}>{children}</View>;
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [base, pressed && styles.pressed]}
-    >
+    <PressableCard onPress={onPress} accessibilityLabel={accessibilityLabel} style={base}>
       {children}
-    </Pressable>
+    </PressableCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    ...elevation.sm,
-  },
-  padded: { padding: spacing.lg, gap: spacing.md },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  card: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+  padded: { padding: spacing.lg + 2, gap: spacing.md },
 });

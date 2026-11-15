@@ -1,4 +1,4 @@
-import { signUpSchema, spacing } from '@smart-city/shared';
+import { signUpSchema } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
@@ -16,6 +16,7 @@ import { isSupabaseConfigured } from '@/lib/env';
 import { firstIssueByField } from '@/lib/forms';
 import { municipalityOptions, useCities } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 type Field = 'fullName' | 'email' | 'password' | 'homeMunicipalityId';
 
@@ -73,7 +74,7 @@ export default function SignUpScreen() {
   }
 
   return (
-    <Screen icon="business" title={t('auth.signUpTitle')} subtitle={t('auth.signUpSubtitle')}>
+    <Screen banner title={t('auth.signUpTitle')} subtitle={t('auth.signUpSubtitle')}>
       {!isSupabaseConfigured ? <Text muted>{t('auth.notConfigured')}</Text> : null}
 
       <View style={styles.form}>

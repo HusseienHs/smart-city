@@ -1,12 +1,12 @@
-import { radii, spacing } from '@smart-city/shared';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
 import { REPORT_STEPS, type ReportStep } from '@/lib/report-draft';
+import { radius, spacing } from '@/theme/metrics';
 
-/** "Step 2 of 5" with a segmented bar; segments follow the reading direction (RTL/LTR). */
+/** The step name, a "2 of 5" pill and a segmented bar; segments follow the reading direction. */
 export function StepProgress({ step }: { step: ReportStep }) {
   const { t } = useI18n();
   const colors = useThemeColors();
@@ -19,16 +19,18 @@ export function StepProgress({ step }: { step: ReportStep }) {
       style={styles.root}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={label}
+      accessibilityLabel={`${t(`reportFlow.steps.${step}`)}, ${label}`}
       accessibilityValue={{ min: 1, max: total, now: current }}
     >
       <View style={styles.labels}>
         <Text variant="label" style={{ color: colors.primary }}>
           {t(`reportFlow.steps.${step}`)}
         </Text>
-        <Text variant="caption" muted>
-          {label}
-        </Text>
+        <View style={[styles.counter, { backgroundColor: colors.primarySoft }]}>
+          <Text variant="micro" style={{ color: colors.primary, fontWeight: '700' }}>
+            {label}
+          </Text>
+        </View>
       </View>
       <View style={styles.bar}>
         {REPORT_STEPS.map((name, index) => (
@@ -48,6 +50,7 @@ export function StepProgress({ step }: { step: ReportStep }) {
 const styles = StyleSheet.create({
   root: { gap: spacing.sm },
   labels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  counter: { paddingHorizontal: spacing.sm + 2, paddingVertical: 3, borderRadius: radius.full },
   bar: { flexDirection: 'row', gap: 6 },
-  segment: { flex: 1, height: 6, borderRadius: radii.full },
+  segment: { flex: 1, height: 6, borderRadius: radius.full },
 });

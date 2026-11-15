@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { BackHandler, Platform, StyleSheet, View } from 'react-native';
@@ -9,6 +8,7 @@ import { StepScreen } from '@/components/report/step-screen';
 import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
+import { radii, spacing } from '@/theme/metrics';
 
 function finish() {
   router.dismissTo('/');

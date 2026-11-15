@@ -1,17 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import type { ComponentProps } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
+import { radius, shadow, spacing } from '@/theme/metrics';
 
 import { Text } from './text';
+import { PressableCard } from './ui/pressable-card';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
   /**
-   * primary: solid brand color · soft: light brand tint · secondary: outlined ·
+   * primary: solid teal · soft: light teal tint · secondary: outlined ·
    * ghost: text only · danger: destructive (red tint).
    */
   variant?: 'primary' | 'soft' | 'secondary' | 'ghost' | 'danger';
@@ -43,30 +44,36 @@ export function Button({
           ? colors.danger
           : colors.primary;
 
+  const fill = {
+    primary: { backgroundColor: colors.primary, shadowColor: colors.primary },
+    soft: { backgroundColor: colors.primarySoft },
+    danger: { backgroundColor: colors.dangerSoft },
+    secondary: { backgroundColor: colors.surface, borderColor: colors.borderStrong },
+    ghost: {},
+  }[variant];
+
+  const pressedFill = {
+    primary: { backgroundColor: colors.primaryPressed },
+    soft: { opacity: 0.8 },
+    danger: { opacity: 0.8 },
+    secondary: { backgroundColor: colors.surfaceMuted },
+    ghost: { backgroundColor: colors.primarySoft },
+  }[variant];
+
   return (
-    <Pressable
+    <PressableCard
       onPress={onPress}
       disabled={isDisabled}
-      accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
+      style={[
         styles.button,
         size === 'lg' && styles.large,
-        variant === 'primary' && {
-          backgroundColor: pressed ? colors.primaryPressed : colors.primary,
-        },
-        variant === 'soft' && { backgroundColor: colors.primarySoft },
-        variant === 'danger' && { backgroundColor: colors.dangerSoft },
-        variant === 'secondary' && {
-          borderColor: colors.borderStrong,
-          backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
-        },
-        variant === 'ghost' && pressed && { backgroundColor: colors.primarySoft },
-        pressed && variant !== 'primary' && variant !== 'secondary' && styles.pressedSoft,
-        pressed && styles.pressed,
+        variant === 'primary' && !isDisabled && styles.glow,
+        fill,
         isDisabled && styles.disabled,
       ]}
+      pressedStyle={pressedFill}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />
@@ -76,24 +83,23 @@ export function Button({
           <Text style={[styles.label, { color: textColor }]}>{title}</Text>
         </View>
       )}
-    </Pressable>
+    </PressableCard>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 50,
+    minHeight: 52,
     paddingHorizontal: spacing.lg,
-    borderRadius: radii.md,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  large: { minHeight: 56, borderRadius: radii.lg },
+  large: { minHeight: 58, borderRadius: radius.lg },
+  glow: { ...shadow.card, shadowOpacity: 0.22 },
   content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  label: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-  pressed: { transform: [{ scale: 0.985 }] },
-  pressedSoft: { opacity: 0.75 },
+  label: { fontSize: 16, lineHeight: 22, fontWeight: '600', textAlign: 'center' },
   disabled: { opacity: 0.5 },
 });

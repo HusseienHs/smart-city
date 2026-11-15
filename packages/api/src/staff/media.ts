@@ -49,7 +49,11 @@ interface SignedUrlRow {
   error: string | null;
 }
 
-async function signPaths(
+/**
+ * Signed URLs for report-media paths as the signed-in user; the storage read policy decides.
+ * Paths the caller may not read are simply missing from the result.
+ */
+export async function signReportMediaPaths(
   client: SmartCityClient,
   paths: string[],
   options: { download?: boolean },
@@ -86,8 +90,8 @@ export async function signReportAttachments(
   await requireUserId(client);
   const paths = attachments.map((attachment) => attachment.storage_path);
   const [view, download] = await Promise.all([
-    signPaths(client, paths, {}),
-    signPaths(client, paths, { download: true }),
+    signReportMediaPaths(client, paths, {}),
+    signReportMediaPaths(client, paths, { download: true }),
   ]);
   return attachments.map((attachment) => ({
     attachmentId: attachment.id,

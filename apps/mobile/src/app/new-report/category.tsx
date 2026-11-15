@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { elevation, radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -18,6 +17,7 @@ import { useI18n } from '@/lib/i18n';
 import { validateStep } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
 import { useHomeMunicipalityId, useReportCategories } from '@/lib/report-options';
+import { elevation, radii, spacing } from '@/theme/metrics';
 
 /**
  * Step 1: one of the categories of the user's city. Reports always go to the city chosen at
@@ -157,6 +157,9 @@ export default function CategoryStep() {
                   />
                 </View>
                 <Text style={styles.label}>{label}</Text>
+                <Text variant="micro" muted numberOfLines={2} style={styles.hint}>
+                  {t(`citizen.categoryHint.${category}`)}
+                </Text>
                 {selected ? (
                   <Ionicons
                     name="checkmark-circle"
@@ -188,6 +191,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   cityName: { fontWeight: '600' },
+  hint: { textAlign: 'center', marginTop: -spacing.xs },
   flex: { flex: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   card: {

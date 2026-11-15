@@ -1,10 +1,10 @@
-import { spacing } from '@smart-city/shared';
 import { ScrollView, StyleSheet, Switch } from 'react-native';
 
 import { Notice } from '@/components/report/notice';
 import { SettingsGroup, SettingsRow } from '@/components/settings-row';
 import { Text } from '@/components/text';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 /**
  * Email and phone notification settings. Shown but disabled: the backend has no preference

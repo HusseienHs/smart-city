@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { updateMyProfile } from '@smart-city/api';
-import { spacing, SUPPORTED_LOCALES, type Locale } from '@smart-city/shared';
+import { SUPPORTED_LOCALES, type Locale } from '@smart-city/shared';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -12,6 +12,7 @@ import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { getSupabase } from '@/lib/supabase';
+import { spacing } from '@/theme/metrics';
 
 type SyncState = { status: 'idle' } | { status: 'syncing' } | { status: 'error'; locale: Locale };
 

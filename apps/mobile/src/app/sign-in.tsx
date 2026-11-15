@@ -1,4 +1,4 @@
-import { signInSchema, spacing } from '@smart-city/shared';
+import { signInSchema } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { canUsePreview, signIn, useAuth } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/env';
 import { firstIssueByField } from '@/lib/forms';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 type Field = 'email' | 'password';
 
@@ -49,7 +50,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <Screen icon="business" title={t('auth.signInTitle')} subtitle={t('auth.signInSubtitle')}>
+    <Screen banner title={t('auth.signInTitle')} subtitle={t('auth.signInSubtitle')}>
       {!isSupabaseConfigured ? <Text muted>{t('auth.notConfigured')}</Text> : null}
 
       <View style={styles.form}>

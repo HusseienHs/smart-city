@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { attachReportPhoto, submitReport } from '@smart-city/api';
-import { radii, REPORT_VISIBILITIES, spacing } from '@smart-city/shared';
+import { REPORT_VISIBILITIES } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Image } from 'expo-image';
 import { router, Stack, type Href } from 'expo-router';
@@ -27,6 +27,7 @@ import {
 import { useReportDraft } from '@/lib/report-draft-context';
 import { sendReport, type SendProgress, type SubmissionServices } from '@/lib/report-submission';
 import { getSupabase } from '@/lib/supabase';
+import { radii, spacing } from '@/theme/metrics';
 
 const SERVICES: SubmissionServices = { submitReport, attachReportPhoto, readPhotoBytes };
 
@@ -260,7 +261,7 @@ export default function ReviewStep() {
               {t('reportFlow.trackingNumberLabel')}
             </Text>
             <Text variant="heading" selectable style={styles.ltr}>
-              {draft.submission!.trackingNumber}
+              {draft.submission?.trackingNumber}
             </Text>
             {sending ? null : photos.failed > 0 ? (
               <Text>

@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { PublishedAnnouncement } from '@smart-city/api';
-import { radii, spacing } from '@smart-city/shared';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -8,47 +7,50 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { EmptyState } from '@/components/empty-state';
-import { LoadError, LoadingState } from '@/components/load-state';
+import { LoadError } from '@/components/load-state';
 import { AnnouncementCard } from '@/components/notices/announcement-card';
 import { FilterChips } from '@/components/notices/filter-chips';
 import { SignInRequired } from '@/components/sign-in-required';
 import { Text } from '@/components/text';
+import { Segmented } from '@/components/ui/segmented';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { localizedName } from '@/lib/home-area';
 import { useI18n } from '@/lib/i18n';
-import {
-  countByFilter,
-  filterAnnouncements,
-  useNoticeBoard,
-  type NoticeFilter,
-} from '@/lib/notice-board';
+import { countByFilter, filterAnnouncements, type NoticeFilter } from '@/lib/notice-board';
+import { useUpdates } from '@/lib/updates-context';
+import { layout, radius, spacing } from '@/theme/metrics';
+
+type Section = 'announcements' | 'notifications';
 
 /**
- * The Notice Board: official announcements of the citizen's home municipality (published,
- * unexpired, from a municipality that joined), newest first. Refreshes when the tab is shown
- * and on pull-to-refresh.
+ * Updates (route `notices`, kept for deep links): official announcements of the citizen's home
+ * municipality (published, unexpired, from a municipality that joined), newest first, and a
+ * placeholder for personal notifications until the backend delivers them. Opening it clears the
+ * "new" dot; it refreshes when shown again and on pull-to-refresh.
  */
-export default function NoticeBoardScreen() {
+export default function UpdatesScreen() {
   const { t, locale } = useI18n();
   const colors = useThemeColors();
   const { user } = useAuth();
-  const board = useNoticeBoard(user?.id ?? null);
+  const { board, markSeen } = useUpdates();
   const [filter, setFilter] = useState<NoticeFilter>('all');
+  const [section, setSection] = useState<Section>('announcements');
 
   // Quietly reload when the tab comes back into view (e.g. after changing the home city). The
-  // first focus is skipped: the initial load is already running, and a second request would
-  // replace it.
+  // first focus is skipped: the initial load is already running.
   const { refresh } = board;
   const focusedBefore = useRef(false);
   useFocusEffect(
     useCallback(() => {
+      markSeen();
       if (!focusedBefore.current) {
         focusedBefore.current = true;
         return;
       }
       if (user) refresh();
-    }, [user, refresh]),
+    }, [user, refresh, markSeen]),
   );
 
   const ready = board.status === 'success' && board.data.kind === 'ready' ? board.data : null;
@@ -57,13 +59,14 @@ export default function NoticeBoardScreen() {
     [ready, filter],
   );
   const cityName = ready ? localizedName(ready.city.name, locale) : '';
+  const showAnnouncements = section === 'announcements';
 
   const header = (
     <View style={styles.header}>
       <Text variant="title" accessibilityRole="header">
-        {t('notices.title')}
+        {t('citizen.updates.title')}
       </Text>
-      <Text muted>{t('notices.subtitle')}</Text>
+      <Text muted>{t('citizen.updates.subtitle')}</Text>
       {ready ? (
         <View style={[styles.city, { backgroundColor: colors.primarySoft }]}>
           <Ionicons name="location" size={14} color={colors.primary} />
@@ -72,7 +75,16 @@ export default function NoticeBoardScreen() {
           </Text>
         </View>
       ) : null}
-      {ready && ready.announcements.length > 0 ? (
+      <Segmented
+        value={section}
+        onChange={setSection}
+        accessibilityLabel={t('citizen.updates.sections')}
+        options={[
+          { value: 'announcements', label: t('citizen.updates.announcements') },
+          { value: 'notifications', label: t('citizen.updates.notifications') },
+        ]}
+      />
+      {showAnnouncements && ready && ready.announcements.length > 0 ? (
         <FilterChips
           value={filter}
           counts={countByFilter(ready.announcements)}
@@ -84,7 +96,23 @@ export default function NoticeBoardScreen() {
 
   function emptyContent() {
     if (!user) return <SignInRequired />;
-    if (board.status === 'loading') return <LoadingState />;
+    if (!showAnnouncements) {
+      return (
+        <EmptyState
+          icon="notifications-outline"
+          title={t('citizen.updates.notificationsEmptyTitle')}
+          description={t('citizen.updates.notificationsEmptyDescription')}
+        />
+      );
+    }
+    if (board.status === 'loading') {
+      return (
+        <View style={styles.gap}>
+          <SkeletonCard lines={3} />
+          <SkeletonCard lines={3} />
+        </View>
+      );
+    }
     if (board.status === 'error') return <LoadError error={board.error} onRetry={board.reload} />;
     const data = board.data;
     if (data.kind === 'no-home') {
@@ -128,13 +156,13 @@ export default function NoticeBoardScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.root, { backgroundColor: colors.background }]}>
       <FlatList<PublishedAnnouncement>
-        data={announcements}
+        data={showAnnouncements ? announcements : []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         ListHeaderComponent={header}
         ListEmptyComponent={emptyContent()}
         refreshing={false}
-        onRefresh={user ? refresh : undefined}
+        onRefresh={user && showAnnouncements ? refresh : undefined}
         renderItem={({ item }) => (
           <AnnouncementCard
             announcement={item}
@@ -149,7 +177,14 @@ export default function NoticeBoardScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxxl },
+  content: {
+    width: '100%',
+    maxWidth: layout.maxWidth,
+    alignSelf: 'center',
+    padding: layout.gutterWide,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+  },
   header: { gap: spacing.sm, marginBottom: spacing.sm },
   city: {
     flexDirection: 'row',
@@ -158,7 +193,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingVertical: 4,
     paddingHorizontal: spacing.sm + 2,
-    borderRadius: radii.full,
+    borderRadius: radius.full,
   },
   gap: { gap: spacing.md },
 });

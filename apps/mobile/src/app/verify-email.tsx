@@ -1,4 +1,4 @@
-import { signInSchema, spacing } from '@smart-city/shared';
+import { signInSchema } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -14,6 +14,7 @@ import { useThemeColors } from '@/hooks/use-theme';
 import { authRedirectInfo, resendVerification } from '@/lib/auth';
 import { devRedirectNoticeKey, isDevelopmentEnv } from '@/lib/auth-redirect';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 /** Supabase limits confirmation emails; this keeps users from hitting the limit by accident. */
 const RESEND_COOLDOWN_SECONDS = 60;

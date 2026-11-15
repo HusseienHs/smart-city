@@ -1,4 +1,4 @@
-import { signInSchema, spacing } from '@smart-city/shared';
+import { signInSchema } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -13,6 +13,7 @@ import { TextField } from '@/components/text-field';
 import { requestPasswordReset } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/env';
 import { useI18n } from '@/lib/i18n';
+import { spacing } from '@/theme/metrics';
 
 const emailSchema = signInSchema.shape.email;
 

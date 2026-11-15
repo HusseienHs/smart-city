@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { MAX_REPORT_PHOTOS, radii, spacing } from '@smart-city/shared';
+import { MAX_REPORT_PHOTOS } from '@smart-city/shared';
 import { Image } from 'expo-image';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { pickPhotos, preparePhoto } from '@/lib/device-photos';
 import { useI18n } from '@/lib/i18n';
 import { formatFileSize, validateStep } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
+import { radii, spacing } from '@/theme/metrics';
 
 type Message = { text: string; tone: 'info' | 'error'; settings?: boolean };
 

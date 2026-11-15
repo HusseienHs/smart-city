@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import type { MessageKey } from '@smart-city/shared/i18n';
 import { Redirect, router } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -15,6 +14,7 @@ import { locateDevice, type LocateResult } from '@/lib/device-location';
 import { useI18n } from '@/lib/i18n';
 import { ADDRESS_MAX_LENGTH, validateStep, type DraftErrors } from '@/lib/report-draft';
 import { useReportDraft } from '@/lib/report-draft-context';
+import { radii, spacing } from '@/theme/metrics';
 
 type Problem = Exclude<LocateResult, { status: 'located' }>;
 

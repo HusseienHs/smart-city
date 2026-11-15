@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { palette, radii, spacing } from '@smart-city/shared';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,6 +6,7 @@ import { Text } from '@/components/text';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
 import type { AnnouncementSeverity } from '@/lib/notice-board';
+import { radii, spacing } from '@/theme/metrics';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -20,7 +20,7 @@ const ICONS: Readonly<Record<AnnouncementSeverity, IconName>> = {
 export function useSeverityColor(severity: AnnouncementSeverity): string {
   const colors = useThemeColors();
   if (severity === 'emergency') return colors.danger;
-  if (severity === 'important') return palette.warning;
+  if (severity === 'important') return colors.warning;
   return colors.primary;
 }
 

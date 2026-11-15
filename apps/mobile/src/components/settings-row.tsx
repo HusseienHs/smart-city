@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { radii, spacing } from '@smart-city/shared';
 import type { ComponentProps, PropsWithChildren, ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
+import { radii, spacing } from '@/theme/metrics';
 
 import { Text } from './text';
 
@@ -16,6 +16,8 @@ interface SettingsRowProps {
   onPress?: () => void;
   /** Secondary text under the label (e.g. the current language). */
   detail?: string;
+  /** Lets the detail wrap (explanations) instead of one truncated line. */
+  multilineDetail?: boolean;
   /** Replaces the chevron with a spinner. */
   loading?: boolean;
   disabled?: boolean;
@@ -35,6 +37,7 @@ export function SettingsRow({
   icon,
   onPress,
   detail,
+  multilineDetail = false,
   loading = false,
   disabled = false,
   accessory,
@@ -71,7 +74,7 @@ export function SettingsRow({
       <View style={styles.text}>
         <Text style={[styles.label, isDanger && { color: colors.danger }]}>{label}</Text>
         {detail ? (
-          <Text variant="caption" muted numberOfLines={1}>
+          <Text variant="caption" muted numberOfLines={multilineDetail ? undefined : 1}>
             {detail}
           </Text>
         ) : null}
@@ -86,7 +89,11 @@ export function SettingsRow({
 
   if (!onPress) {
     return (
-      <View style={[rowStyle, disabled && styles.disabled]} accessible accessibilityLabel={label}>
+      <View
+        style={[rowStyle, disabled && styles.disabled]}
+        accessible
+        accessibilityLabel={detail ? `${label}, ${detail}` : label}
+      >
         {content}
       </View>
     );

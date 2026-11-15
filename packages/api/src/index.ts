@@ -19,8 +19,10 @@ export * from './reference-data/reference-data';
 
 export * from './me/columns';
 export * from './me/me';
+export * from './me/report-media';
 
 export * from './reports/submission';
+export * from './reports/public-reports';
 
 export * from './staff/staff';
 export * from './staff/report-columns';

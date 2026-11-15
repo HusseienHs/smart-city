@@ -34,3 +34,4 @@ export * from './staff/workflow';
 export * from './auth/staff-sign-up';
 export * from './staff/departments';
 export * from './staff/staff-admin';
+export * from './staff/announcements';

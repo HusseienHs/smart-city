@@ -7,6 +7,7 @@ import {
   MY_PROFILE_COLUMNS,
   NEIGHBORHOOD_COLUMNS,
   REPORT_CATEGORY_COLUMNS,
+  STAFF_ANNOUNCEMENT_COLUMNS,
 } from '@smart-city/api';
 import { describe, expect, it } from 'vitest';
 
@@ -90,6 +91,59 @@ describe('@smart-city/api column lists against real permissions', () => {
     ).map((row) => row.id);
     expect(visible).toContain(published!.id);
     expect(visible).not.toContain(draft!.id);
+  });
+});
+
+describe('@smart-city/api staff announcement statements against real permissions', () => {
+  const world = useWorld();
+
+  it('lets department staff create, read and edit a draft with the columns the API uses', async () => {
+    // createAnnouncement: the inserted columns, returning STAFF_ANNOUNCEMENT_COLUMNS.
+    const [created] = await world.db.as<{ id: string; status: string; neighborhood_id: string }>(
+      user(ids.employeeAX),
+      `insert into public.announcements
+         (municipality_id, department_id, neighborhood_id, title, body, severity, expires_at)
+       values ($1, $2, $3, '{"he": "עבודות"}', '{"he": "תוכן"}', 'important', now() + interval '1 day')
+       returning ${STAFF_ANNOUNCEMENT_COLUMNS}`,
+      [ids.muniA, ids.deptAX, ids.neighborhoodANorth],
+    );
+    expect(created).toMatchObject({ status: 'draft', neighborhood_id: ids.neighborhoodANorth });
+
+    // updateAnnouncement: exactly the updated columns, returning STAFF_ANNOUNCEMENT_COLUMNS.
+    const updated = await world.db.as(
+      user(ids.employeeAX),
+      `update public.announcements
+         set neighborhood_id = null, title = '{"he": "עבודות", "en": "Works"}',
+             body = '{"he": "תוכן"}', severity = 'info', expires_at = null
+       where id = $1 and municipality_id = $2
+       returning ${STAFF_ANNOUNCEMENT_COLUMNS}`,
+      [created!.id, ids.muniA],
+    );
+    expect(updated).toHaveLength(1);
+
+    // listStaffAnnouncements as another staff member of the municipality.
+    const listed = await world.db.as<{ id: string }>(
+      user(ids.managerAY),
+      `select ${STAFF_ANNOUNCEMENT_COLUMNS} from public.announcements where municipality_id = $1`,
+      [ids.muniA],
+    );
+    expect(listed.map((row) => row.id)).toContain(created!.id);
+  });
+
+  it('refuses the department through the update (the API never changes it)', async () => {
+    const [created] = await world.db.as<{ id: string }>(
+      user(ids.adminA),
+      `insert into public.announcements (municipality_id, title, body)
+       values ($1, '{"he": "הודעה"}', '{"he": "תוכן"}') returning id`,
+      [ids.muniA],
+    );
+    expect(
+      await world.db.fails(
+        user(ids.adminA),
+        `update public.announcements set department_id = $2 where id = $1`,
+        [created!.id, ids.deptAX],
+      ),
+    ).toMatch(DENIED);
   });
 });
 

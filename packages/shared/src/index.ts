@@ -4,3 +4,4 @@ export * from './reports';
 export * from './roles';
 export * from './validation';
 export * from './staff-validation';
+export * from './content-validation';

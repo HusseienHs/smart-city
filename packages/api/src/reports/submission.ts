@@ -146,7 +146,7 @@ function byteSize(bytes: ReportPhotoBytes): number {
       : bytes.byteLength;
 }
 
-interface StorageErrorLike {
+export interface StorageErrorLike {
   message?: string;
   status?: number;
   statusCode?: string;
@@ -167,7 +167,7 @@ export function storageErrorStatus(error: StorageErrorLike): number | undefined 
 }
 
 /** Maps a storage-js error to an ApiError (see storageErrorStatus for the two formats). */
-function fromStorageError(error: StorageErrorLike): ApiError {
+export function fromStorageError(error: StorageErrorLike): ApiError {
   const status = storageErrorStatus(error);
   if (!status) {
     // No HTTP response: a failed connection (StorageUnknownError wraps the fetch failure).

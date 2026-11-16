@@ -3,13 +3,15 @@
 import type { Locale } from '@smart-city/shared';
 import Link from 'next/link';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
+import { MenuSeparator, menuItemClasses, menuPanelClasses } from '@/components/ui/menu';
 import { usePopover } from '@/components/ui/use-popover';
 import { signOutAction } from '@/lib/auth/actions';
 import { cn } from '@/lib/cn';
 
-interface UserMenuProps {
+export interface UserMenuProps {
   locale: Locale;
   name: string;
   email: string | null;
@@ -26,13 +28,14 @@ interface UserMenuProps {
   };
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length > 1 ? [parts[0]![0], parts.at(-1)![0]] : [parts[0]?.[0]];
-  return letters.filter(Boolean).join('').toUpperCase() || '?';
-}
-
+/**
+ * The signed-in staff member and their account menu. `sidebar` is the full-width row at the
+ * bottom of the sidebar (opens upward; collapses to the avatar in the icon rail); `header` is
+ * the avatar button in the top bar on phones, where the sidebar is hidden.
+ */
 export function UserMenu({
+  placement,
+  rail,
   locale,
   name,
   email,
@@ -42,10 +45,22 @@ export function UserMenu({
   accessHref,
   pendingInvitations,
   labels,
-}: UserMenuProps) {
+}: UserMenuProps & { placement: 'sidebar' | 'header'; rail?: boolean }) {
   const { open, setOpen, toggleOpen, containerRef, toggleRef, panelId } = usePopover();
-  const item =
-    'flex h-9 w-full items-center gap-2.5 rounded-sm px-3 text-base text-foreground transition-colors hover:bg-surface-muted';
+  const inSidebar = placement === 'sidebar';
+  const railHidden = rail ? 'rail:sr-only' : undefined;
+
+  const avatar = (
+    <span className="relative">
+      <Avatar name={name} size={inSidebar ? 'sm' : 'md'} />
+      {pendingInvitations > 0 ? (
+        <span
+          aria-hidden
+          className="absolute -end-0.5 -top-0.5 size-2.5 rounded-full border-2 border-sidebar bg-primary"
+        />
+      ) : null}
+    </span>
+  );
 
   return (
     <div ref={containerRef} className="relative">
@@ -56,57 +71,78 @@ export function UserMenu({
         aria-controls={panelId}
         onClick={toggleOpen}
         aria-label={`${labels.menu}: ${name}`}
-        className="flex items-center gap-2 rounded-full p-0.5 pe-1 transition-colors hover:bg-surface-muted sm:pe-2"
+        title={rail ? name : undefined}
+        className={cn(
+          'flex items-center text-start transition-colors duration-150',
+          'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none',
+          inSidebar
+            ? cn(
+                'w-full gap-2.5 rounded-md p-1.5 hover:bg-sidebar-hover',
+                open && 'bg-sidebar-hover',
+                rail && 'rail:mx-auto rail:size-10 rail:justify-center rail:p-0',
+              )
+            : 'rounded-full p-0.5 hover:bg-surface-muted',
+        )}
       >
-        <span className="relative flex size-8 items-center justify-center rounded-full bg-navy text-xs font-semibold text-white">
-          {initials(name)}
-          {pendingInvitations > 0 ? (
-            <span className="absolute -end-0.5 -top-0.5 size-2.5 rounded-full border-2 border-surface bg-primary" />
-          ) : null}
-        </span>
-        <span className="hidden max-w-40 truncate text-sm font-medium text-foreground sm:block">
-          {name}
-        </span>
-        <Icon
-          name="chevronDown"
-          className={cn(
-            'hidden size-3.5 text-muted transition-transform sm:block',
-            open && 'rotate-180',
-          )}
-        />
+        {avatar}
+        {inSidebar ? (
+          <>
+            <span className={cn('min-w-0 flex-1 leading-tight', railHidden)}>
+              <span className="block truncate text-sm font-medium text-foreground">{name}</span>
+              <span className="mt-0.5 block truncate text-2xs text-muted">{role}</span>
+            </span>
+            <Icon name="chevronsUpDown" className={cn('size-4 text-subtle', railHidden)} />
+          </>
+        ) : null}
       </button>
 
       {open ? (
         <div
           id={panelId}
-          className="absolute end-0 top-full z-40 mt-2 w-72 animate-popover-in rounded-md border border-border bg-surface p-1 shadow-md"
+          className={cn(
+            inSidebar ? menuPanelClasses('stretch', 'top') : menuPanelClasses('end'),
+            inSidebar ? 'min-w-60' : 'w-72',
+            rail && 'rail:inset-x-auto rail:start-0 rail:w-72',
+          )}
         >
-          <div className="border-b border-border px-3 pt-2 pb-3">
-            <p className="truncate font-semibold text-foreground">{name}</p>
-            {email ? (
-              <p className="truncate text-sm text-muted">
-                <bdi>{email}</bdi>
-              </p>
-            ) : null}
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <Badge tone="primary">{role}</Badge>
-              {municipality ? <Badge>{municipality}</Badge> : null}
+          <div className="flex items-center gap-3 px-2.5 pt-2 pb-2.5">
+            <Avatar name={name} size="lg" />
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-foreground">{name}</p>
+              {email ? (
+                <p className="truncate text-sm text-muted">
+                  <bdi>{email}</bdi>
+                </p>
+              ) : null}
             </div>
           </div>
-          <div className="py-1">
-            <Link href={accountHref} className={item} onClick={() => setOpen(false)}>
-              <Icon name="account" className="size-4 text-muted" />
-              {labels.account}
-            </Link>
-            <Link href={accessHref} className={item} onClick={() => setOpen(false)}>
-              <Icon name="mail" className="size-4 text-muted" />
-              <span className="flex-1">{labels.invitations}</span>
-              {pendingInvitations > 0 ? <Badge tone="primary">{pendingInvitations}</Badge> : null}
-            </Link>
+          <div className="flex flex-wrap items-center gap-1.5 px-2.5 pb-2.5">
+            <Badge tone="primary" size="sm">
+              {role}
+            </Badge>
+            {municipality ? <Badge size="sm">{municipality}</Badge> : null}
           </div>
-          <form action={signOutAction} className="border-t border-border pt-1">
+          <MenuSeparator />
+          <Link href={accountHref} className={menuItemClasses()} onClick={() => setOpen(false)}>
+            <Icon name="account" className="size-4 text-muted" />
+            {labels.account}
+          </Link>
+          <Link href={accessHref} className={menuItemClasses()} onClick={() => setOpen(false)}>
+            <Icon name="mail" className="size-4 text-muted" />
+            <span className="flex-1">{labels.invitations}</span>
+            {pendingInvitations > 0 ? (
+              <Badge tone="primary" size="sm">
+                {pendingInvitations}
+              </Badge>
+            ) : null}
+          </Link>
+          <MenuSeparator />
+          <form action={signOutAction}>
             <input type="hidden" name="locale" value={locale} />
-            <button type="submit" className={cn(item, 'text-danger hover:bg-danger-soft')}>
+            <button
+              type="submit"
+              className={cn(menuItemClasses(), 'text-danger hover:bg-danger-soft')}
+            >
               <Icon name="signOut" className="size-4" />
               {labels.signOut}
             </button>

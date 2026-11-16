@@ -1,10 +1,16 @@
-/** Light by default; dark only when the user turns it on (saved in this browser). */
+/**
+ * Light or dark. A choice saved in this browser wins; without one, the operating system's
+ * preference is followed.
+ */
 export type AdminTheme = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'smart-city.theme';
 
-/** Runs in <head> before paint: applies a saved dark choice. */
-export const THEME_SCRIPT = `try{if(localStorage.getItem('${THEME_STORAGE_KEY}')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}`;
+/**
+ * Runs in <head> before paint (see the root layout): applies the saved theme, or the system
+ * preference when nothing is saved, so the first frame is already in the right theme.
+ */
+export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');if(t!=='light'&&t!=='dark')t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}})()`;
 
 export function readTheme(): AdminTheme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
@@ -19,9 +25,16 @@ export function subscribeTheme(onChange: () => void): () => void {
 }
 
 export function applyTheme(theme: AdminTheme): void {
-  if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
-  else delete document.documentElement.dataset.theme;
+  const root = document.documentElement;
+  // Colors switch at once instead of every element running its own hover transition.
+  root.dataset.themeSwitching = '';
+  root.dataset.theme = theme;
   window.dispatchEvent(new Event(THEME_EVENT));
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      delete root.dataset.themeSwitching;
+    });
+  });
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {

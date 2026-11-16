@@ -8,7 +8,7 @@ export type AlertTone = 'info' | 'success' | 'warning' | 'danger';
 
 const TONES: Record<AlertTone, { box: string; icon: IconName }> = {
   info: { box: 'border-info-border bg-info-soft text-info', icon: 'info' },
-  success: { box: 'border-success-border bg-success-soft text-success', icon: 'check' },
+  success: { box: 'border-success-border bg-success-soft text-success', icon: 'checkCircle' },
   warning: { box: 'border-warning-border bg-warning-soft text-warning', icon: 'alert' },
   danger: { box: 'border-danger-border bg-danger-soft text-danger', icon: 'alert' },
 };
@@ -19,10 +19,13 @@ const TONES: Record<AlertTone, { box: string; icon: IconName }> = {
  */
 export function Alert({
   tone = 'info',
+  title,
   className,
   children,
 }: {
   tone?: AlertTone;
+  /** An optional bold first line. */
+  title?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -30,13 +33,16 @@ export function Alert({
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       className={cn(
-        'flex items-start gap-2.5 rounded-md border px-3.5 py-3 text-sm',
+        'flex animate-fade-in items-start gap-3 rounded-md border px-3.5 py-3 text-sm',
         TONES[tone].box,
         className,
       )}
     >
-      <Icon name={TONES[tone].icon} className="mt-px size-4" />
-      <div className="min-w-0 text-foreground-secondary">{children}</div>
+      <Icon name={TONES[tone].icon} className="mt-0.5 size-4" />
+      <div className="min-w-0 flex-1 text-foreground-secondary">
+        {title ? <p className="mb-0.5 font-medium text-foreground">{title}</p> : null}
+        {children}
+      </div>
     </div>
   );
 }

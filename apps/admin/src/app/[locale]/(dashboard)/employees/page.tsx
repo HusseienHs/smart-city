@@ -225,7 +225,7 @@ async function Directory({
                       {manage ? (
                         <Link
                           href={localizedHref(locale, `/employees/${member.employeeId}`)}
-                          className="font-medium text-primary after:absolute after:inset-0 hover:underline"
+                          className="font-medium text-accent after:absolute after:inset-0 hover:underline"
                           aria-label={t('adminEmployees.openEmployee', { name })}
                         >
                           {name}

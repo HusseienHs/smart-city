@@ -26,7 +26,7 @@ const CONTROL =
 const CHIP =
   'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-sm ' +
   'text-foreground-secondary transition-colors select-none hover:bg-surface-subtle ' +
-  'has-checked:border-primary-soft-border has-checked:bg-primary-soft has-checked:text-primary ' +
+  'has-checked:border-primary-soft-border has-checked:bg-primary-soft has-checked:text-accent ' +
   'has-focus-visible:ring-3 has-focus-visible:ring-primary/25';
 
 export interface FilterOptions {
@@ -352,7 +352,7 @@ export function ActiveFilters({
           <Link
             key={key}
             href={`${baseHref}${filtersQuery(filters, withoutFilter(filters, key))}`}
-            className="inline-flex h-7 max-w-full items-center gap-1 rounded-full border border-primary-soft-border bg-primary-soft ps-2.5 pe-1.5 text-xs font-medium text-primary hover:bg-primary-soft/70"
+            className="inline-flex h-7 max-w-full items-center gap-1 rounded-full border border-primary-soft-border bg-primary-soft ps-2.5 pe-1.5 text-xs font-medium text-accent hover:bg-primary-soft/70"
             aria-label={t('adminReports.list.removeFilter', { filter: text })}
           >
             <span className="truncate">{text}</span>

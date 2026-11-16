@@ -2,7 +2,10 @@
 
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 
+import { cn } from '@/lib/cn';
+
 import { Button } from './button';
+import { Icon } from './icon';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -41,6 +44,8 @@ export function ConfirmDialog({
     if (!open && element.open) element.close();
   }, [open]);
 
+  const danger = tone === 'danger';
+
   return (
     <dialog
       ref={dialog}
@@ -50,23 +55,36 @@ export function ConfirmDialog({
         event.preventDefault();
         onCancel();
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-surface p-0 text-foreground shadow-lg backdrop:bg-black/40"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] popover p-0 text-foreground open:animate-dialog-in"
     >
-      <div className="p-5">
-        <h2 id={titleId} className="text-md font-semibold">
-          {title}
-        </h2>
-        {children ? (
-          <div id={bodyId} className="mt-2 text-sm text-foreground-secondary">
-            {children}
-          </div>
-        ) : null}
+      <div className="flex gap-4 p-5 sm:p-6">
+        <span
+          className={cn(
+            'flex size-10 shrink-0 items-center justify-center rounded-full border',
+            danger
+              ? 'border-danger-border bg-danger-soft text-danger'
+              : 'border-primary-soft-border bg-primary-soft text-accent',
+          )}
+          aria-hidden
+        >
+          <Icon name={danger ? 'alert' : 'info'} className="size-[18px]" />
+        </span>
+        <div className="min-w-0 pt-1.5">
+          <h2 id={titleId} className="text-md leading-6 font-semibold">
+            {title}
+          </h2>
+          {children ? (
+            <div id={bodyId} className="mt-1.5 text-base text-muted">
+              {children}
+            </div>
+          ) : null}
+        </div>
       </div>
-      <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-border bg-surface-subtle px-5 py-3 sm:px-6">
         <Button variant="secondary" onClick={onCancel} autoFocus>
           {cancelLabel}
         </Button>
-        <Button variant={tone === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
+        <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>
           {confirmLabel}
         </Button>
       </div>

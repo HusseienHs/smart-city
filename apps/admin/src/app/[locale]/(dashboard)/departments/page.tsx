@@ -123,7 +123,7 @@ async function DepartmentsList() {
                     <TableCell>
                       <Link
                         href={localizedHref(locale, `/departments/${department.id}`)}
-                        className="font-medium text-primary after:absolute after:inset-0 hover:underline"
+                        className="font-medium text-accent after:absolute after:inset-0 hover:underline"
                       >
                         {localizedText(department.name, locale)}
                       </Link>

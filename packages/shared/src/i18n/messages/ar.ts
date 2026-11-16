@@ -272,6 +272,10 @@ export const ar: Messages = {
     language: 'اللغة',
     changeLanguage: 'تغيير اللغة',
     version: 'الإصدار {version}',
+    collapseSidebar: 'طيّ الشريط الجانبي',
+    expandSidebar: 'توسيع الشريط الجانبي',
+    theme: 'المظهر',
+    workspaceStatus: 'حالة النظام',
   },
   adminModules: {
     reports: 'مراجعة بلاغات السكان وتوجيهها ومعالجتها في جميع الأقسام.',

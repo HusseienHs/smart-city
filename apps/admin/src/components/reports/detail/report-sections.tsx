@@ -84,7 +84,7 @@ export function ReportFacts({
                 target="_blank"
                 rel="noopener noreferrer"
                 referrerPolicy="no-referrer"
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-accent hover:underline"
               >
                 {t('adminReports.detail.openInMap')}
               </a>
@@ -112,7 +112,7 @@ export function ReportFacts({
         ) : null}
         {duplicateOf ? (
           <Fact label={t('adminReports.detail.duplicateOf')}>
-            <Link href={duplicateOf.href} className="text-primary hover:underline" dir="ltr">
+            <Link href={duplicateOf.href} className="text-accent hover:underline" dir="ltr">
               {duplicateOf.label}
             </Link>
           </Fact>
@@ -186,7 +186,7 @@ export function ReportPhotos({
                     href={signed.downloadUrl}
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
-                    className="block border-t border-border px-2 py-1.5 text-center text-xs font-medium text-primary hover:bg-surface"
+                    className="block border-t border-border px-2 py-1.5 text-center text-xs font-medium text-accent hover:bg-surface"
                   >
                     {t('adminReports.detail.download')}
                   </a>

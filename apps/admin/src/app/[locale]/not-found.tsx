@@ -14,7 +14,7 @@ export default async function NotFound() {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-md rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
-        <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full border border-primary-soft-border bg-primary-soft text-primary">
+        <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full border border-primary-soft-border bg-primary-soft text-accent">
           <Icon name="search" />
         </span>
         <p className="text-xs font-semibold tracking-wider text-muted tabular-nums">404</p>

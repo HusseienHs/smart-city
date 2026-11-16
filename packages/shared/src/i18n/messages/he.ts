@@ -273,6 +273,10 @@ export const he: Messages = {
     language: 'שפה',
     changeLanguage: 'החלפת שפה',
     version: 'גרסה {version}',
+    collapseSidebar: 'כיווץ סרגל הצד',
+    expandSidebar: 'הרחבת סרגל הצד',
+    theme: 'ערכת נושא',
+    workspaceStatus: 'מצב המערכת',
   },
   adminModules: {
     reports: 'סקירה, ניתוב וטיפול בדיווחי התושבים בכל המחלקות.',

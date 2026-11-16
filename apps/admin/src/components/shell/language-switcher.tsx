@@ -2,10 +2,12 @@
 
 import type { Locale } from '@smart-city/shared';
 import { usePathname } from 'next/navigation';
-import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 
 import { buttonClasses } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { menuItemClasses, menuPanelClasses } from '@/components/ui/menu';
+import { usePopover } from '@/components/ui/use-popover';
 import { cn } from '@/lib/cn';
 import { switchLocalePath } from '@/lib/i18n/routing';
 import { switchLanguage } from '@/lib/i18n/switch-language';
@@ -28,31 +30,9 @@ interface LanguageSwitcherProps {
  * remembered in a cookie so that unprefixed URLs open in it next time.
  */
 export function LanguageSwitcher({ current, options, label }: LanguageSwitcherProps) {
-  const [open, setOpen] = useState(false);
-  const container = useRef<HTMLDivElement>(null);
-  const toggle = useRef<HTMLButtonElement>(null);
-  const listId = useId();
+  const { open, setOpen, toggleOpen, containerRef, toggleRef, panelId } = usePopover();
   const pathname = usePathname();
   const currentLabel = options.find((option) => option.locale === current)?.label ?? current;
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!container.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        toggle.current?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
 
   function choose(event: MouseEvent<HTMLAnchorElement>, locale: Locale) {
     event.preventDefault();
@@ -61,28 +41,28 @@ export function LanguageSwitcher({ current, options, label }: LanguageSwitcherPr
   }
 
   return (
-    <div ref={container} className="relative">
+    <div ref={containerRef} className="relative">
       <button
-        ref={toggle}
+        ref={toggleRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleOpen}
         aria-expanded={open}
-        aria-controls={listId}
+        aria-controls={panelId}
         aria-label={`${label}: ${currentLabel}`}
-        className={buttonClasses({ variant: 'ghost', size: 'sm' })}
+        className={cn(buttonClasses({ variant: 'ghost', size: 'sm' }), open && 'bg-surface-muted')}
       >
         <Icon name="language" className="size-4" />
         <span className="max-sm:sr-only">{currentLabel}</span>
         <Icon
           name="chevronDown"
-          className={cn('size-3.5 transition-transform duration-150', open && 'rotate-180')}
+          className={cn(
+            'size-3.5 opacity-60 transition-transform duration-150 max-sm:hidden',
+            open && 'rotate-180',
+          )}
         />
       </button>
       {open ? (
-        <ul
-          id={listId}
-          className="absolute end-0 top-full z-40 mt-2 w-48 animate-popover-in rounded-md border border-border bg-surface p-1 shadow-md"
-        >
+        <ul id={panelId} className={cn(menuPanelClasses('end'), 'w-48')}>
           {options.map((option) => {
             const selected = option.locale === current;
             return (
@@ -94,10 +74,9 @@ export function LanguageSwitcher({ current, options, label }: LanguageSwitcherPr
                   aria-current={selected ? 'true' : undefined}
                   onClick={(event) => choose(event, option.locale)}
                   className={cn(
-                    'flex h-9 items-center justify-between gap-3 rounded-sm px-3 text-base transition-colors duration-150',
-                    selected
-                      ? 'bg-primary-soft font-medium text-primary'
-                      : 'text-foreground hover:bg-surface-muted',
+                    menuItemClasses(selected),
+                    'justify-between',
+                    selected && 'font-medium',
                   )}
                 >
                   {option.label}

@@ -102,7 +102,7 @@ async function AccessContent({
         </section>
       ) : access.status === 'no-access' ? (
         <div className="flex flex-col items-center rounded-md border border-dashed border-border-strong px-5 py-8 text-center">
-          <span className="mb-3 flex size-10 items-center justify-center rounded-full border border-primary-soft-border bg-primary-soft text-primary">
+          <span className="mb-3 flex size-10 items-center justify-center rounded-full border border-primary-soft-border bg-primary-soft text-accent">
             <Icon name="roles" />
           </span>
           <p className="font-semibold text-foreground">{t('adminAuth.noAccessTitle')}</p>

@@ -50,7 +50,7 @@ export function ReporterContact({
                 <a
                   href={`tel:${state.contact.phone}`}
                   dir="ltr"
-                  className="text-primary hover:underline"
+                  className="text-accent hover:underline"
                 >
                   {state.contact.phone}
                 </a>

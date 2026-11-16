@@ -96,7 +96,7 @@ async function Overview() {
                   href={localizedHref(locale, entry.path)}
                   className="group flex items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-surface-subtle"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-subtle text-foreground-secondary transition-colors group-hover:border-primary-soft-border group-hover:bg-primary-soft group-hover:text-primary">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-subtle text-foreground-secondary transition-colors group-hover:border-primary-soft-border group-hover:bg-primary-soft group-hover:text-accent">
                     <Icon name={entry.icon} className="size-[18px]" />
                   </span>
                   <span className="min-w-0 flex-1">

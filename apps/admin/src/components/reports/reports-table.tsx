@@ -98,7 +98,7 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                 <TableCell className="whitespace-nowrap">
                   <Link
                     href={`${baseHref}/${report.id}`}
-                    className="font-medium text-primary after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:after:ring-3 focus-visible:after:ring-primary/30"
+                    className="font-medium text-accent after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:after:ring-3 focus-visible:after:ring-primary/30"
                     aria-label={t('adminReports.list.openReport', {
                       trackingNumber: report.tracking_number,
                     })}
@@ -159,7 +159,7 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
               className="flex flex-col gap-2 px-4 py-3.5 transition-colors hover:bg-surface-subtle"
             >
               <span className="flex items-center justify-between gap-3">
-                <span className="font-medium text-primary" dir="ltr">
+                <span className="font-medium text-accent" dir="ltr">
                   {report.tracking_number}
                 </span>
                 <Icon name="chevronEnd" className="size-4 text-subtle" />

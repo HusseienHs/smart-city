@@ -1,75 +1,150 @@
 @import 'tailwindcss';
 
+/* `dark:` follows the dashboard's own theme attribute, not the OS setting. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * `rail:` styles the persistent sidebar while it is an icon rail: always on tablets
+ * (below xl), and on desktop when the user collapsed it. Only the static sidebar uses it;
+ * the drawer always shows the full sidebar.
+ */
+@custom-variant rail {
+  @media (width < 80rem) {
+    @slot;
+  }
+  &:where([data-sidebar='collapsed'] *) {
+    @slot;
+  }
+}
+
 /*
  * Smart City Admin — design tokens.
  *
- * The admin dashboard has its own enterprise palette (deep navy + restrained blue); the
- * citizen app keeps the teal brand in packages/shared/src/design-tokens.ts. Components never
- * use raw colors: only the semantic tokens below, exposed to Tailwind through @theme.
+ * Two complete themes, designed independently (dark is not an inversion of light):
+ * - Light: a cool near-white canvas, white cards with hairline borders, one cobalt accent.
+ * - Dark: a blue-black canvas with layered surfaces, softened borders and desaturated,
+ *   lighter semantic colors so badges stay legible without glowing.
+ *
+ * Components never use raw colors: only the semantic tokens below, exposed to Tailwind
+ * through @theme. The theme is chosen by `data-theme` on <html> (set before paint by the
+ * inline script in the root layout; see src/lib/theme.ts).
  *
  * Layout uses logical utilities only (ms-/me-/ps-/pe-/start-/end-/border-s/border-e,
  * text-start), so every screen flips automatically between RTL (Hebrew, Arabic) and LTR.
- *
- * Light is the primary (and currently only) theme. Dark mode will be added as a second
- * token set once it has been designed, not derived automatically.
  */
 :root {
   color-scheme: light;
 
-  /* Surfaces */
-  --background: #f6f7f9;
+  /* Surfaces: canvas → card → inset/hover */
+  --background: #f8f9fb;
   --surface: #ffffff;
-  --surface-subtle: #f9fafb;
-  --surface-muted: #f1f3f6;
-  --border: #e3e6eb;
-  --border-strong: #cdd2da;
+  --surface-subtle: #fafbfc;
+  --surface-muted: #f2f4f7;
+  --surface-raised: #ffffff;
+  --sidebar: #f3f4f7;
+  --sidebar-hover: #e8eaef;
+  --overlay: rgb(15 18 28 / 0.4);
+  --border: #e5e7ec;
+  --border-strong: #d2d6de;
 
   /* Text */
-  --foreground: #0f172a;
-  --foreground-secondary: #334155;
-  --muted: #64748b;
-  --subtle: #94a3b8;
+  --foreground: #0d1220;
+  --foreground-secondary: #384152;
+  --muted: #687082;
+  --subtle: #9aa1b0;
 
-  /* Brand: navy (navigation, headings) and blue (actions, focus, selection) */
-  --navy: #0b1f3a;
-  --navy-hover: #132a4b;
-  --navy-active: #1a3459;
-  --navy-border: #1d3352;
-  --navy-foreground: #c9d3e3;
-  --navy-muted: #7f92b0;
-  --navy-accent: #60a5fa;
-  --navy-success: #4ade80;
-
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-pressed: #1e40af;
-  --primary-soft: #eff4ff;
-  --primary-soft-border: #c7d7fe;
+  /* Accent: cobalt. `primary` fills (buttons, selection); `accent` is the text/icon color. */
+  --primary: #3156d3;
+  --primary-hover: #2849ba;
+  --primary-pressed: #213ea0;
+  --primary-soft: #eef2fd;
+  --primary-soft-border: #d0dbfa;
   --on-primary: #ffffff;
+  --accent: #2f52c9;
+  --focus-ring: rgb(49 86 211 / 0.28);
 
-  /* Semantic */
-  --success: #15803d;
-  --success-soft: #ecfdf3;
-  --success-border: #abefc6;
-  --warning: #b45309;
-  --warning-soft: #fffaeb;
-  --warning-border: #fedf89;
-  --danger: #b91c1c;
-  --danger-hover: #991b1b;
+  /* Semantic: text color, soft fill, soft border, solid fill (for buttons and dots) */
+  --success: #157a3c;
+  --success-soft: #eefaf2;
+  --success-border: #c3ead0;
+  --warning: #a8530a;
+  --warning-soft: #fff7e9;
+  --warning-border: #f8dcab;
+  --danger: #b42318;
+  --danger-hover: #912018;
+  --danger-solid: #c4321f;
   --danger-soft: #fef3f2;
-  --danger-border: #fecdca;
-  --info: #0369a1;
-  --info-soft: #f0f9ff;
-  --info-border: #b9e6fe;
-  --violet: #6d28d9;
-  --violet-soft: #f5f3ff;
-  --violet-border: #ddd6fe;
+  --danger-border: #f9cdc8;
+  --info: #0b6aa2;
+  --info-soft: #eff8ff;
+  --info-border: #c2e2f8;
+  --violet: #6a2fd0;
+  --violet-soft: #f5f2ff;
+  --violet-border: #ddd3fc;
+
+  /* Elevation */
+  --elevation-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
+  --elevation-sm: 0 1px 2px 0 rgb(16 24 40 / 0.05), 0 1px 3px 0 rgb(16 24 40 / 0.04);
+  --elevation-md: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --elevation-lg: 0 20px 40px -12px rgb(16 24 40 / 0.18), 0 6px 12px -4px rgb(16 24 40 / 0.06);
 
   /* Layout */
-  --sidebar-width: 248px;
-  --sidebar-rail-width: 72px;
+  --sidebar-width: 256px;
+  --sidebar-rail-width: 64px;
   --header-height: 56px;
-  --content-max-width: 1440px;
+  --content-max-width: 1360px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --background: #0b0d12;
+  --surface: #12151c;
+  --surface-subtle: #151922;
+  --surface-muted: #1b2029;
+  --surface-raised: #181c25;
+  --sidebar: #0e1117;
+  --sidebar-hover: #181c24;
+  --overlay: rgb(0 0 0 / 0.6);
+  --border: #232935;
+  --border-strong: #303746;
+
+  --foreground: #eceef3;
+  --foreground-secondary: #c4c9d4;
+  --muted: #8d95a6;
+  --subtle: #636b7c;
+
+  --primary: #4b6bed;
+  --primary-hover: #5b79f0;
+  --primary-pressed: #4161e0;
+  --primary-soft: rgb(91 121 240 / 0.13);
+  --primary-soft-border: rgb(91 121 240 / 0.3);
+  --on-primary: #ffffff;
+  --accent: #8fa4ff;
+  --focus-ring: rgb(120 145 255 / 0.35);
+
+  --success: #5ad48a;
+  --success-soft: rgb(52 199 112 / 0.12);
+  --success-border: rgb(52 199 112 / 0.28);
+  --warning: #f2b54c;
+  --warning-soft: rgb(240 168 50 / 0.12);
+  --warning-border: rgb(240 168 50 / 0.28);
+  --danger: #f4807a;
+  --danger-hover: #f79a94;
+  --danger-solid: #d9392b;
+  --danger-soft: rgb(240 90 80 / 0.12);
+  --danger-border: rgb(240 90 80 / 0.3);
+  --info: #5cc0f2;
+  --info-soft: rgb(56 170 230 / 0.12);
+  --info-border: rgb(56 170 230 / 0.28);
+  --violet: #b49cff;
+  --violet-soft: rgb(150 120 255 / 0.13);
+  --violet-border: rgb(150 120 255 / 0.3);
+
+  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --elevation-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35), 0 1px 3px 0 rgb(0 0 0 / 0.2);
+  --elevation-md: 0 6px 16px -4px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --elevation-lg: 0 24px 48px -12px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(255 255 255 / 0.04);
 }
 
 @theme inline {
@@ -77,6 +152,10 @@
   --color-surface: var(--surface);
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-overlay: var(--overlay);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
 
@@ -85,21 +164,14 @@
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
 
-  --color-navy: var(--navy);
-  --color-navy-hover: var(--navy-hover);
-  --color-navy-active: var(--navy-active);
-  --color-navy-border: var(--navy-border);
-  --color-navy-foreground: var(--navy-foreground);
-  --color-navy-muted: var(--navy-muted);
-  --color-navy-accent: var(--navy-accent);
-  --color-navy-success: var(--navy-success);
-
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-pressed: var(--primary-pressed);
   --color-primary-soft: var(--primary-soft);
   --color-primary-soft-border: var(--primary-soft-border);
   --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-focus-ring: var(--focus-ring);
 
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
@@ -109,6 +181,7 @@
   --color-warning-border: var(--warning-border);
   --color-danger: var(--danger);
   --color-danger-hover: var(--danger-hover);
+  --color-danger-solid: var(--danger-solid);
   --color-danger-soft: var(--danger-soft);
   --color-danger-border: var(--danger-border);
   --color-info: var(--info);
@@ -117,6 +190,11 @@
   --color-violet: var(--violet);
   --color-violet-soft: var(--violet-soft);
   --color-violet-border: var(--violet-border);
+
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
 
   /*
    * IBM Plex Sans Hebrew carries Latin + Hebrew; IBM Plex Sans Arabic fills in Arabic.
@@ -129,10 +207,13 @@
 }
 
 /*
- * Dashboard type scale (denser than Tailwind's defaults; body text is 14px).
- * 12 / 13 / 14 / 16 / 18 / 20 / 24 / 30.
+ * Type scale (denser than Tailwind's defaults; body text is 14px).
+ * 11 / 12 / 13 / 14 / 16 / 18 / 20 / 24 / 30.
+ * Radii: 4 (chips) / 6 (controls) / 8 (cards) / 10 (panels) / 12 (dialogs, menus).
  */
 @theme {
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
   --text-xs: 0.75rem;
   --text-xs--line-height: 1rem;
   --text-sm: 0.8125rem;
@@ -154,15 +235,16 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
-
-  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.05);
-  --shadow-md: 0 6px 16px -4px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.05);
-  --shadow-lg: 0 16px 40px -12px rgb(15 23 42 / 0.25);
+  --radius-xl: 12px;
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --animate-popover-in: popover-in 140ms var(--ease-standard);
+  --animate-popover-in: popover-in 140ms var(--ease-out-soft);
+  --animate-dialog-in: dialog-in 180ms var(--ease-out-soft);
+  --animate-fade-in: fade-in 160ms var(--ease-standard);
+  --animate-enter: enter 220ms var(--ease-out-soft);
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
 
   @keyframes popover-in {
     from {
@@ -172,6 +254,47 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
     }
   }
 }
@@ -187,6 +310,7 @@
     font-family: var(--font-sans);
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
+    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -206,6 +330,19 @@
     background: var(--primary-soft-border);
   }
 
+  /* Native dialogs: a soft overlay that fades in with the panel. */
+  dialog::backdrop {
+    background: var(--overlay);
+    animation: fade-in 160ms var(--ease-standard);
+  }
+
+  /* Switching theme must not animate every color on the page. */
+  html[data-theme-switching] *,
+  html[data-theme-switching] *::before,
+  html[data-theme-switching] *::after {
+    transition: none !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -220,5 +357,21 @@
 
 @utility scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: var(--navy-border) transparent;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* A card surface: hairline border, white (or raised dark) fill, barely-there shadow. */
+@utility card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-xs);
+}
+
+/* A floating panel: menus, popovers and the municipality switcher. */
+@utility popover {
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-lg);
 }

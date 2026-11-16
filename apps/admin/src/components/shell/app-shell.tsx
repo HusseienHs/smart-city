@@ -3,6 +3,7 @@ import { SUPPORTED_LOCALES } from '@smart-city/shared';
 import { createTranslator } from '@smart-city/shared/i18n';
 import type { ReactNode } from 'react';
 
+import { ThemeToggle } from '@/components/theme-toggle';
 import { canAccessModule } from '@/lib/auth/permissions';
 import { roleLabel } from '@/lib/auth/role-label';
 import { ACCESS_PATH } from '@/lib/auth/routes';
@@ -21,7 +22,7 @@ import { MunicipalityContext, type MunicipalityOption } from './municipality-con
 import { ShellFrame } from './shell-frame';
 import { Sidebar, type SidebarProps } from './sidebar';
 import type { ShellNavGroup } from './types';
-import { UserMenu } from './user-menu';
+import { UserMenu, type UserMenuProps } from './user-menu';
 
 /**
  * The dashboard chrome for a verified staff member. Reads the session (so it renders inside
@@ -60,6 +61,23 @@ export async function AppShell({ children }: { children: ReactNode }) {
     .then((invitations) => invitations.length)
     .catch(() => 0);
 
+  const userMenu: UserMenuProps = {
+    locale,
+    name: staff.user.fullName ?? staff.user.email ?? '',
+    email: staff.user.email,
+    role: roleLabel(t, staff.role),
+    municipality: current?.name ?? null,
+    accountHref: localizedHref(locale, getModule('account').path),
+    accessHref: localizedHref(locale, ACCESS_PATH),
+    pendingInvitations,
+    labels: {
+      menu: t('adminAuth.accountMenu'),
+      account: t('adminNav.account'),
+      invitations: t('adminAuth.invitationsTitle'),
+      signOut: t('auth.signOut'),
+    },
+  };
+
   const sidebar: SidebarProps = {
     groups,
     productName: t('app.name'),
@@ -68,11 +86,16 @@ export async function AppShell({ children }: { children: ReactNode }) {
     backendConnected: isSupabaseConfigured,
     backendLabel: isSupabaseConfigured ? t('backend.connected') : t('backend.notConfigured'),
     versionLabel: t('adminShell.version', { version: packageJson.version }),
-    context: (
+    collapseLabels: {
+      collapse: t('adminShell.collapseSidebar'),
+      expand: t('adminShell.expandSidebar'),
+    },
+    context: (rail) => (
       <MunicipalityContext
         locale={locale}
         current={current}
         options={staff.memberships.map(toOption)}
+        rail={rail}
         labels={{
           municipality: t('adminAuth.municipality'),
           switchMunicipality: t('adminAuth.switchMunicipality'),
@@ -81,6 +104,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         }}
       />
     ),
+    user: (rail) => <UserMenu placement="sidebar" rail={rail} {...userMenu} />,
   };
 
   return (
@@ -91,7 +115,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <Breadcrumbs
           label={t('adminShell.breadcrumbs')}
           entries={groups.flatMap((group) =>
-            group.items.map((item) => ({ path: item.path, label: item.label, group: group.label })),
+            group.items.map((item) => ({
+              path: item.path,
+              href: item.href,
+              label: item.label,
+              group: group.label,
+            })),
           )}
         />
       }
@@ -105,22 +134,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
               label: t(`language.${option}`),
             }))}
           />
-          <UserMenu
-            locale={locale}
-            name={staff.user.fullName ?? staff.user.email ?? ''}
-            email={staff.user.email}
-            role={roleLabel(t, staff.role)}
-            municipality={current?.name ?? null}
-            accountHref={localizedHref(locale, getModule('account').path)}
-            accessHref={localizedHref(locale, ACCESS_PATH)}
-            pendingInvitations={pendingInvitations}
-            labels={{
-              menu: t('adminAuth.accountMenu'),
-              account: t('adminNav.account'),
-              invitations: t('adminAuth.invitationsTitle'),
-              signOut: t('auth.signOut'),
-            }}
-          />
+          <ThemeToggle labels={{ dark: t('common.darkMode'), light: t('common.lightMode') }} />
+          {/* Phones have no persistent sidebar: the account menu moves into the top bar. */}
+          <div className="ms-1 md:hidden">
+            <UserMenu placement="header" {...userMenu} />
+          </div>
         </>
       }
       labels={{

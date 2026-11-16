@@ -150,7 +150,7 @@ async function NoticesList() {
                     <TableCell className="max-w-md">
                       <Link
                         href={localizedHref(locale, `/notices/${item.id}`)}
-                        className="block font-medium text-primary hover:underline"
+                        className="block font-medium text-accent hover:underline"
                       >
                         {localizedText(item.title, locale)}
                       </Link>

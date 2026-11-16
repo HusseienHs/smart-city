@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
  */
 export function Table({ className, ...props }: ComponentProps<'table'>) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full scrollbar-thin overflow-x-auto">
       <table className={cn('w-full border-collapse text-base', className)} {...props} />
     </div>
   );
@@ -26,7 +26,10 @@ export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
 export function TableRow({ className, ...props }: ComponentProps<'tr'>) {
   return (
     <tr
-      className={cn('transition-colors duration-150 hover:bg-surface-subtle', className)}
+      className={cn(
+        'transition-colors duration-100 hover:bg-surface-subtle has-[a:focus-visible]:bg-surface-subtle',
+        className,
+      )}
       {...props}
     />
   );
@@ -37,7 +40,8 @@ export function TableHeaderCell({ className, ...props }: ComponentProps<'th'>) {
     <th
       scope="col"
       className={cn(
-        'h-10 border-b border-border px-4 text-start text-xs font-medium whitespace-nowrap text-muted',
+        'h-9 border-b border-border px-4 text-start text-xs font-medium whitespace-nowrap text-muted',
+        'first:ps-5 last:pe-5',
         className,
       )}
       {...props}
@@ -46,5 +50,10 @@ export function TableHeaderCell({ className, ...props }: ComponentProps<'th'>) {
 }
 
 export function TableCell({ className, ...props }: ComponentProps<'td'>) {
-  return <td className={cn('h-12 px-4 text-start text-foreground', className)} {...props} />;
+  return (
+    <td
+      className={cn('h-13 px-4 py-2.5 text-start text-foreground first:ps-5 last:pe-5', className)}
+      {...props}
+    />
+  );
 }

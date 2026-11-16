@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Arabic, IBM_Plex_Sans_Hebrew } from 'next/font/google';
 
 import { getLocale, getTranslator } from '@/lib/i18n/server';
+import { SIDEBAR_SCRIPT } from '@/lib/sidebar';
+import { THEME_SCRIPT } from '@/lib/theme';
 
 import '../globals.css';
 
@@ -41,11 +43,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: LayoutProps<'/[locale]'>) {
   const locale = await getLocale();
   return (
+    // The theme script sets `data-theme` before React hydrates, so <html> differs on purpose.
     <html
       lang={locale}
       dir={getTextDirection(locale)}
+      data-theme="light"
       className={`${plexHebrew.variable} ${plexArabic.variable} h-full`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `${THEME_SCRIPT};${SIDEBAR_SCRIPT}` }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

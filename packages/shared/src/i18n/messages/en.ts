@@ -277,6 +277,10 @@ export const en = {
     language: 'Language',
     changeLanguage: 'Change language',
     version: 'Version {version}',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
+    theme: 'Theme',
+    workspaceStatus: 'System status',
   },
   adminModules: {
     reports: 'Review, route and resolve residents’ reports across departments.',

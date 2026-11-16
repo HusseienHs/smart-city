@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn';
 
 import { BrandMark } from './brand-mark';
 import { NavLink } from './nav-link';
+import { SidebarToggle } from './sidebar-toggle';
 import type { ShellNavGroup, SidebarVariant } from './types';
 
 export interface SidebarProps {
@@ -14,10 +15,21 @@ export interface SidebarProps {
   backendConnected: boolean;
   backendLabel: string;
   versionLabel: string;
-  /** The working context under the brand: municipality, role and the switcher. */
-  context?: ReactNode;
+  collapseLabels: { collapse: string; expand: string };
+  /**
+   * The working context under the brand: municipality, role and the switcher. Receives
+   * whether it is rendered in the icon rail.
+   */
+  context?: (rail: boolean) => ReactNode;
+  /** The signed-in user at the bottom (opens the account menu). */
+  user?: (rail: boolean) => ReactNode;
 }
 
+/**
+ * The navigation sidebar. `static` is the persistent one: full width on desktop, an icon rail
+ * on tablets and when collapsed (the `rail:` variant). `drawer` is the full sidebar inside the
+ * off-canvas drawer on phones and tablets.
+ */
 export function Sidebar({
   variant,
   groups,
@@ -27,45 +39,49 @@ export function Sidebar({
   backendConnected,
   backendLabel,
   versionLabel,
+  collapseLabels,
   context,
+  user,
 }: SidebarProps & { variant: SidebarVariant }) {
   const rail = variant === 'static';
-  // Only labels of the rail collapse; the drawer always shows the full sidebar.
-  const railHidden = rail ? 'max-xl:sr-only' : undefined;
+  // Only the persistent sidebar collapses; the drawer always shows labels.
+  const railHidden = rail ? 'rail:sr-only' : undefined;
 
   return (
     <aside
       className={cn(
-        'flex h-full flex-col bg-navy text-navy-foreground',
-        rail ? 'w-(--sidebar-rail-width) xl:w-(--sidebar-width)' : 'w-[min(280px,85vw)]',
+        'flex h-full flex-col bg-sidebar',
+        rail
+          ? 'w-(--sidebar-width) border-e border-border transition-[width] duration-200 ease-standard rail:w-(--sidebar-rail-width)'
+          : 'w-[min(288px,85vw)]',
       )}
     >
+      {/* Brand */}
       <div
         className={cn(
-          'flex h-(--header-height) shrink-0 items-center gap-3 border-b border-navy-border px-4',
-          rail && 'max-xl:justify-center',
+          'flex h-(--header-height) shrink-0 items-center gap-2.5 px-4',
+          rail && 'rail:justify-center rail:px-0',
         )}
       >
         <BrandMark />
-        <div className={cn('min-w-0', railHidden)}>
-          <p className="truncate text-md leading-5 font-semibold text-white">{productName}</p>
-          <p className="truncate text-xs text-navy-muted">{tagline}</p>
+        <div className={cn('min-w-0 leading-tight', railHidden)}>
+          <p className="truncate text-base font-semibold text-foreground">{productName}</p>
+          <p className="truncate text-2xs text-muted">{tagline}</p>
         </div>
       </div>
 
+      {/* Municipality */}
       {context ? (
-        // In the icon rail the context is reachable through the drawer instead.
-        <div className={cn('shrink-0 border-b border-navy-border p-3', rail && 'max-xl:hidden')}>
-          {context}
-        </div>
+        <div className={cn('shrink-0 px-3 pb-2', rail && 'rail:px-2')}>{context(rail)}</div>
       ) : null}
 
+      {/* Modules */}
       <nav
         aria-label={navLabel}
         className={cn(
-          'flex-1 scrollbar-thin px-3 py-4',
+          'flex-1 scrollbar-thin px-3 pt-2 pb-4',
           // Tooltips of the rail extend past its edge, so the rail must not clip them.
-          rail ? 'max-xl:overflow-visible xl:overflow-y-auto' : 'overflow-y-auto',
+          rail ? 'overflow-y-auto rail:overflow-visible rail:px-2' : 'overflow-y-auto',
         )}
       >
         {groups.map((group, index) => {
@@ -75,21 +91,18 @@ export function Sidebar({
               key={group.id}
               role="group"
               aria-labelledby={headingId}
-              className={cn(index > 0 && (rail ? 'mt-3 xl:mt-6' : 'mt-6'))}
+              className={cn(index > 0 && 'mt-5', rail && index > 0 && 'rail:mt-3')}
             >
               {rail && index > 0 ? (
-                <div className="mx-2 mb-3 border-t border-navy-border xl:hidden" aria-hidden />
+                <div className="mx-2 mb-3 hidden border-t border-border rail:block" aria-hidden />
               ) : null}
               <p
                 id={headingId}
-                className={cn(
-                  'mb-2 px-3 text-[11px] font-semibold tracking-wider text-navy-muted uppercase',
-                  railHidden,
-                )}
+                className={cn('mb-1 px-2 text-2xs font-medium text-subtle', railHidden)}
               >
                 {group.label}
               </p>
-              <ul className="space-y-0.5">
+              <ul className="space-y-px">
                 {group.items.map((item) => (
                   <li key={item.id}>
                     <NavLink item={item} variant={variant} />
@@ -101,23 +114,37 @@ export function Sidebar({
         })}
       </nav>
 
-      <div
-        className={cn('shrink-0 border-t border-navy-border px-4 py-3', rail && 'max-xl:px-0')}
-        title={rail ? backendLabel : undefined}
-      >
-        <p className={cn('flex items-start gap-2 text-xs', rail && 'max-xl:justify-center')}>
-          <span
-            className={cn(
-              'mt-1 size-2 shrink-0 rounded-full',
-              backendConnected ? 'bg-navy-success' : 'bg-navy-muted',
-            )}
-            aria-hidden
-          />
-          <span className={cn('line-clamp-2', railHidden)}>{backendLabel}</span>
+      {/* Footer: collapse control, system status, signed-in user */}
+      <div className={cn('shrink-0 space-y-1 border-t border-border p-3', rail && 'rail:px-2')}>
+        {rail ? (
+          <div className="max-xl:hidden">
+            <SidebarToggle labels={collapseLabels} />
+          </div>
+        ) : null}
+        <p
+          className={cn(
+            'flex items-center gap-2 px-2 py-1 text-2xs text-muted',
+            rail && 'rail:justify-center',
+          )}
+          title={backendLabel}
+        >
+          <span className="relative flex size-2 shrink-0" aria-hidden>
+            {backendConnected ? (
+              <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-40 [animation-duration:2.5s]" />
+            ) : null}
+            <span
+              className={cn(
+                'relative size-2 rounded-full',
+                backendConnected ? 'bg-success' : 'bg-subtle',
+              )}
+            />
+          </span>
+          <span className={cn('min-w-0 flex-1 truncate', railHidden)}>{backendLabel}</span>
+          <span className={cn('shrink-0 text-subtle tabular-nums', railHidden)}>
+            {versionLabel}
+          </span>
         </p>
-        <p className={cn('mt-1 text-[11px] text-navy-muted tabular-nums', railHidden)}>
-          {versionLabel}
-        </p>
+        {user ? user(rail) : null}
       </div>
     </aside>
   );

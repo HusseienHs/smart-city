@@ -2,6 +2,7 @@ import { SUPPORTED_LOCALES } from '@smart-city/shared';
 
 import { BrandMark } from '@/components/shell/brand-mark';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
+import { Icon } from '@/components/ui/icon';
 import { getLocale, getTranslator } from '@/lib/i18n/server';
 
 import packageJson from '../../../../package.json';
@@ -17,28 +18,38 @@ export default async function AuthLayout({ children }: LayoutProps<'/[locale]'>)
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-navy p-10 text-navy-foreground lg:flex">
-        <div className="flex items-center gap-3">
-          <BrandMark />
-          <div>
-            <p className="text-md leading-5 font-semibold text-white">{t('app.name')}</p>
-            <p className="text-xs text-navy-muted">{t('adminShell.productTagline')}</p>
-          </div>
-        </div>
-        <div className="max-w-sm">
-          <p className="text-2xl leading-snug font-semibold text-white">
-            {t('adminAuth.signInSubtitle')}
-          </p>
-          <p className="mt-3 text-base text-navy-muted">{t('adminAuth.staffOnlyNote')}</p>
-        </div>
-        <p className="text-xs text-navy-muted">
-          {t('adminShell.version', { version: packageJson.version })}
-        </p>
-        {/* A quiet grid that hints at a city map, drawn with CSS only. */}
+      <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-border bg-sidebar p-10 lg:flex xl:p-12">
+        {/* A quiet street grid that hints at a city map, drawn with CSS only. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--navy-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--navy-foreground)_1px,transparent_1px)] [background-size:48px_48px] opacity-[0.07]"
+          className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_30%_20%,black,transparent_75%)] [background-size:44px_44px]"
         />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -start-40 -top-40 size-[32rem] rounded-full bg-primary/10 blur-3xl"
+        />
+
+        <div className="relative flex items-center gap-3">
+          <BrandMark size="lg" />
+          <div className="leading-tight">
+            <p className="text-md font-semibold text-foreground">{t('app.name')}</p>
+            <p className="text-sm text-muted">{t('adminShell.productTagline')}</p>
+          </div>
+        </div>
+
+        <div className="relative max-w-md">
+          <span className="mb-5 flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-accent shadow-sm">
+            <Icon name="roles" className="size-5" />
+          </span>
+          <p className="text-2xl leading-snug font-semibold tracking-tight text-foreground xl:text-3xl">
+            {t('adminAuth.signInSubtitle')}
+          </p>
+          <p className="mt-3 text-base text-muted">{t('adminAuth.staffOnlyNote')}</p>
+        </div>
+
+        <p className="relative text-xs text-subtle tabular-nums">
+          {t('adminShell.version', { version: packageJson.version })}
+        </p>
       </aside>
 
       <div className="flex min-h-dvh flex-col bg-background">
@@ -57,7 +68,7 @@ export default async function AuthLayout({ children }: LayoutProps<'/[locale]'>)
           />
         </header>
         <main className="flex flex-1 items-start justify-center px-4 py-8 md:items-center md:px-8">
-          <div className="w-full max-w-[420px]">{children}</div>
+          <div className="w-full max-w-[420px] animate-enter">{children}</div>
         </main>
       </div>
     </div>

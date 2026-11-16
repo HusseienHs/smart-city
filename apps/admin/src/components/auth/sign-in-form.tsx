@@ -72,10 +72,7 @@ export function SignInForm({ locale, next, forgotPasswordHref, labels }: SignInF
       </Field>
 
       <div className="-mt-2 flex justify-end">
-        <Link
-          href={forgotPasswordHref}
-          className="text-sm font-medium text-primary hover:text-primary-hover hover:underline"
-        >
+        <Link href={forgotPasswordHref} className="text-sm font-medium text-accent hover:underline">
           {labels.forgotPassword}
         </Link>
       </div>

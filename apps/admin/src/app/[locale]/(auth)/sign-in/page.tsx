@@ -68,7 +68,7 @@ async function JoinLink({ label }: { label: string }) {
   return (
     <Link
       href={localizedHref(locale, JOIN_PATH)}
-      className="font-medium text-primary hover:underline"
+      className="font-medium text-accent hover:underline"
     >
       {label}
     </Link>

@@ -25,6 +25,11 @@ interface BadgeProps {
   children: ReactNode;
 }
 
+/** The solid dot color of each tone, for status indicators outside a badge. */
+export function badgeDotClass(tone: BadgeTone): string {
+  return TONES[tone].dot;
+}
+
 export function Badge({ tone = 'neutral', dot, size = 'md', className, children }: BadgeProps) {
   return (
     <span

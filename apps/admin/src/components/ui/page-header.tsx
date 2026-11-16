@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { cn } from '@/lib/cn';
+
 import { Icon } from './icon';
 
 interface PageHeaderProps {
@@ -20,18 +22,7 @@ export function PageHeader({ title, description, eyebrow, back, actions, meta }:
   return (
     <header className="mb-6 flex animate-enter flex-wrap items-end justify-between gap-x-6 gap-y-4 md:mb-7">
       <div className="min-w-0 flex-1 basis-80">
-        {back ? (
-          <Link
-            href={back.href}
-            className="group mb-3 inline-flex items-center gap-1.5 rounded-xs text-sm font-medium text-muted transition-colors hover:text-foreground"
-          >
-            <Icon
-              name="arrowStart"
-              className="size-4 transition-transform duration-150 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
-            />
-            {back.label}
-          </Link>
-        ) : null}
+        {back ? <BackLink href={back.href} label={back.label} className="mb-3" /> : null}
         {eyebrow ? <p className="mb-1.5 text-xs font-medium text-muted">{eyebrow}</p> : null}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h1 className="text-xl leading-8 font-semibold tracking-tight text-foreground sm:text-2xl">
@@ -43,5 +34,32 @@ export function PageHeader({ title, description, eyebrow, back, actions, meta }:
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
+  );
+}
+
+/** "← Back to the list" above a detail page; the arrow mirrors in right-to-left layouts. */
+export function BackLink({
+  href,
+  label,
+  className,
+}: {
+  href: string;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group inline-flex items-center gap-1.5 rounded-xs text-sm font-medium text-muted transition-colors hover:text-foreground',
+        className,
+      )}
+    >
+      <Icon
+        name="arrowStart"
+        className="size-4 transition-transform duration-150 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
+      />
+      {label}
+    </Link>
   );
 }

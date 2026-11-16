@@ -378,6 +378,7 @@ export const ar: Messages = {
       apply: 'تطبيق',
       clear: 'مسح التصفية',
       activeFilters: 'عوامل تصفية نشطة: {count}',
+      moreFilters: 'عوامل تصفية إضافية',
       removeFilter: 'إزالة عامل التصفية: {filter}',
       results: '{total} بلاغ',
       tableLabel: 'البلاغات',

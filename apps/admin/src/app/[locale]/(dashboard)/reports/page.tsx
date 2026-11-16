@@ -90,7 +90,8 @@ async function ReportsList({
         </Alert>
       ) : null}
 
-      <Panel title={t('adminReports.list.filters')} flush className="mb-6">
+      <Panel flush className="animate-enter">
+        <h2 className="sr-only">{t('adminReports.list.filters')}</h2>
         <ReportsFilters
           filters={filters}
           directory={directory}
@@ -106,9 +107,6 @@ async function ReportsList({
             showUnassigned: role === 'municipality_admin' || role === 'department_manager',
           }}
         />
-      </Panel>
-
-      <Panel flush>
         <ActiveFilters
           filters={filters}
           labels={labels}
@@ -182,28 +180,35 @@ async function ReportsList({
 function ReportsListSkeleton() {
   return (
     <div aria-busy="true">
-      <div className="mb-8 flex flex-col gap-2">
+      <div className="mb-7 flex flex-col gap-2">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-80 max-w-full" />
       </div>
-      <div className="mb-6 rounded-lg border border-border bg-surface p-5">
-        <Skeleton className="mb-4 h-9 w-full" />
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 7 }, (_, i) => (
-            <Skeleton key={i} className="h-8 w-24 rounded-full" />
-          ))}
+      <div className="overflow-clip card">
+        <div className="space-y-3 border-b border-border p-5">
+          <Skeleton className="h-9 w-full rounded-sm" />
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from({ length: 7 }, (_, i) => (
+              <Skeleton key={i} className="h-7 w-20 rounded-full" />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-7 w-16 rounded-full" />
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="rounded-lg border border-border bg-surface">
+        <div className="h-9 border-b border-border bg-surface-subtle" />
         {Array.from({ length: 8 }, (_, i) => (
           <div
             key={i}
-            className="flex items-center gap-4 border-b border-border px-5 py-4 last:border-b-0"
+            className="flex h-13 items-center gap-4 border-b border-border px-5 last:border-b-0"
           >
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-20 max-sm:hidden" />
             <Skeleton className="h-4 flex-1" />
-            <Skeleton className="h-6 w-20 rounded-full" />
-            <Skeleton className="h-6 w-16 rounded-full max-sm:hidden" />
+            <Skeleton className="h-6 w-20 rounded-sm" />
+            <Skeleton className="h-6 w-14 rounded-sm max-sm:hidden" />
           </div>
         ))}
       </div>

@@ -41,7 +41,7 @@ export function buttonClasses({ variant = 'secondary', size = 'md', iconOnly }: 
     'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-sm font-medium',
     'transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-standard',
     'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring',
-    'active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    'active:translate-y-px disabled:pointer-events-none disabled:opacity-50',
     VARIANTS[variant],
     iconOnly ? SIZES[size].square : SIZES[size].text,
   );

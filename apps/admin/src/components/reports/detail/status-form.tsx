@@ -4,17 +4,14 @@ import { REPORT_REJECTION_REASONS, type Locale, type ReportStatus } from '@smart
 import { useActionState, useRef, useState, type FormEvent } from 'react';
 
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, Spinner } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Field, Select, TextInput } from '@/components/ui/field';
+import { controlClasses, Field, Select, TextInput } from '@/components/ui/field';
 import { changeReportStatusAction, type ReportActionState } from '@/lib/reports/actions';
 import { needsConfirmation } from '@/lib/reports/capabilities';
 import { translatorFor, type ReportStrings } from '@/lib/reports/strings';
 
 const initial: ReportActionState = { status: 'idle' };
-const TEXTAREA =
-  'min-h-24 w-full rounded-sm border bg-surface px-3 py-2 text-base text-foreground shadow-xs ' +
-  'placeholder:text-subtle focus:border-primary focus:ring-3 focus:ring-primary/15 focus:outline-none';
 
 interface StatusFormProps {
   locale: Locale;
@@ -192,14 +189,14 @@ export function StatusForm({
                 aria-describedby={describedBy}
                 aria-invalid={invalid || undefined}
                 aria-required={publicNote || undefined}
-                className={`${TEXTAREA} ${invalid ? 'border-danger' : 'border-border-strong'}`}
+                className={controlClasses(invalid, 'h-auto min-h-24 px-3 py-2 leading-relaxed')}
               />
             )}
           </Field>
         ) : null}
 
         {target && !publicNote ? (
-          <label className="flex items-center gap-2 text-sm text-foreground-secondary">
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-sm text-foreground-secondary transition-colors hover:bg-surface-subtle has-checked:border-primary-soft-border has-checked:bg-primary-soft has-checked:text-foreground">
             <input
               type="checkbox"
               name="notePublic"
@@ -216,7 +213,9 @@ export function StatusForm({
           variant={target === 'rejected' ? 'danger' : 'primary'}
           disabled={pending || !target}
           aria-busy={pending || undefined}
+          className="w-full"
         >
+          {pending ? <Spinner /> : null}
           {pending ? t('adminReports.status.saving') : t('adminReports.status.submit')}
         </Button>
       </div>

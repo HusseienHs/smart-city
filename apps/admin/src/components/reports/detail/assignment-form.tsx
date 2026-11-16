@@ -4,7 +4,7 @@ import { REPORT_PRIORITIES, type Locale, type ReportPriority } from '@smart-city
 import { useActionState, useRef, useState, type FormEvent } from 'react';
 
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, Spinner } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Field, Select } from '@/components/ui/field';
 import { assignReportAction, type ReportActionState } from '@/lib/reports/actions';
@@ -175,7 +175,14 @@ export function AssignmentForm({
       </Field>
 
       <div>
-        <Button type="submit" variant="primary" disabled={pending} aria-busy={pending || undefined}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={pending}
+          aria-busy={pending || undefined}
+          className="w-full"
+        >
+          {pending ? <Spinner /> : null}
           {pending ? t('adminReports.assignment.saving') : t('adminReports.assignment.submit')}
         </Button>
       </div>

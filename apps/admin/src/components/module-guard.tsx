@@ -26,7 +26,7 @@ export async function ModuleGuard({ module, children }: { module: ModuleId; chil
   return (
     <Panel>
       <EmptyState
-        icon="roles"
+        icon="lock"
         title={t('adminAuth.forbiddenTitle')}
         description={t('adminAuth.forbiddenDescription', { role: roleLabel(t, staff.role) })}
       >

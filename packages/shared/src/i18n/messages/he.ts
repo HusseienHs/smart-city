@@ -379,6 +379,7 @@ export const he: Messages = {
       apply: 'החלה',
       clear: 'ניקוי סינון',
       activeFilters: 'מסננים פעילים: {count}',
+      moreFilters: 'מסננים נוספים',
       removeFilter: 'הסרת מסנן: {filter}',
       results: '{total} דיווחים',
       tableLabel: 'דיווחים',

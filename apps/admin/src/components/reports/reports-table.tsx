@@ -4,6 +4,8 @@ import type { Translator } from '@smart-city/shared/i18n';
 import Link from 'next/link';
 
 import { ReportStatusBadge } from '@/components/report-status-badge';
+import { Avatar } from '@/components/ui/avatar';
+import { buttonClasses } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import {
   Table,
@@ -36,6 +38,18 @@ function place(report: StaffReportSummary, labels: ReportLabels): string | null 
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
+/** The assignee with an avatar, or a muted "unassigned" label. */
+function Assignee({ id, labels }: { id: string | null; labels: ReportLabels }) {
+  const name = labels.person(id);
+  if (!id) return <span className="text-muted">{name}</span>;
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <Avatar name={name} size="xs" />
+      <span className="truncate">{name}</span>
+    </span>
+  );
+}
+
 /** The reports list: a sortable table from `md` up, cards on narrow screens. */
 export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: ReportsTableProps) {
   const sortable = (column: StaffReportSortField, label: string) => {
@@ -48,17 +62,19 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
         <Link
           href={`${baseHref}${filtersQuery(filters, sortChange(filters, column))}`}
           className={cn(
-            'inline-flex items-center gap-1 rounded-xs hover:text-foreground',
+            'group/sort -mx-1.5 inline-flex h-7 items-center gap-1 rounded-xs px-1.5 transition-colors hover:bg-surface-muted hover:text-foreground',
             active && 'text-foreground',
           )}
           aria-label={t('adminReports.list.sortBy', { column: label })}
         >
           {label}
-          {active ? (
-            <span aria-hidden className="text-[10px]">
-              {direction === 'asc' ? '▲' : '▼'}
-            </span>
-          ) : null}
+          <Icon
+            name={active ? (direction === 'asc' ? 'arrowUp' : 'arrowDown') : 'chevronsUpDown'}
+            className={cn(
+              'size-3.5',
+              active ? 'text-accent' : 'opacity-0 transition-opacity group-hover/sort:opacity-60',
+            )}
+          />
           {active ? (
             <span className="sr-only">
               {direction === 'asc'
@@ -94,11 +110,11 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
           <TableBody>
             {reports.map((report) => (
               // The tracking-number link stretches over the whole row.
-              <TableRow key={report.id} className="relative">
+              <TableRow key={report.id} className="group/row relative">
                 <TableCell className="whitespace-nowrap">
                   <Link
                     href={`${baseHref}/${report.id}`}
-                    className="font-medium text-accent after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:after:ring-3 focus-visible:after:ring-primary/30"
+                    className="font-medium text-foreground tabular-nums group-hover/row:text-accent after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring focus-visible:after:ring-inset"
                     aria-label={t('adminReports.list.openReport', {
                       trackingNumber: report.tracking_number,
                     })}
@@ -107,11 +123,13 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                     {report.tracking_number}
                   </Link>
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-foreground-secondary">
+                <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
                   {labels.category(report.category_id)}
                 </TableCell>
                 <TableCell className="max-w-xs">
-                  <span className="line-clamp-2 text-sm">{report.description}</span>
+                  <span className="line-clamp-2 text-sm text-foreground-secondary">
+                    {report.description}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <ReportStatusBadge
@@ -125,21 +143,21 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                     label={t(`reportPriority.${report.priority}`)}
                   />
                 </TableCell>
-                <TableCell className="text-sm whitespace-nowrap">
+                <TableCell
+                  className={cn('text-sm whitespace-nowrap', !report.department_id && 'text-muted')}
+                >
                   {labels.department(report.department_id)}
                 </TableCell>
-                <TableCell
-                  className={cn('text-sm whitespace-nowrap', !report.assignee_id && 'text-muted')}
-                >
-                  {labels.person(report.assignee_id)}
+                <TableCell className="max-w-48 text-sm whitespace-nowrap">
+                  <Assignee id={report.assignee_id} labels={labels} />
                 </TableCell>
-                <TableCell className="max-w-48 text-sm text-foreground-secondary">
+                <TableCell className="max-w-48 text-sm text-muted">
                   <span className="line-clamp-2">{place(report, labels) ?? '—'}</span>
                 </TableCell>
-                <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
+                <TableCell className="text-sm whitespace-nowrap text-muted tabular-nums">
                   {formatDateTime(locale, report.created_at)}
                 </TableCell>
-                <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
+                <TableCell className="text-sm whitespace-nowrap text-muted tabular-nums">
                   {formatDateTime(locale, report.updated_at)}
                 </TableCell>
               </TableRow>
@@ -156,19 +174,22 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
           <li key={report.id}>
             <Link
               href={`${baseHref}/${report.id}`}
-              className="flex flex-col gap-2 px-4 py-3.5 transition-colors hover:bg-surface-subtle"
+              className="flex flex-col gap-2 px-4 py-3.5 transition-colors hover:bg-surface-subtle active:bg-surface-muted"
             >
               <span className="flex items-center justify-between gap-3">
-                <span className="font-medium text-accent" dir="ltr">
+                <span className="font-medium text-foreground tabular-nums" dir="ltr">
                   {report.tracking_number}
                 </span>
-                <Icon name="chevronEnd" className="size-4 text-subtle" />
+                <span className="flex items-center gap-2 text-xs text-muted tabular-nums">
+                  {formatDateTime(locale, report.created_at)}
+                  <Icon name="chevronEnd" className="size-4 text-subtle" />
+                </span>
               </span>
-              <span className="text-sm text-foreground-secondary">
+              <span className="text-sm font-medium text-foreground-secondary">
                 {labels.category(report.category_id)}
               </span>
-              <span className="line-clamp-2 text-sm">{report.description}</span>
-              <span className="flex flex-wrap gap-1.5">
+              <span className="line-clamp-2 text-sm text-muted">{report.description}</span>
+              <span className="flex flex-wrap items-center gap-1.5">
                 <ReportStatusBadge
                   status={report.status}
                   label={t(`reportStatus.${report.status}`)}
@@ -178,9 +199,15 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                   label={t(`reportPriority.${report.priority}`)}
                 />
               </span>
-              <span className="text-xs text-muted">
-                {labels.department(report.department_id)} · {labels.person(report.assignee_id)} ·{' '}
-                {formatDateTime(locale, report.created_at)}
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                <span className="flex items-center gap-1">
+                  <Icon name="departments" className="size-3.5" />
+                  {labels.department(report.department_id)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Icon name="user" className="size-3.5" />
+                  {labels.person(report.assignee_id)}
+                </span>
               </span>
             </Link>
           </li>
@@ -212,17 +239,15 @@ export function ReportsPagination({
   const from = Math.min(total, (page - 1) * pageSize + 1);
   const to = Math.min(total, page * pageSize);
   const link = (target: number) => `${baseHref}${filtersQuery(filters, { page: target })}`;
-  const navClass =
-    'inline-flex h-8 items-center gap-1.5 rounded-sm border border-border-strong bg-surface px-3 text-sm font-medium text-foreground shadow-xs hover:bg-surface-subtle';
-  const disabledClass =
-    'inline-flex h-8 items-center gap-1.5 rounded-sm border border-border px-3 text-sm text-subtle';
+  const navClass = buttonClasses({ variant: 'secondary', size: 'sm' });
+  const disabledClass = cn(navClass, 'pointer-events-none opacity-50 shadow-none');
 
   return (
     <nav
       aria-label={t('adminReports.pagination.label')}
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle px-4 py-3 sm:px-5"
     >
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted tabular-nums">
         {page <= pageCount
           ? t('adminReports.pagination.summary', { from, to, total })
           : t('adminReports.list.results', { total })}
@@ -234,16 +259,16 @@ export function ReportsPagination({
             className={navClass}
             rel="prev"
           >
-            <Icon name="chevronEnd" className="size-4 rotate-180" />
+            <Icon name="chevronStart" className="size-4" />
             {t('adminReports.pagination.previous')}
           </Link>
         ) : (
           <span className={disabledClass} aria-disabled="true">
-            <Icon name="chevronEnd" className="size-4 rotate-180" />
+            <Icon name="chevronStart" className="size-4" />
             {t('adminReports.pagination.previous')}
           </span>
         )}
-        <span className="text-sm text-foreground-secondary">
+        <span className="px-1 text-sm text-foreground-secondary tabular-nums">
           {t('adminReports.pagination.page', {
             page: Math.min(page, Math.max(pageCount, 1)),
             pages: Math.max(pageCount, 1),

@@ -387,6 +387,7 @@ export const en = {
       apply: 'Apply',
       clear: 'Clear filters',
       activeFilters: 'Active filters: {count}',
+      moreFilters: 'More filters',
       removeFilter: 'Remove filter: {filter}',
       results: '{total} reports',
       tableLabel: 'Reports',

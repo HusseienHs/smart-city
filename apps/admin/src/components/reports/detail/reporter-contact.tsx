@@ -4,7 +4,7 @@ import type { Locale } from '@smart-city/shared';
 import { useActionState, useState } from 'react';
 
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, Spinner } from '@/components/ui/button';
 import { revealReporterContactAction, type ContactActionState } from '@/lib/reports/actions';
 import { translatorFor, type ReportStrings } from '@/lib/reports/strings';
 
@@ -39,7 +39,7 @@ export function ReporterContact({
 
       {shown ? (
         state.contact ? (
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md border border-border bg-surface-subtle p-3 text-sm">
+          <dl className="grid animate-fade-in grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 rounded-md border border-border bg-surface-subtle p-3.5 text-sm">
             <dt className="text-muted">{t('adminReports.contact.name')}</dt>
             <dd className="font-medium text-foreground">
               {state.contact.fullName ?? t('adminReports.contact.noName')}
@@ -66,7 +66,12 @@ export function ReporterContact({
 
       {shown ? (
         <div>
-          <Button variant="secondary" onClick={() => setHiddenKey(state.key)}>
+          <Button
+            variant="secondary"
+            icon="lock"
+            className="w-full"
+            onClick={() => setHiddenKey(state.key)}
+          >
             {t('adminReports.contact.hide')}
           </Button>
         </div>
@@ -77,10 +82,12 @@ export function ReporterContact({
           <Button
             type="submit"
             variant="secondary"
-            icon="account"
+            icon={pending ? undefined : 'eye'}
             disabled={pending}
             aria-busy={pending || undefined}
+            className="w-full"
           >
+            {pending ? <Spinner /> : null}
             {pending ? t('adminReports.contact.revealing') : t('adminReports.contact.reveal')}
           </Button>
         </form>

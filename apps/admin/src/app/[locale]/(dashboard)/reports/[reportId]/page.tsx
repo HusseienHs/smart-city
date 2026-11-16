@@ -28,8 +28,9 @@ import { StatusForm } from '@/components/reports/detail/status-form';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
+import { DescriptionList } from '@/components/ui/description-list';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -77,17 +78,7 @@ async function ReportDetails({
   ]);
   const { staff, municipalityId, client, directory, colleagues } = workspace;
   const listHref = localizedHref(locale, '/reports');
-  const back = (
-    <ButtonLink
-      href={listHref}
-      variant="ghost"
-      size="sm"
-      icon="chevronEnd"
-      className="mb-3 [&>svg]:rotate-180"
-    >
-      {t('adminReports.detail.backToList')}
-    </ButtonLink>
-  );
+  const back = { href: listHref, label: t('adminReports.detail.backToList') };
 
   let details: StaffReportDetails | null = null;
   let failed = false;
@@ -104,7 +95,7 @@ async function ReportDetails({
     // Missing, foreign and inaccessible reports look the same (no id probing).
     return (
       <>
-        {back}
+        <BackLink {...back} className="mb-4" />
         <Panel>
           <EmptyState
             icon={failed ? 'alert' : 'reports'}
@@ -176,8 +167,8 @@ async function ReportDetails({
 
   return (
     <>
-      {back}
       <PageHeader
+        back={back}
         title={report.tracking_number}
         description={labels.category(report.category_id)}
         meta={
@@ -192,9 +183,9 @@ async function ReportDetails({
         }
       />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Panel title={t('adminReports.detail.details')}>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        <div className="flex min-w-0 animate-enter flex-col gap-6">
+          <Panel title={t('adminReports.detail.details')} icon="reports">
             <ReportFacts
               report={report}
               duplicateOf={
@@ -214,6 +205,7 @@ async function ReportDetails({
           <Panel
             title={t('adminReports.detail.photos')}
             description={t('adminReports.detail.linksExpire')}
+            icon="image"
           >
             <div className="flex flex-col gap-6">
               <ReportPhotos
@@ -233,10 +225,18 @@ async function ReportDetails({
             </div>
           </Panel>
 
-          <Panel title={t('adminReports.comments.title')}>
+          <Panel
+            title={t('adminReports.comments.title')}
+            icon="message"
+            actions={
+              <Badge size="sm" className="tabular-nums">
+                {comments.length}
+              </Badge>
+            }
+          >
             <div className="flex flex-col gap-6">
               <ReportComments comments={comments} labels={labels} locale={locale} t={t} />
-              <div className="border-t border-border pt-5">
+              <div className="-mx-5 -mb-5 border-t border-border bg-surface-subtle px-5 pt-4 pb-5">
                 <h3 className="mb-3 text-sm font-semibold text-foreground">
                   {t('adminReports.comments.add')}
                 </h3>
@@ -245,13 +245,13 @@ async function ReportDetails({
             </div>
           </Panel>
 
-          <Panel title={t('adminReports.detail.history')}>
+          <Panel title={t('adminReports.detail.history')} icon="clock">
             <ReportHistory history={history} labels={labels} locale={locale} t={t} />
           </Panel>
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-6">
-          <Panel title={t('adminReports.status.title')}>
+        <aside className="flex min-w-0 animate-enter flex-col gap-6">
+          <Panel title={t('adminReports.status.title')} icon="layers">
             <div className="flex flex-col gap-3">
               {role === 'intake_dispatcher' && targets.length > 0 ? (
                 <p className="text-sm text-muted">{t('adminReports.status.dispatcherHint')}</p>
@@ -279,7 +279,7 @@ async function ReportDetails({
             </div>
           </Panel>
 
-          <Panel title={t('adminReports.assignment.title')}>
+          <Panel title={t('adminReports.assignment.title')} icon="userPlus">
             {mode !== 'none' ? (
               <AssignmentForm
                 locale={locale}
@@ -297,15 +297,31 @@ async function ReportDetails({
               />
             ) : (
               <div className="flex flex-col gap-3">
-                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-muted">{t('adminReports.assignment.department')}</dt>
-                  <dd>{labels.department(report.department_id)}</dd>
-                  <dt className="text-muted">{t('adminReports.assignment.assignee')}</dt>
-                  <dd>{labels.person(report.assignee_id)}</dd>
-                  <dt className="text-muted">{t('adminReports.assignment.priority')}</dt>
-                  <dd>{t(`reportPriority.${report.priority}`)}</dd>
-                </dl>
-                <p className="text-sm text-muted">
+                <DescriptionList
+                  items={[
+                    {
+                      label: t('adminReports.assignment.department'),
+                      value: labels.department(report.department_id),
+                      icon: 'departments',
+                    },
+                    {
+                      label: t('adminReports.assignment.assignee'),
+                      value: labels.person(report.assignee_id),
+                      icon: 'user',
+                    },
+                    {
+                      label: t('adminReports.assignment.priority'),
+                      value: (
+                        <ReportPriorityBadge
+                          priority={report.priority}
+                          label={t(`reportPriority.${report.priority}`)}
+                        />
+                      ),
+                      icon: 'flag',
+                    },
+                  ]}
+                />
+                <p className="border-t border-border pt-3 text-sm text-muted">
                   {isFinishedStatus(report.status)
                     ? t('adminReports.assignment.finished')
                     : t('adminReports.assignment.readOnly')}
@@ -314,7 +330,7 @@ async function ReportDetails({
             )}
           </Panel>
 
-          <Panel title={t('adminReports.contact.title')}>
+          <Panel title={t('adminReports.contact.title')} icon="user">
             {canViewReporterContact(role) ? (
               <ReporterContact locale={locale} reportId={report.id} strings={strings} />
             ) : (
@@ -322,7 +338,7 @@ async function ReportDetails({
             )}
           </Panel>
 
-          <Panel title={t('adminReports.completion.title')}>
+          <Panel title={t('adminReports.completion.title')} icon="upload">
             {upload.allowed ? (
               <CompletionUpload
                 locale={locale}
@@ -350,26 +366,38 @@ async function ReportDetails({
 function ReportDetailsSkeleton() {
   return (
     <div aria-busy="true">
-      <Skeleton className="mb-4 h-8 w-28" />
-      <div className="mb-8 flex flex-col gap-2">
-        <Skeleton className="h-8 w-56" />
+      <Skeleton className="mb-4 h-4 w-28" />
+      <div className="mb-7 flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-6 w-20 rounded-sm" />
+          <Skeleton className="h-6 w-16 rounded-sm" />
+        </div>
         <Skeleton className="h-4 w-32" />
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <div className="flex flex-col gap-6">
           {['h-40', 'h-56', 'h-48'].map((height) => (
-            <div key={height} className="rounded-lg border border-border bg-surface p-5">
-              <Skeleton className="mb-4 h-5 w-32" />
-              <Skeleton className={`${height} w-full`} />
+            <div key={height} className="card">
+              <div className="border-b border-border px-5 py-4">
+                <Skeleton className="h-5 w-32" />
+              </div>
+              <div className="p-5">
+                <Skeleton className={`${height} w-full rounded-md`} />
+              </div>
             </div>
           ))}
         </div>
         <div className="flex flex-col gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-surface p-5">
-              <Skeleton className="mb-4 h-5 w-28" />
-              <Skeleton className="mb-2 h-9 w-full" />
-              <Skeleton className="h-9 w-24" />
+            <div key={i} className="card">
+              <div className="border-b border-border px-5 py-4">
+                <Skeleton className="h-5 w-28" />
+              </div>
+              <div className="space-y-3 p-5">
+                <Skeleton className="h-9 w-full rounded-sm" />
+                <Skeleton className="h-9 w-full rounded-sm" />
+              </div>
             </div>
           ))}
         </div>

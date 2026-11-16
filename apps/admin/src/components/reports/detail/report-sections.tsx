@@ -10,18 +10,24 @@ import type { Translator } from '@smart-city/shared/i18n';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { ReportStatusBadge } from '@/components/report-status-badge';
-import { Badge } from '@/components/ui/badge';
-import { Icon } from '@/components/ui/icon';
+import { REPORT_STATUS_TONES, ReportStatusBadge } from '@/components/report-status-badge';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge, badgeDotClass } from '@/components/ui/badge';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
 import { formatCoordinate, formatDateTime } from '@/lib/reports/format';
 import type { ReportLabels } from '@/lib/reports/labels';
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function Fact({ label, icon, children }: { label: string; icon: IconName; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-xs font-medium text-muted">{label}</dt>
-      <dd className="text-sm text-foreground">{children}</dd>
+    <div className="flex min-w-0 gap-3">
+      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-surface-subtle text-muted">
+        <Icon name={icon} className="size-3.5" />
+      </span>
+      <div className="min-w-0">
+        <dt className="text-xs text-muted">{label}</dt>
+        <dd className="mt-0.5 text-sm break-words text-foreground">{children}</dd>
+      </div>
     </div>
   );
 }
@@ -44,32 +50,37 @@ export function ReportFacts({
   const neighborhood = labels.neighborhood(report.neighborhood_id);
   const location = report.location;
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div>
-        <h3 className="mb-1.5 text-xs font-medium text-muted">
+        <h3 className="mb-2 text-xs font-medium text-muted">
           {t('adminReports.detail.description')}
         </h3>
-        <p className="text-base whitespace-pre-line text-foreground" dir="auto">
+        <p
+          className="rounded-md border border-border bg-surface-subtle px-4 py-3 text-base leading-relaxed whitespace-pre-line text-foreground"
+          dir="auto"
+        >
           {report.description}
         </p>
       </div>
-      <dl className="grid gap-4 sm:grid-cols-2">
-        <Fact label={t('adminReports.columns.category')}>
+      <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+        <Fact icon="tag" label={t('adminReports.columns.category')}>
           {labels.category(report.category_id)}
         </Fact>
-        <Fact label={t('adminReports.detail.visibility')}>
+        <Fact icon="eye" label={t('adminReports.detail.visibility')}>
           {report.visibility === 'public'
             ? t('adminReports.detail.visibilityPublic')
             : t('adminReports.detail.visibilityPrivate')}
         </Fact>
-        <Fact label={t('adminReports.detail.address')}>
+        <Fact icon="mapPin" label={t('adminReports.detail.address')}>
           <span dir="auto">{report.address?.trim() || '—'}</span>
         </Fact>
-        <Fact label={t('adminReports.detail.neighborhood')}>{neighborhood ?? '—'}</Fact>
-        <Fact label={t('adminReports.detail.location')}>
+        <Fact icon="map" label={t('adminReports.detail.neighborhood')}>
+          {neighborhood ?? '—'}
+        </Fact>
+        <Fact icon="mapPin" label={t('adminReports.detail.location')}>
           {location ? (
-            <span className="flex flex-col gap-0.5">
-              <span dir="ltr" className="font-mono text-sm">
+            <span className="flex flex-col gap-1">
+              <span dir="ltr" className="font-mono text-xs text-foreground-secondary">
                 {formatCoordinate(location.latitude)}, {formatCoordinate(location.longitude)}
               </span>
               {report.location_accuracy_m != null ? (
@@ -84,35 +95,43 @@ export function ReportFacts({
                 target="_blank"
                 rel="noopener noreferrer"
                 referrerPolicy="no-referrer"
-                className="text-sm text-accent hover:underline"
+                className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline"
               >
                 {t('adminReports.detail.openInMap')}
+                <Icon name="arrowEnd" className="size-3.5 -rotate-45 rtl:rotate-45" />
               </a>
             </span>
           ) : (
-            t('adminReports.detail.noLocation')
+            <span className="text-muted">{t('adminReports.detail.noLocation')}</span>
           )}
         </Fact>
-        <Fact label={t('adminReports.detail.confirmations')}>
-          {report.confirmation_count} · {t('adminReports.detail.followers')} {report.follower_count}
+        <Fact icon="checkCircle" label={t('adminReports.detail.confirmations')}>
+          <span className="tabular-nums">
+            {report.confirmation_count} · {t('adminReports.detail.followers')}{' '}
+            {report.follower_count}
+          </span>
         </Fact>
-        <Fact label={t('adminReports.detail.submittedAt')}>
-          {formatDateTime(locale, report.created_at)}
+        <Fact icon="clock" label={t('adminReports.detail.submittedAt')}>
+          <span className="tabular-nums">{formatDateTime(locale, report.created_at)}</span>
         </Fact>
-        <Fact label={t('adminReports.detail.updatedAt')}>
-          {formatDateTime(locale, report.updated_at)}
+        <Fact icon="clock" label={t('adminReports.detail.updatedAt')}>
+          <span className="tabular-nums">{formatDateTime(locale, report.updated_at)}</span>
         </Fact>
-        <Fact label={t('adminReports.detail.statusChangedAt')}>
-          {formatDateTime(locale, report.status_changed_at)}
+        <Fact icon="layers" label={t('adminReports.detail.statusChangedAt')}>
+          <span className="tabular-nums">{formatDateTime(locale, report.status_changed_at)}</span>
         </Fact>
         {report.rejection_reason ? (
-          <Fact label={t('adminReports.detail.rejectionReason')}>
+          <Fact icon="alert" label={t('adminReports.detail.rejectionReason')}>
             {t(`reportRejectionReason.${report.rejection_reason}`)}
           </Fact>
         ) : null}
         {duplicateOf ? (
-          <Fact label={t('adminReports.detail.duplicateOf')}>
-            <Link href={duplicateOf.href} className="text-accent hover:underline" dir="ltr">
+          <Fact icon="copy" label={t('adminReports.detail.duplicateOf')}>
+            <Link
+              href={duplicateOf.href}
+              className="font-medium text-accent tabular-nums hover:underline"
+              dir="ltr"
+            >
               {duplicateOf.label}
             </Link>
           </Fact>
@@ -141,18 +160,26 @@ export function ReportPhotos({
 }) {
   return (
     <div>
-      <h3 className="mb-2 text-sm font-medium text-foreground-secondary">{title}</h3>
+      <h3 className="mb-2.5 flex items-center gap-2 text-sm font-medium text-foreground">
+        {title}
+        <span className="rounded-xs bg-surface-muted px-1.5 text-2xs leading-5 text-muted tabular-nums">
+          {attachments.length}
+        </span>
+      </h3>
       {attachments.length === 0 ? (
-        <p className="text-sm text-muted">{t('adminReports.detail.noPhotos')}</p>
+        <p className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted">
+          <Icon name="image" className="size-4 text-subtle" />
+          {t('adminReports.detail.noPhotos')}
+        </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
           {attachments.map((attachment, index) => {
             const signed = media.get(attachment.id);
             const alt = t('adminReports.detail.photoAlt', { index: index + 1, trackingNumber });
             return (
               <li
                 key={attachment.id}
-                className="overflow-hidden rounded-md border border-border bg-surface-subtle"
+                className="group overflow-hidden rounded-md border border-border bg-surface-subtle"
               >
                 {signed?.viewUrl && signed.displayable ? (
                   <a
@@ -160,6 +187,7 @@ export function ReportPhotos({
                     target="_blank"
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
+                    className="block overflow-hidden focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:outline-none focus-visible:ring-inset"
                   >
                     {/* Signed, expiring URLs from a private bucket: not suitable for next/image. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -168,12 +196,12 @@ export function ReportPhotos({
                       alt={alt}
                       loading="lazy"
                       referrerPolicy="no-referrer"
-                      className="aspect-square w-full object-cover"
+                      className="aspect-square w-full object-cover transition-transform duration-300 ease-standard group-hover:scale-[1.03]"
                     />
                   </a>
                 ) : (
                   <div className="flex aspect-square flex-col items-center justify-center gap-2 p-3 text-center">
-                    <Icon name={signed?.downloadUrl ? 'reports' : 'alert'} className="text-muted" />
+                    <Icon name={signed?.downloadUrl ? 'image' : 'alert'} className="text-subtle" />
                     <span className="text-xs text-muted">
                       {signed?.downloadUrl
                         ? t('adminReports.detail.heicPhoto')
@@ -186,8 +214,9 @@ export function ReportPhotos({
                     href={signed.downloadUrl}
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
-                    className="block border-t border-border px-2 py-1.5 text-center text-xs font-medium text-accent hover:bg-surface"
+                    className="flex items-center justify-center gap-1.5 border-t border-border bg-surface px-2 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-surface-muted"
                   >
+                    <Icon name="arrowDown" className="size-3.5" />
                     {t('adminReports.detail.download')}
                   </a>
                 ) : null}
@@ -213,56 +242,73 @@ export function ReportHistory({
   t: Translator;
 }) {
   return (
-    <ol className="relative flex flex-col gap-5 border-s border-border ps-5">
-      {history.map((entry) => (
-        <li key={entry.id} className="relative">
+    <ol className="relative flex flex-col gap-6">
+      {history.map((entry, index) => (
+        <li key={entry.id} className="relative flex gap-3.5">
+          {/* The rail that joins one step to the next. */}
+          {index < history.length - 1 ? (
+            <span aria-hidden className="absolute start-[11px] top-7 -bottom-6 w-px bg-border" />
+          ) : null}
           <span
             aria-hidden
-            className="absolute -start-[25px] top-1 size-2.5 rounded-full border-2 border-surface bg-primary"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            {entry.from_status ? (
-              <>
-                <ReportStatusBadge
-                  status={entry.from_status}
-                  label={t(`reportStatus.${entry.from_status}`)}
-                />
-                <Icon name="chevronEnd" className="size-3.5 text-subtle" />
-              </>
-            ) : null}
-            <ReportStatusBadge
-              status={entry.to_status}
-              label={t(`reportStatus.${entry.to_status}`)}
-            />
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            {formatDateTime(locale, entry.created_at)}
-            {' · '}
-            {entry.from_status === null && entry.changed_by_employee_id === null
-              ? t('adminReports.detail.historySubmitted')
-              : t('adminReports.detail.historyBy', {
-                  name: labels.author(entry.changed_by_employee_id),
-                })}
-          </p>
-          {entry.note ? (
-            <div
+            className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
+          >
+            <span
               className={cn(
-                'mt-2 rounded-md border px-3 py-2 text-sm',
-                entry.note_is_public
-                  ? 'border-info-border bg-info-soft'
-                  : 'border-border bg-surface-subtle',
+                'size-2 rounded-full',
+                badgeDotClass(REPORT_STATUS_TONES[entry.to_status]),
               )}
-            >
-              <Badge tone={entry.note_is_public ? 'info' : 'neutral'} className="mb-1">
-                {entry.note_is_public
-                  ? t('adminReports.detail.notePublic')
-                  : t('adminReports.detail.noteInternal')}
-              </Badge>
-              <p className="whitespace-pre-line text-foreground" dir="auto">
-                {entry.note}
-              </p>
+            />
+          </span>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {entry.from_status ? (
+                <>
+                  <ReportStatusBadge
+                    status={entry.from_status}
+                    label={t(`reportStatus.${entry.from_status}`)}
+                  />
+                  <Icon name="arrowEnd" className="size-3.5 text-subtle" />
+                </>
+              ) : null}
+              <ReportStatusBadge
+                status={entry.to_status}
+                label={t(`reportStatus.${entry.to_status}`)}
+              />
             </div>
-          ) : null}
+            <p className="mt-1.5 text-xs text-muted">
+              <span className="tabular-nums">{formatDateTime(locale, entry.created_at)}</span>
+              {' · '}
+              {entry.from_status === null && entry.changed_by_employee_id === null
+                ? t('adminReports.detail.historySubmitted')
+                : t('adminReports.detail.historyBy', {
+                    name: labels.author(entry.changed_by_employee_id),
+                  })}
+            </p>
+            {entry.note ? (
+              <div
+                className={cn(
+                  'mt-2.5 rounded-md border px-3 py-2.5 text-sm',
+                  entry.note_is_public
+                    ? 'border-info-border bg-info-soft'
+                    : 'border-border bg-surface-subtle',
+                )}
+              >
+                <Badge
+                  tone={entry.note_is_public ? 'info' : 'neutral'}
+                  size="sm"
+                  className="mb-1.5"
+                >
+                  {entry.note_is_public
+                    ? t('adminReports.detail.notePublic')
+                    : t('adminReports.detail.noteInternal')}
+                </Badge>
+                <p className="whitespace-pre-line text-foreground" dir="auto">
+                  {entry.note}
+                </p>
+              </div>
+            ) : null}
+          </div>
         </li>
       ))}
     </ol>
@@ -282,44 +328,63 @@ export function ReportComments({
   t: Translator;
 }) {
   if (comments.length === 0) {
-    return <p className="text-sm text-muted">{t('adminReports.comments.empty')}</p>;
+    return (
+      <p className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted">
+        <Icon name="message" className="size-4 text-subtle" />
+        {t('adminReports.comments.empty')}
+      </p>
+    );
   }
   return (
-    <ul className="flex flex-col gap-3">
-      {comments.map((comment) => (
-        <li
-          key={comment.id}
-          className={cn(
-            'rounded-md border px-3.5 py-3',
-            comment.is_internal
-              ? 'border-warning-border bg-warning-soft/40'
-              : 'border-border bg-surface',
-          )}
-        >
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-foreground">
-              {comment.from_reporter
-                ? t('adminReports.people.reporter')
-                : labels.author(comment.author_employee_id)}
-            </span>
-            {comment.is_internal ? (
-              <Badge tone="warning" dot>
-                {t('adminReports.comments.internal')}
-              </Badge>
+    <ul className="flex flex-col gap-4">
+      {comments.map((comment) => {
+        const author = comment.from_reporter
+          ? t('adminReports.people.reporter')
+          : labels.author(comment.author_employee_id);
+        return (
+          <li key={comment.id} className="flex gap-3">
+            {comment.from_reporter ? (
+              <span
+                aria-hidden
+                className="flex size-7 shrink-0 items-center justify-center rounded-full border border-info-border bg-info-soft text-info"
+              >
+                <Icon name="user" className="size-3.5" />
+              </span>
             ) : (
-              <Badge tone="info" dot>
-                {comment.from_reporter
-                  ? t('adminReports.comments.fromReporter')
-                  : t('adminReports.comments.public')}
-              </Badge>
+              <Avatar name={author} size="sm" />
             )}
-            <span className="text-xs text-muted">{formatDateTime(locale, comment.created_at)}</span>
-          </div>
-          <p className="text-sm whitespace-pre-line text-foreground" dir="auto">
-            {comment.body}
-          </p>
-        </li>
-      ))}
+            <div
+              className={cn(
+                'min-w-0 flex-1 rounded-lg border px-3.5 py-2.5',
+                comment.is_internal
+                  ? 'border-warning-border bg-warning-soft/50'
+                  : 'border-border bg-surface',
+              )}
+            >
+              <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-sm font-medium text-foreground">{author}</span>
+                {comment.is_internal ? (
+                  <Badge tone="warning" size="sm" dot>
+                    {t('adminReports.comments.internal')}
+                  </Badge>
+                ) : (
+                  <Badge tone="info" size="sm" dot>
+                    {comment.from_reporter
+                      ? t('adminReports.comments.fromReporter')
+                      : t('adminReports.comments.public')}
+                  </Badge>
+                )}
+                <span className="ms-auto text-xs text-muted tabular-nums">
+                  {formatDateTime(locale, comment.created_at)}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-foreground" dir="auto">
+                {comment.body}
+              </p>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }

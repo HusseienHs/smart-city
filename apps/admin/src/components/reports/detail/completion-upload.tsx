@@ -11,7 +11,8 @@ import { useId, useRef, useState } from 'react';
 
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonClasses } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { publicEnv } from '@/lib/env';
 import { registerCompletionPhotoAction } from '@/lib/reports/actions';
 import { translatorFor, type ReportStrings } from '@/lib/reports/strings';
@@ -181,10 +182,11 @@ export function CompletionUpload({
       {items.length > 0 ? (
         <ul className="flex flex-col gap-2" aria-live="polite">
           {items.map((item) => (
-            <li key={item.key} className="rounded-md border border-border px-3 py-2">
+            <li key={item.key} className="rounded-md border border-border bg-surface px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-sm" dir="auto">
-                  {item.name}
+                <span className="flex min-w-0 items-center gap-2 text-sm" dir="auto">
+                  <Icon name="image" className="size-4 shrink-0 text-subtle" />
+                  <span className="truncate">{item.name}</span>
                 </span>
                 {item.status === 'done' ? (
                   <Badge tone="success" dot>
@@ -204,7 +206,7 @@ export function CompletionUpload({
               </div>
               {item.status === 'uploading' ? (
                 <div
-                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-muted"
+                  className="mt-2.5 h-1 overflow-hidden rounded-full bg-surface-muted"
                   role="progressbar"
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -212,7 +214,7 @@ export function CompletionUpload({
                   aria-label={item.name}
                 >
                   <div
-                    className="h-full bg-primary transition-[width]"
+                    className="h-full rounded-full bg-primary transition-[width] duration-200"
                     style={{ width: `${item.progress}%` }}
                   />
                 </div>
@@ -240,15 +242,20 @@ export function CompletionUpload({
       ) : null}
 
       {remaining > 0 ? (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-2">
           <label
             htmlFor={inputId}
             className={
-              buttonClasses({ variant: 'secondary' }) +
-              ' cursor-pointer has-focus-visible:ring-3 has-focus-visible:ring-primary/25'
+              'flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong ' +
+              'bg-surface-subtle px-4 py-5 text-center text-sm font-medium text-foreground transition-colors ' +
+              'hover:border-primary hover:bg-primary-soft/50 has-focus-visible:ring-3 has-focus-visible:ring-focus-ring ' +
+              'aria-disabled:opacity-60'
             }
             aria-disabled={inFlight > 0 || undefined}
           >
+            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-xs">
+              <Icon name="upload" className="size-4" />
+            </span>
             {t('adminReports.completion.choose')}
             <input
               ref={input}
@@ -260,7 +267,7 @@ export function CompletionUpload({
               onChange={(event) => onFiles(event.target.files)}
             />
           </label>
-          <span className="text-sm text-muted">
+          <span className="text-center text-xs text-muted">
             {t('adminReports.completion.remaining', { count: remaining })}
           </span>
         </div>

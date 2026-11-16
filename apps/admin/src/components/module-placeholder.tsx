@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 
 import { ModuleGuard } from '@/components/module-guard';
 import { Badge } from '@/components/ui/badge';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Icon } from '@/components/ui/icon';
 import { PageHeader } from '@/components/ui/page-header';
-import { Panel } from '@/components/ui/panel';
 import { getTranslator } from '@/lib/i18n/server';
 import { getModule, moduleDescriptionKey, type ModuleId } from '@/lib/navigation';
 
@@ -29,19 +28,34 @@ export async function ModulePlaceholder({ module: id }: { module: ModuleId }) {
         description={t(moduleDescriptionKey(id))}
         meta={<Badge>{t('adminPlaceholder.phase', { phase: entry.phase })}</Badge>}
       />
-      <Panel>
-        <EmptyState
-          icon={entry.icon}
-          title={t('adminPlaceholder.title')}
-          description={t('adminPlaceholder.description', { phase: entry.phase })}
-        >
-          {entry.requiresBackend ? (
-            <Badge tone="warning" dot>
-              {t('adminPlaceholder.dependsOnBackend')}
+      <section className="relative animate-enter overflow-clip card">
+        {/* A faint dotted field: signals "not built yet" without imitating real content. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 [background-image:radial-gradient(var(--border-strong)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)] [background-size:20px_20px] opacity-70"
+        />
+        <div className="relative flex flex-col items-center px-6 py-20 text-center">
+          <span className="flex size-14 items-center justify-center rounded-xl border border-border bg-surface text-foreground-secondary shadow-sm">
+            <Icon name={entry.icon} className="size-6" />
+          </span>
+          <h2 className="mt-5 text-lg font-semibold text-foreground">
+            {t('adminPlaceholder.title')}
+          </h2>
+          <p className="mt-1 max-w-md text-base text-muted">
+            {t('adminPlaceholder.description', { phase: entry.phase })}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <Badge tone="primary" dot>
+              {t('adminPlaceholder.phase', { phase: entry.phase })}
             </Badge>
-          ) : null}
-        </EmptyState>
-      </Panel>
+            {entry.requiresBackend ? (
+              <Badge tone="warning" dot>
+                {t('adminPlaceholder.dependsOnBackend')}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+      </section>
     </ModuleGuard>
   );
 }

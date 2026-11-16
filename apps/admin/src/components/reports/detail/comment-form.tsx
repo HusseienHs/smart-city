@@ -5,8 +5,10 @@ import type { Locale } from '@smart-city/shared';
 import { useActionState, useId, useRef, useState, type FormEvent } from 'react';
 
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, Spinner } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { controlClasses } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
 import { addReportCommentAction, type ReportActionState } from '@/lib/reports/actions';
 import { translatorFor, type ReportStrings } from '@/lib/reports/strings';
@@ -82,7 +84,7 @@ export function CommentForm({
         <Alert tone="danger">{state.message}</Alert>
       ) : null}
 
-      <label htmlFor={bodyId} className="text-sm font-medium text-foreground-secondary">
+      <label htmlFor={bodyId} className="text-sm font-medium text-foreground">
         {t('adminReports.comments.body')}
       </label>
       <textarea
@@ -94,11 +96,7 @@ export function CommentForm({
         onChange={(event) => setLength(event.target.value.length)}
         aria-describedby={[counterId, error ? errorId : null].filter(Boolean).join(' ')}
         aria-invalid={error ? true : undefined}
-        className={cn(
-          'min-h-24 w-full rounded-sm border bg-surface px-3 py-2 text-base text-foreground shadow-xs',
-          'focus:border-primary focus:ring-3 focus:ring-primary/15 focus:outline-none',
-          error ? 'border-danger' : 'border-border-strong',
-        )}
+        className={controlClasses(Boolean(error), 'h-auto min-h-24 px-3 py-2 leading-relaxed')}
       />
       <div className="-mt-1 flex items-center justify-between gap-2 text-xs">
         {error ? (
@@ -110,31 +108,51 @@ export function CommentForm({
         )}
         <span
           id={counterId}
-          className={cn('text-muted', length > REPORT_COMMENT_MAX_LENGTH - 100 && 'text-warning')}
+          className={cn(
+            'text-muted tabular-nums',
+            length > REPORT_COMMENT_MAX_LENGTH - 100 && 'text-warning',
+          )}
         >
           {t('adminReports.comments.counter', { count: length, max: REPORT_COMMENT_MAX_LENGTH })}
         </span>
       </div>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium text-foreground-secondary">
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium text-foreground">
           {t('adminReports.comments.visibility')}
         </legend>
-        {(['internal', 'public'] as const).map((value) => (
-          <label key={value} className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="radio"
-              name="visibility"
-              value={value}
-              checked={visibility === value}
-              onChange={() => setVisibility(value)}
-              className="size-4 accent-[var(--color-primary)]"
-            />
-            {value === 'internal'
-              ? t('adminReports.comments.internalOption')
-              : t('adminReports.comments.publicOption')}
-          </label>
-        ))}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(['internal', 'public'] as const).map((value) => (
+            <label
+              key={value}
+              className={cn(
+                'flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors',
+                'has-focus-visible:ring-3 has-focus-visible:ring-focus-ring',
+                visibility === value
+                  ? value === 'public'
+                    ? 'border-info-border bg-info-soft text-foreground'
+                    : 'border-warning-border bg-warning-soft/60 text-foreground'
+                  : 'border-border text-foreground-secondary hover:bg-surface-subtle',
+              )}
+            >
+              <input
+                type="radio"
+                name="visibility"
+                value={value}
+                checked={visibility === value}
+                onChange={() => setVisibility(value)}
+                className="size-4 accent-[var(--color-primary)]"
+              />
+              <Icon
+                name={value === 'internal' ? 'lock' : 'eye'}
+                className={cn('size-4', value === 'internal' ? 'text-warning' : 'text-info')}
+              />
+              {value === 'internal'
+                ? t('adminReports.comments.internalOption')
+                : t('adminReports.comments.publicOption')}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       {isPublic ? <Alert tone="warning">{t('adminReports.comments.publicWarning')}</Alert> : null}
@@ -145,7 +163,9 @@ export function CommentForm({
           variant={isPublic ? 'primary' : 'secondary'}
           disabled={pending}
           aria-busy={pending || undefined}
+          icon={pending ? undefined : 'send'}
         >
+          {pending ? <Spinner /> : null}
           {pending
             ? t('adminReports.comments.posting')
             : isPublic

@@ -77,7 +77,7 @@ export function SignInForm({ locale, next, forgotPasswordHref, labels }: SignInF
         </Link>
       </div>
 
-      <SubmitButton variant="primary" pendingLabel={labels.pending} className="w-full">
+      <SubmitButton variant="primary" size="lg" pendingLabel={labels.pending} className="w-full">
         {labels.submit}
       </SubmitButton>
     </form>

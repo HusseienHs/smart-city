@@ -8,10 +8,12 @@ import { ConfirmActionForm } from '@/components/staff/confirm-action-form';
 import { DepartmentForm } from '@/components/staff/department-form';
 import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
 import { Alert } from '@/components/ui/alert';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { Icon } from '@/components/ui/icon';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -59,15 +61,7 @@ async function DepartmentDetails({
   const { staff, client, municipalityId, departments, directory } = workspace;
   const listHref = localizedHref(locale, '/departments');
   const back = (
-    <ButtonLink
-      href={listHref}
-      variant="ghost"
-      size="sm"
-      icon="chevronEnd"
-      className="mb-3 [&>svg]:rotate-180"
-    >
-      {t('adminDepartments.detail.backToList')}
-    </ButtonLink>
+    <BackLink href={listHref} label={t('adminDepartments.detail.backToList')} className="mb-4" />
   );
 
   // Only departments of the active municipality are in the list (explicit filter + RLS).
@@ -107,15 +101,23 @@ async function DepartmentDetails({
       {back}
       <PageHeader
         title={localizedText(department.name, locale)}
+        leading={
+          <span
+            aria-hidden
+            className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-foreground-secondary shadow-xs"
+          >
+            <Icon name="departments" className="size-6" />
+          </span>
+        }
         meta={
           <Badge tone={department.isActive ? 'success' : 'neutral'} dot>
             {department.isActive ? t('adminStaff.active') : t('adminStaff.inactive')}
           </Badge>
         }
       />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Panel title={t('adminDepartments.form.editTitle')}>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="flex min-w-0 animate-enter flex-col gap-6">
+          <Panel title={t('adminDepartments.form.editTitle')} icon="edit">
             {manage ? (
               <DepartmentForm
                 locale={locale}
@@ -165,17 +167,29 @@ async function DepartmentDetails({
             )}
           </Panel>
 
-          <Panel title={t('adminDepartments.detail.members')} flush>
+          <Panel
+            title={t('adminDepartments.detail.members')}
+            icon="employees"
+            flush
+            actions={
+              <Badge size="sm" className="tabular-nums">
+                {members.length}
+              </Badge>
+            }
+          >
             {members.length === 0 ? (
-              <p className="px-5 py-4 text-sm text-muted">
-                {t('adminDepartments.detail.noMembers')}
-              </p>
+              <EmptyState
+                icon="employees"
+                size="compact"
+                title={t('adminDepartments.detail.noMembers')}
+              />
             ) : (
               <ul className="divide-y divide-border">
                 {members.map((member) => {
                   const name = member.fullName?.trim() || t('adminEmployees.unnamed');
                   const content = (
                     <>
+                      <Avatar name={name} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium text-foreground">{name}</span>
                         {member.jobTitle ? (
@@ -190,7 +204,7 @@ async function DepartmentDetails({
                       {canManageStaff(role) ? (
                         <Link
                           href={localizedHref(locale, `/employees/${member.employeeId}`)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-surface-subtle"
+                          className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-subtle"
                         >
                           {content}
                         </Link>
@@ -205,11 +219,11 @@ async function DepartmentDetails({
           </Panel>
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-6">
-          <Panel title={t('adminDepartments.detail.reports')}>
+        <aside className="flex min-w-0 animate-enter flex-col gap-6">
+          <Panel title={t('adminDepartments.detail.reports')} icon="reports">
             {counts ? (
-              <div className="flex flex-col gap-3">
-                <p className="text-2xl font-semibold text-foreground">
+              <div className="flex flex-col gap-4">
+                <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                   {t('adminDepartments.detail.openReports', { count: counts[department.id] ?? 0 })}
                 </p>
                 <ButtonLink
@@ -225,7 +239,11 @@ async function DepartmentDetails({
             )}
           </Panel>
 
-          <Panel title={t('adminDepartments.activation.title')}>
+          <Panel
+            title={t('adminDepartments.activation.title')}
+            icon={department.isActive ? 'alert' : 'checkCircle'}
+            className={manage && department.isActive ? 'border-danger-border' : undefined}
+          >
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted">
                 {department.isActive

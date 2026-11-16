@@ -5,9 +5,8 @@ import { ModuleGuard } from '@/components/module-guard';
 import { moduleMetadata } from '@/components/module-placeholder';
 import { AnnouncementForm } from '@/components/notices/announcement-form';
 import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
-import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { localizedText } from '@/lib/i18n/localized-text';
 import { localizedHref } from '@/lib/i18n/routing';
@@ -45,15 +44,11 @@ async function NewAnnouncement() {
   const ownDepartment = staff.active.department_id;
 
   const back = (
-    <ButtonLink
+    <BackLink
       href={localizedHref(locale, '/notices')}
-      variant="ghost"
-      size="sm"
-      icon="chevronEnd"
-      className="mb-3 [&>svg]:rotate-180"
-    >
-      {t('adminNotices.form.backToList')}
-    </ButtonLink>
+      label={t('adminNotices.form.backToList')}
+      className="mb-4"
+    />
   );
 
   if (!canDraftAnnouncements(role, ownDepartment)) {
@@ -62,7 +57,7 @@ async function NewAnnouncement() {
         {back}
         <Panel>
           <EmptyState
-            icon="roles"
+            icon="lock"
             title={t('adminNotices.form.noAccessTitle')}
             description={t('adminNotices.form.noAccessDescription')}
           />
@@ -88,7 +83,7 @@ async function NewAnnouncement() {
     <>
       {back}
       <PageHeader title={t('adminNotices.form.createTitle')} />
-      <Panel>
+      <Panel className="animate-enter">
         <AnnouncementForm
           locale={locale}
           strings={noticeStrings(locale)}

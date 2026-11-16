@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { controlClasses } from '@/components/ui/field';
 
 /** A read-only link with a copy button (the onboarding link admins send to invitees). */
 export function CopyLink({
@@ -23,11 +24,15 @@ export function CopyLink({
           value={value}
           dir="ltr"
           onFocus={(event) => event.currentTarget.select()}
-          className="h-9 min-w-0 flex-1 rounded-sm border border-border-strong bg-surface-subtle px-3 font-mono text-sm text-foreground"
+          className={controlClasses(
+            false,
+            'min-w-0 flex-1 bg-surface-subtle px-3 font-mono text-sm',
+          )}
           aria-label={labels.copy}
         />
         <Button
           variant="secondary"
+          icon={status === 'copied' ? 'check' : 'copy'}
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(value);

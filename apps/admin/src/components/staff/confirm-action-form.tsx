@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 
 import { Alert } from '@/components/ui/alert';
-import { Button, type ButtonVariant } from '@/components/ui/button';
+import { Button, Spinner, type ButtonVariant } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { StaffActionState } from '@/lib/staff/actions';
 
@@ -66,12 +66,14 @@ export function ConfirmActionForm({
       <div>
         <Button
           type="button"
-          variant={variant}
+          // A destructive action shown as a quiet button reads red, so it is never mistaken.
+          variant={danger && variant === 'ghost' ? 'danger-ghost' : variant}
           size={size}
           disabled={disabled || pending}
           aria-busy={pending || undefined}
           onClick={() => setOpen(true)}
         >
+          {pending ? <Spinner /> : null}
           {pending ? pendingLabel : label}
         </Button>
       </div>

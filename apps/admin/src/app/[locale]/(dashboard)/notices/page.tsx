@@ -12,6 +12,7 @@ import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import type { AccessRole } from '@/lib/auth/permissions';
 import { requireStaff } from '@/lib/auth/staff-context';
+import { cn } from '@/lib/cn';
 import { localizedText } from '@/lib/i18n/localized-text';
 import { localizedHref } from '@/lib/i18n/routing';
 import { getLocale, getTranslator } from '@/lib/i18n/server';
@@ -57,6 +59,13 @@ const SEVERITY_TONE: Record<StaffAnnouncement['severity'], BadgeTone> = {
   info: 'info',
   important: 'warning',
   emergency: 'danger',
+};
+
+/** The marker beside each title: severity at a glance, before reading the badge. */
+const SEVERITY_ICON: Record<StaffAnnouncement['severity'], { icon: IconName; box: string }> = {
+  info: { icon: 'info', box: 'border-info-border bg-info-soft text-info' },
+  important: { icon: 'alert', box: 'border-warning-border bg-warning-soft text-warning' },
+  emergency: { icon: 'alert', box: 'border-danger-border bg-danger-soft text-danger' },
 };
 
 const STATE_TONE: Record<AnnouncementDisplayState, BadgeTone> = {
@@ -123,7 +132,19 @@ async function NoticesList() {
           ) : null
         }
       />
-      <Panel title={t('adminNotices.listTitle')} flush>
+      <Panel
+        title={t('adminNotices.listTitle')}
+        icon="notices"
+        flush
+        className="animate-enter"
+        actions={
+          announcements.length > 0 ? (
+            <Badge size="sm" className="tabular-nums">
+              {announcements.length}
+            </Badge>
+          ) : null
+        }
+      >
         {announcements.length === 0 ? (
           <EmptyState
             icon="notices"
@@ -146,19 +167,32 @@ async function NoticesList() {
               {announcements.map((item) => {
                 const state = announcementDisplayState(item);
                 return (
-                  <TableRow key={item.id}>
-                    <TableCell className="max-w-md">
-                      <Link
-                        href={localizedHref(locale, `/notices/${item.id}`)}
-                        className="block font-medium text-accent hover:underline"
-                      >
-                        {localizedText(item.title, locale)}
-                      </Link>
-                      <span className="line-clamp-2 block text-sm text-muted">
-                        {localizedText(item.body, locale)}
-                      </span>
+                  <TableRow key={item.id} className="align-top">
+                    <TableCell className="max-w-md py-3.5">
+                      <div className="flex gap-3">
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border',
+                            SEVERITY_ICON[item.severity].box,
+                          )}
+                        >
+                          <Icon name={SEVERITY_ICON[item.severity].icon} className="size-3.5" />
+                        </span>
+                        <div className="min-w-0">
+                          <Link
+                            href={localizedHref(locale, `/notices/${item.id}`)}
+                            className="block font-medium text-foreground transition-colors hover:text-accent"
+                          >
+                            {localizedText(item.title, locale)}
+                          </Link>
+                          <span className="mt-0.5 line-clamp-2 block text-sm text-muted">
+                            {localizedText(item.body, locale)}
+                          </span>
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-sm text-foreground-secondary">
+                    <TableCell className="py-3.5 text-sm text-foreground-secondary">
                       {item.department_id
                         ? (departmentNames.get(item.department_id) ?? '—')
                         : t('adminNotices.municipalityWide')}
@@ -170,17 +204,17 @@ async function NoticesList() {
                         </span>
                       ) : null}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5">
                       <Badge tone={SEVERITY_TONE[item.severity]}>
                         {t(`notices.severity.${item.severity}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5">
                       <Badge tone={STATE_TONE[state]} dot>
                         {t(`adminNotices.state.${state}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
+                    <TableCell className="py-3.5 text-sm whitespace-nowrap text-foreground-secondary tabular-nums">
                       <span className="block">
                         {item.published_at
                           ? t('adminNotices.publishedOn', {
@@ -191,14 +225,14 @@ async function NoticesList() {
                             })}
                       </span>
                       {item.expires_at ? (
-                        <span className="block text-muted">
+                        <span className="mt-0.5 block text-xs text-muted">
                           {t('adminNotices.expiresOn', {
                             date: formatDateTime(locale, item.expires_at),
                           })}
                         </span>
                       ) : null}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3">
                       <RowActions
                         item={item}
                         role={role}

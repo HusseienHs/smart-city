@@ -8,9 +8,9 @@ import { ConfirmActionForm } from '@/components/staff/confirm-action-form';
 import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { Icon } from '@/components/ui/icon';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { localizedText } from '@/lib/i18n/localized-text';
 import { localizedHref } from '@/lib/i18n/routing';
@@ -59,15 +59,11 @@ async function AnnouncementDetails({
   ]);
   const { staff, client, municipalityId, departments } = workspace;
   const back = (
-    <ButtonLink
+    <BackLink
       href={localizedHref(locale, '/notices')}
-      variant="ghost"
-      size="sm"
-      icon="chevronEnd"
-      className="mb-3 [&>svg]:rotate-180"
-    >
-      {t('adminNotices.form.backToList')}
-    </ButtonLink>
+      label={t('adminNotices.form.backToList')}
+      className="mb-4"
+    />
   );
 
   // Explicitly scoped to the active municipality (and by RLS).
@@ -149,7 +145,7 @@ async function AnnouncementDetails({
           <Alert tone="warning">{t('adminNotices.imageNotPublic')}</Alert>
         </div>
       ) : null}
-      <Panel>
+      <Panel className="animate-enter">
         {editable ? (
           <AnnouncementForm
             locale={locale}
@@ -174,7 +170,8 @@ async function AnnouncementDetails({
         ) : (
           <div className="flex flex-col gap-4">
             <Alert tone="info">{t('adminNotices.detail.readOnly')}</Alert>
-            <p className="text-sm text-muted">
+            <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+              <Icon name="departments" className="size-4 text-subtle" />
               {departmentName}
               {announcement.neighborhood_id
                 ? ` · ${t('adminNotices.neighborhoodLabel', {
@@ -189,10 +186,10 @@ async function AnnouncementDetails({
               <img
                 src={imageUrl}
                 alt=""
-                className="max-h-72 w-fit max-w-full rounded-md border border-border object-contain"
+                className="max-h-72 w-fit max-w-full rounded-lg border border-border object-contain shadow-xs"
               />
             ) : null}
-            <p className="text-base whitespace-pre-line text-foreground">
+            <p className="max-w-3xl text-base leading-relaxed whitespace-pre-line text-foreground">
               {localizedText(announcement.body, locale)}
             </p>
           </div>

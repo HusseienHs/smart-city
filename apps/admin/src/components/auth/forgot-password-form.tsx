@@ -68,7 +68,7 @@ export function ForgotPasswordForm({
           />
         )}
       </Field>
-      <SubmitButton variant="primary" pendingLabel={labels.pending} className="w-full">
+      <SubmitButton variant="primary" size="lg" pendingLabel={labels.pending} className="w-full">
         {labels.submit}
       </SubmitButton>
       <ButtonLink href={signInHref} variant="ghost" className="w-full">

@@ -8,10 +8,11 @@ import { ConfirmActionForm } from '@/components/staff/confirm-action-form';
 import { JobTitleForm, RoleForm } from '@/components/staff/employee-forms';
 import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
 import { Alert } from '@/components/ui/alert';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ButtonLink } from '@/components/ui/button';
+import { DescriptionList } from '@/components/ui/description-list';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -54,15 +55,11 @@ async function EmployeeDetails({
   ]);
   const { staff, client, municipalityId, departments, directory } = workspace;
   const back = (
-    <ButtonLink
+    <BackLink
       href={localizedHref(locale, '/employees')}
-      variant="ghost"
-      size="sm"
-      icon="chevronEnd"
-      className="mb-3 [&>svg]:rotate-180"
-    >
-      {t('adminEmployees.detail.backToList')}
-    </ButtonLink>
+      label={t('adminEmployees.detail.backToList')}
+      className="mb-4"
+    />
   );
 
   // The directory holds only this municipality's memberships (get_municipality_staff).
@@ -107,6 +104,7 @@ async function EmployeeDetails({
       {back}
       <PageHeader
         title={name}
+        leading={<Avatar name={name} size="lg" className="size-12 text-md" />}
         description={member.jobTitle ?? undefined}
         meta={
           <>
@@ -125,43 +123,48 @@ async function EmployeeDetails({
         </Alert>
       ) : null}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Panel title={t('adminEmployees.detail.membership')}>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-medium text-muted">
-                  {t('adminEmployees.columns.role')}
-                </dt>
-                <dd className="text-sm">{roleLabel(t, member.role)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted">
-                  {t('adminEmployees.columns.department')}
-                </dt>
-                <dd className="text-sm">
-                  {member.departmentId ? (departmentName.get(member.departmentId) ?? '—') : '—'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted">
-                  {t('adminEmployees.detail.memberSince')}
-                </dt>
-                <dd className="text-sm">
-                  {member.createdAt ? formatDateTime(locale, member.createdAt) : '—'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted">
-                  {t('adminEmployees.detail.openReports')}
-                </dt>
-                <dd className="text-sm">{openReports}</dd>
-              </div>
-            </dl>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="flex min-w-0 animate-enter flex-col gap-6">
+          <Panel title={t('adminEmployees.detail.membership')} icon="account">
+            <DescriptionList
+              layout="inline"
+              items={[
+                {
+                  label: t('adminEmployees.columns.role'),
+                  icon: 'roles',
+                  value: (
+                    <Badge tone={member.role === 'municipality_admin' ? 'violet' : 'neutral'}>
+                      {roleLabel(t, member.role)}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: t('adminEmployees.columns.department'),
+                  icon: 'departments',
+                  value: member.departmentId
+                    ? (departmentName.get(member.departmentId) ?? '—')
+                    : '—',
+                },
+                {
+                  label: t('adminEmployees.detail.memberSince'),
+                  icon: 'clock',
+                  value: (
+                    <span className="tabular-nums">
+                      {member.createdAt ? formatDateTime(locale, member.createdAt) : '—'}
+                    </span>
+                  ),
+                },
+                {
+                  label: t('adminEmployees.detail.openReports'),
+                  icon: 'reports',
+                  value: <span className="font-medium tabular-nums">{openReports}</span>,
+                },
+              ]}
+            />
           </Panel>
 
           {!isSelf ? (
-            <Panel title={t('adminEmployees.role.title')}>
+            <Panel title={t('adminEmployees.role.title')} icon="roles">
               {member.isActive ? (
                 <RoleForm
                   locale={locale}
@@ -184,8 +187,8 @@ async function EmployeeDetails({
         </div>
 
         {!isSelf ? (
-          <aside className="flex min-w-0 flex-col gap-6">
-            <Panel title={t('adminEmployees.detail.jobTitle')}>
+          <aside className="flex min-w-0 animate-enter flex-col gap-6">
+            <Panel title={t('adminEmployees.detail.jobTitle')} icon="tag">
               <JobTitleForm
                 locale={locale}
                 strings={strings}
@@ -193,7 +196,12 @@ async function EmployeeDetails({
                 jobTitle={member.jobTitle}
               />
             </Panel>
-            <Panel title={t('adminEmployees.activation.title')}>
+            <Panel
+              title={t('adminEmployees.activation.title')}
+              icon={member.isActive ? 'alert' : 'checkCircle'}
+              // Deactivation is the one destructive action on this page: it reads as a danger zone.
+              className={member.isActive ? 'border-danger-border' : undefined}
+            >
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
                   {member.isActive

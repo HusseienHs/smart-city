@@ -16,21 +16,38 @@ interface PageHeaderProps {
   actions?: ReactNode;
   /** Status badges or metadata shown next to the title. */
   meta?: ReactNode;
+  /** A visual before the title, e.g. a person's avatar. */
+  leading?: ReactNode;
 }
 
-export function PageHeader({ title, description, eyebrow, back, actions, meta }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  eyebrow,
+  back,
+  actions,
+  meta,
+  leading,
+}: PageHeaderProps) {
   return (
     <header className="mb-6 flex animate-enter flex-wrap items-end justify-between gap-x-6 gap-y-4 md:mb-7">
       <div className="min-w-0 flex-1 basis-80">
         {back ? <BackLink href={back.href} label={back.label} className="mb-3" /> : null}
-        {eyebrow ? <p className="mb-1.5 text-xs font-medium text-muted">{eyebrow}</p> : null}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="text-xl leading-8 font-semibold tracking-tight text-foreground sm:text-2xl">
-            {title}
-          </h1>
-          {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
+        <div className="flex min-w-0 items-center gap-4">
+          {leading}
+          <div className="min-w-0">
+            {eyebrow ? <p className="mb-1.5 text-xs font-medium text-muted">{eyebrow}</p> : null}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="text-xl leading-8 font-semibold tracking-tight text-foreground sm:text-2xl">
+                {title}
+              </h1>
+              {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
+            </div>
+            {description ? (
+              <p className="mt-1 max-w-3xl text-base text-muted">{description}</p>
+            ) : null}
+          </div>
         </div>
-        {description ? <p className="mt-1 max-w-3xl text-base text-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>

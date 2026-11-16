@@ -15,7 +15,8 @@ import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { Icon } from '@/components/ui/icon';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { JOIN_PATH } from '@/lib/auth/routes';
@@ -81,29 +82,26 @@ async function Invitations() {
 
   return (
     <>
-      <ButtonLink
+      <BackLink
         href={localizedHref(locale, '/employees')}
-        variant="ghost"
-        size="sm"
-        icon="chevronEnd"
-        className="mb-3 [&>svg]:rotate-180"
-      >
-        {t('adminEmployees.detail.backToList')}
-      </ButtonLink>
+        label={t('adminEmployees.detail.backToList')}
+        className="mb-4"
+      />
       <PageHeader
         title={t('adminEmployees.invitations')}
         description={t('adminInvitations.subtitle')}
       />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
+      <div className="grid animate-enter items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <Panel
           title={t('adminInvitations.newTitle')}
           description={t('adminInvitations.newDescription')}
+          icon="userPlus"
         >
           <InviteForm locale={locale} strings={strings} departments={activeDepartments} />
         </Panel>
 
-        <Panel title={t('adminInvitations.linkTitle')}>
+        <Panel title={t('adminInvitations.linkTitle')} icon="link">
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted">{t('adminInvitations.linkDescription')}</p>
             <CopyLink value={link} labels={linkLabels} />
@@ -111,18 +109,44 @@ async function Invitations() {
               <h3 className="mb-2 text-sm font-semibold text-foreground">
                 {t('adminInvitations.instructionsTitle')}
               </h3>
-              <ol className="list-decimal space-y-1 ps-5 text-sm text-foreground-secondary">
-                <li>{t('adminInvitations.instructions1')}</li>
-                <li>{t('adminInvitations.instructions2')}</li>
-                <li>{t('adminInvitations.instructions3')}</li>
-                <li>{t('adminInvitations.instructions4')}</li>
+              <ol className="space-y-2.5 text-sm text-foreground-secondary">
+                {(
+                  [
+                    'adminInvitations.instructions1',
+                    'adminInvitations.instructions2',
+                    'adminInvitations.instructions3',
+                    'adminInvitations.instructions4',
+                  ] as const
+                ).map((key, index) => (
+                  <li key={key} className="flex gap-2.5">
+                    <span
+                      aria-hidden
+                      className="flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-surface-subtle text-2xs font-semibold text-muted tabular-nums"
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="pt-px">{t(key)}</span>
+                  </li>
+                ))}
               </ol>
             </div>
           </div>
         </Panel>
       </div>
 
-      <Panel title={t('adminInvitations.listTitle')} flush className="mt-6">
+      <Panel
+        title={t('adminInvitations.listTitle')}
+        icon="mail"
+        flush
+        className="mt-6"
+        actions={
+          invitations && invitations.length > 0 ? (
+            <Badge size="sm" className="tabular-nums">
+              {invitations.length}
+            </Badge>
+          ) : null
+        }
+      >
         {invitations === null ? (
           <EmptyState icon="alert" title={t('adminInvitations.loadError')}>
             <ButtonLink href={localizedHref(locale, '/employees/invitations')} variant="primary">
@@ -130,7 +154,7 @@ async function Invitations() {
             </ButtonLink>
           </EmptyState>
         ) : invitations.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-muted">{t('adminInvitations.empty')}</p>
+          <EmptyState icon="mail" size="compact" title={t('adminInvitations.empty')} />
         ) : (
           <ul className="divide-y divide-border">
             {invitations.map((invitation) => {
@@ -139,8 +163,14 @@ async function Invitations() {
               return (
                 <li
                   key={invitation.id}
-                  className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start"
+                  className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-surface-subtle lg:flex-row lg:items-start"
                 >
+                  <span
+                    aria-hidden
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-subtle text-muted max-lg:hidden"
+                  >
+                    <Icon name="mail" className="size-4" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium break-all text-foreground" dir="ltr">
@@ -157,7 +187,7 @@ async function Invitations() {
                         : ''}
                       {invitation.job_title ? ` · ${invitation.job_title}` : ''}
                     </p>
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-xs text-muted tabular-nums">
                       {t('adminInvitations.sent', {
                         date: formatDate(locale, invitation.created_at),
                       })}

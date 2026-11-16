@@ -63,7 +63,7 @@ export function ResetPasswordForm({
           />
         )}
       </Field>
-      <SubmitButton variant="primary" pendingLabel={labels.pending} className="w-full">
+      <SubmitButton variant="primary" size="lg" pendingLabel={labels.pending} className="w-full">
         {labels.submit}
       </SubmitButton>
     </form>

@@ -5,9 +5,11 @@ import { Suspense } from 'react';
 import { ModuleGuard } from '@/components/module-guard';
 import { moduleMetadata } from '@/components/module-placeholder';
 import { StaffPageSkeleton } from '@/components/staff/staff-skeleton';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { controlClasses, Select } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
@@ -46,9 +48,6 @@ export default function EmployeesPage({ searchParams }: PageProps<'/[locale]/emp
     </ModuleGuard>
   );
 }
-
-const CONTROL =
-  'h-9 w-full appearance-none rounded-sm border border-border-strong bg-surface px-3 pe-9 text-base text-foreground shadow-xs focus:border-primary focus:ring-3 focus:ring-primary/15 focus:outline-none';
 
 async function Directory({
   searchParams,
@@ -97,23 +96,17 @@ async function Directory({
     options: [string, string][],
   ) => (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={`filter-${name}`} className="text-sm font-medium text-foreground-secondary">
+      <label htmlFor={`filter-${name}`} className="text-sm font-medium text-foreground">
         {label}
       </label>
-      <div className="relative">
-        <select id={`filter-${name}`} name={name} defaultValue={value ?? ''} className={CONTROL}>
-          <option value="">{t('adminEmployees.filters.any')}</option>
-          {options.map(([optionValue, optionLabel]) => (
-            <option key={optionValue} value={optionValue}>
-              {optionLabel}
-            </option>
-          ))}
-        </select>
-        <Icon
-          name="chevronDown"
-          className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted"
-        />
-      </div>
+      <Select id={`filter-${name}`} name={name} defaultValue={value ?? ''}>
+        <option value="">{t('adminEmployees.filters.any')}</option>
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 
@@ -128,7 +121,7 @@ async function Directory({
             <ButtonLink
               href={localizedHref(locale, '/employees/invitations')}
               variant="primary"
-              icon="mail"
+              icon="userPlus"
             >
               {t('adminEmployees.invite')}
             </ButtonLink>
@@ -136,26 +129,38 @@ async function Directory({
         }
       />
 
-      <Panel flush className="mb-6">
+      <Panel
+        title={t('adminEmployees.directory')}
+        description={t('adminEmployees.results', { count: visible.length })}
+        icon="employees"
+        flush
+        className="animate-enter"
+      >
         <form
           method="get"
           action={baseHref}
           role="search"
-          className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-5"
+          className="grid items-end gap-3 border-b border-border p-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]"
         >
-          <div className="flex flex-col gap-1.5 xl:col-span-2">
-            <label htmlFor="staff-search" className="text-sm font-medium text-foreground-secondary">
+          <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1">
+            <label htmlFor="staff-search" className="text-sm font-medium text-foreground">
               {t('adminEmployees.searchLabel')}
             </label>
-            <input
-              id="staff-search"
-              type="search"
-              name="q"
-              maxLength={100}
-              defaultValue={filters.search}
-              placeholder={t('adminEmployees.searchPlaceholder')}
-              className={CONTROL.replace('appearance-none', '')}
-            />
+            <div className="relative">
+              <Icon
+                name="search"
+                className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+              />
+              <input
+                id="staff-search"
+                type="search"
+                name="q"
+                maxLength={100}
+                defaultValue={filters.search}
+                placeholder={t('adminEmployees.searchPlaceholder')}
+                className={controlClasses(false, 'ps-9 pe-3')}
+              />
+            </div>
           </div>
           {select(
             'role',
@@ -173,8 +178,8 @@ async function Directory({
                 ['inactive', t('adminStaff.inactive')],
               ])
             : null}
-          <div className="flex items-end gap-2 md:col-span-2 xl:col-span-5">
-            <Button type="submit" variant="primary" icon="filter">
+          <div className="flex items-end gap-2 md:col-span-2 xl:col-span-1">
+            <Button type="submit" variant="secondary" icon="filter">
               {t('adminEmployees.filters.apply')}
             </Button>
             {hasFilters ? (
@@ -184,16 +189,10 @@ async function Directory({
             ) : null}
           </div>
         </form>
-      </Panel>
 
-      <Panel
-        title={t('adminEmployees.directory')}
-        description={t('adminEmployees.results', { count: visible.length })}
-        flush
-      >
         {visible.length === 0 ? (
           <EmptyState
-            icon="employees"
+            icon={hasFilters ? 'search' : 'employees'}
             title={hasFilters ? t('adminEmployees.noMatches') : t('adminEmployees.empty')}
             description={!hasFilters && manage ? t('adminEmployees.emptyDescription') : undefined}
           />
@@ -219,35 +218,43 @@ async function Directory({
                 return (
                   <TableRow
                     key={member.employeeId}
-                    className={cn(manage && 'relative', !member.isActive && 'text-muted')}
+                    className={cn('group/row', manage && 'relative')}
                   >
                     <TableCell>
-                      {manage ? (
-                        <Link
-                          href={localizedHref(locale, `/employees/${member.employeeId}`)}
-                          className="font-medium text-accent after:absolute after:inset-0 hover:underline"
-                          aria-label={t('adminEmployees.openEmployee', { name })}
-                        >
-                          {name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium text-foreground">{name}</span>
-                      )}
-                      {member.employeeId === self ? (
-                        <Badge tone="primary" className="ms-2">
-                          {t('adminEmployees.you')}
-                        </Badge>
-                      ) : null}
+                      <div
+                        className={cn(
+                          'flex min-w-0 items-center gap-3',
+                          !member.isActive && 'opacity-60',
+                        )}
+                      >
+                        <Avatar name={name} size="sm" />
+                        {manage ? (
+                          <Link
+                            href={localizedHref(locale, `/employees/${member.employeeId}`)}
+                            className="truncate font-medium text-foreground transition-colors group-hover/row:text-accent after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring focus-visible:after:ring-inset"
+                            aria-label={t('adminEmployees.openEmployee', { name })}
+                          >
+                            {name}
+                          </Link>
+                        ) : (
+                          <span className="truncate font-medium text-foreground">{name}</span>
+                        )}
+                        {member.employeeId === self ? (
+                          <Badge tone="primary" size="sm">
+                            {t('adminEmployees.you')}
+                          </Badge>
+                        ) : null}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-sm whitespace-nowrap">
-                      {roleLabel(t, member.role)}
+                    <TableCell className="whitespace-nowrap">
+                      <Badge tone={member.role === 'municipality_admin' ? 'violet' : 'neutral'}>
+                        {roleLabel(t, member.role)}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className={cn('text-sm', !member.departmentId && 'text-muted')}>
                       {member.departmentId ? (departmentName.get(member.departmentId) ?? '—') : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-foreground-secondary">
-                      {member.jobTitle ?? '—'}
-                    </TableCell>
+                    <TableCell className="text-sm text-muted">{member.jobTitle ?? '—'}</TableCell>
                     {showStatus ? (
                       <TableCell>
                         <Badge tone={member.isActive ? 'success' : 'neutral'} dot>
@@ -256,7 +263,7 @@ async function Directory({
                       </TableCell>
                     ) : null}
                     {showStatus ? (
-                      <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
+                      <TableCell className="text-sm whitespace-nowrap text-muted tabular-nums">
                         {member.createdAt ? formatDate(locale, member.createdAt) : '—'}
                       </TableCell>
                     ) : null}

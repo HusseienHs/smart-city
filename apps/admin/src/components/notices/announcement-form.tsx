@@ -212,7 +212,7 @@ export function AnnouncementForm({
         })}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 border-t border-border pt-5 md:grid-cols-2">
         <Field
           label={t('adminNotices.form.severity')}
           hint={t('adminNotices.form.severityHint')}
@@ -277,10 +277,10 @@ export function AnnouncementForm({
           </Field>
         ) : (
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-foreground-secondary">
+            <span className="text-sm font-medium text-foreground">
               {t('adminNotices.form.department')}
             </span>
-            <p className="text-sm text-foreground">
+            <p className="flex h-9 items-center rounded-sm border border-border bg-surface-muted px-3 text-sm text-foreground">
               {announcement
                 ? announcement.departmentName
                 : t('adminNotices.form.ownDepartment', { department: ownDepartmentName ?? '—' })}
@@ -315,10 +315,10 @@ export function AnnouncementForm({
         </Field>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-border pt-5">
         {announcement?.hasImage && !preview ? (
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-foreground-secondary">
+            <span className="text-sm font-medium text-foreground">
               {t('adminNotices.form.currentImage')}
             </span>
             {announcement.imageUrl ? (
@@ -327,12 +327,12 @@ export function AnnouncementForm({
                 src={announcement.imageUrl}
                 alt=""
                 className={cn(
-                  'max-h-56 w-fit max-w-full rounded-md border border-border object-contain',
-                  removeImage && 'opacity-40',
+                  'max-h-56 w-fit max-w-full rounded-lg border border-border object-contain shadow-xs transition-opacity',
+                  removeImage && 'opacity-40 grayscale',
                 )}
               />
             ) : null}
-            <label className="flex items-center gap-2 text-sm text-foreground">
+            <label className="flex w-fit cursor-pointer items-center gap-2 rounded-sm text-sm text-danger">
               <input
                 type="checkbox"
                 name="removeImage"
@@ -364,7 +364,13 @@ export function AnnouncementForm({
                 accept={ANNOUNCEMENT_IMAGE_TYPES.join(',')}
                 aria-describedby={describedBy}
                 aria-invalid={invalid || undefined}
-                className="text-sm text-foreground file:me-3 file:rounded-sm file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground"
+                className={cn(
+                  'w-full cursor-pointer rounded-md border border-dashed border-border-strong bg-surface-subtle p-2 text-sm text-muted transition-colors',
+                  'hover:border-primary focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:outline-none',
+                  'file:me-3 file:cursor-pointer file:rounded-sm file:border file:border-border-strong file:bg-surface',
+                  'file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground file:shadow-xs',
+                  invalid && 'border-danger',
+                )}
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   const problem = file ? announcementImageProblem(file) : null;
@@ -387,14 +393,14 @@ export function AnnouncementForm({
           <img
             src={preview}
             alt=""
-            className="max-h-56 w-fit max-w-full rounded-md border border-border object-contain"
+            className="max-h-56 w-fit max-w-full animate-fade-in rounded-lg border border-border object-contain shadow-xs"
           />
         ) : null}
       </div>
 
       {!editing ? (
         canPublishOwn ? (
-          <label className="flex items-start gap-3">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface-subtle p-4 transition-colors hover:border-border-strong has-checked:border-primary-soft-border has-checked:bg-primary-soft">
             <input
               type="checkbox"
               name="publish"
@@ -414,8 +420,12 @@ export function AnnouncementForm({
         )
       ) : null}
 
-      <div>
-        <SubmitButton variant="primary" pendingLabel={t('adminNotices.form.creating')}>
+      <div className="-mx-5 -mb-5 flex justify-end border-t border-border bg-surface-subtle px-5 py-3.5">
+        <SubmitButton
+          variant="primary"
+          icon={editing ? 'check' : 'send'}
+          pendingLabel={t('adminNotices.form.creating')}
+        >
           {editing ? t('adminNotices.form.save') : t('adminNotices.form.create')}
         </SubmitButton>
       </div>

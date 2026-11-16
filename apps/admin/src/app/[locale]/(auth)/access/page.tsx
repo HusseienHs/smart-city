@@ -103,7 +103,7 @@ async function AccessContent({
       ) : access.status === 'no-access' ? (
         <div className="flex flex-col items-center rounded-md border border-dashed border-border-strong px-5 py-8 text-center">
           <span className="mb-3 flex size-10 items-center justify-center rounded-full border border-primary-soft-border bg-primary-soft text-accent">
-            <Icon name="roles" />
+            <Icon name="lock" />
           </span>
           <p className="font-semibold text-foreground">{t('adminAuth.noAccessTitle')}</p>
           <p className="mt-1 text-sm text-muted">
@@ -143,14 +143,25 @@ function InvitationItem({
     .join(' · ');
 
   return (
-    <li className="rounded-md border border-border bg-surface-subtle p-4">
-      <p className="font-semibold text-foreground">
-        {localizedText(invitation.municipality_name, locale)}
-      </p>
-      <p className="mt-0.5 text-sm text-foreground-secondary">{details}</p>
-      <p className="mt-0.5 text-xs text-muted">
-        {t('adminAuth.invitationExpires', { date: expires })}
-      </p>
+    <li className="rounded-lg border border-border bg-surface-subtle p-4">
+      <div className="flex gap-3">
+        <span
+          aria-hidden
+          className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-soft-border bg-primary-soft text-sm font-semibold text-accent"
+        >
+          {Array.from(localizedText(invitation.municipality_name, locale).trim())[0] ?? '·'}
+        </span>
+        <div className="min-w-0">
+          <p className="font-semibold text-foreground">
+            {localizedText(invitation.municipality_name, locale)}
+          </p>
+          <p className="mt-0.5 text-sm text-foreground-secondary">{details}</p>
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+            <Icon name="clock" className="size-3" />
+            {t('adminAuth.invitationExpires', { date: expires })}
+          </p>
+        </div>
+      </div>
       <div className="mt-3 flex gap-2">
         <form action={acceptInvitationAction} className="flex-1">
           <input type="hidden" name="locale" value={locale} />

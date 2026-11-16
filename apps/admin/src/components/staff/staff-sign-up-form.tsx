@@ -114,7 +114,12 @@ export function StaffSignUpForm({
         )}
       </Field>
       <p className="text-xs text-muted">{t('adminJoin.confirmedNote')}</p>
-      <SubmitButton variant="primary" pendingLabel={t('adminJoin.pending')} className="w-full">
+      <SubmitButton
+        variant="primary"
+        size="lg"
+        pendingLabel={t('adminJoin.pending')}
+        className="w-full"
+      >
         {t('adminJoin.submit')}
       </SubmitButton>
     </form>

@@ -17,7 +17,7 @@ export async function AdminOnly({ children }: { children: ReactNode }) {
   return (
     <Panel>
       <EmptyState
-        icon="roles"
+        icon="lock"
         title={t('adminStaff.adminOnlyTitle')}
         description={t('adminStaff.adminOnlyDescription')}
       />

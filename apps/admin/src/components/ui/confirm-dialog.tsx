@@ -55,32 +55,38 @@ export function ConfirmDialog({
         event.preventDefault();
         onCancel();
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] popover p-0 text-foreground open:animate-dialog-in"
+      className="m-auto w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-surface-raised p-0 text-foreground shadow-lg open:animate-dialog-in"
     >
-      <div className="flex gap-4 p-5 sm:p-6">
+      <div className="relative px-6 pt-6 pb-5">
+        {/* A soft wash of the dialog's tone behind the icon. */}
+        <div
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b to-transparent',
+            danger ? 'from-danger-soft' : 'from-primary-soft',
+          )}
+        />
         <span
           className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-full border',
+            'relative flex size-12 items-center justify-center rounded-xl ring-1 ring-inset',
             danger
-              ? 'border-danger-border bg-danger-soft text-danger'
-              : 'border-primary-soft-border bg-primary-soft text-accent',
+              ? 'bg-danger-soft text-danger ring-danger-border'
+              : 'bg-primary-soft text-accent ring-primary-soft-border',
           )}
           aria-hidden
         >
-          <Icon name={danger ? 'alert' : 'info'} className="size-[18px]" />
+          <Icon name={danger ? 'alert' : 'info'} className="size-[22px]" />
         </span>
-        <div className="min-w-0 pt-1.5">
-          <h2 id={titleId} className="text-md leading-6 font-semibold">
-            {title}
-          </h2>
-          {children ? (
-            <div id={bodyId} className="mt-1.5 text-base text-muted">
-              {children}
-            </div>
-          ) : null}
-        </div>
+        <h2 id={titleId} className="relative mt-4 text-lg leading-7 font-semibold tracking-tight">
+          {title}
+        </h2>
+        {children ? (
+          <div id={bodyId} className="relative mt-1.5 text-base leading-6 text-muted">
+            {children}
+          </div>
+        ) : null}
       </div>
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border bg-surface-subtle px-5 py-3 sm:px-6">
+      <div className="grid gap-2 border-t border-border bg-surface-subtle px-6 py-4 sm:flex sm:justify-end">
         <Button variant="secondary" onClick={onCancel} autoFocus>
           {cancelLabel}
         </Button>

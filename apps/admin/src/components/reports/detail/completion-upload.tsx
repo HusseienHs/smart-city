@@ -248,7 +248,7 @@ export function CompletionUpload({
             className={
               'flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong ' +
               'bg-surface-subtle px-4 py-5 text-center text-sm font-medium text-foreground transition-colors ' +
-              'hover:border-primary hover:bg-primary-soft/50 has-focus-visible:ring-3 has-focus-visible:ring-focus-ring ' +
+              'hover:border-primary hover:bg-primary-soft/50 has-focus-visible:ring-4 has-focus-visible:ring-focus-ring ' +
               'aria-disabled:opacity-60'
             }
             aria-disabled={inFlight > 0 || undefined}

@@ -62,8 +62,8 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
         <Link
           href={`${baseHref}${filtersQuery(filters, sortChange(filters, column))}`}
           className={cn(
-            'group/sort -mx-1.5 inline-flex h-7 items-center gap-1 rounded-xs px-1.5 transition-colors hover:bg-surface-muted hover:text-foreground',
-            active && 'text-foreground',
+            'group/sort -mx-2 inline-flex h-7 items-center gap-1.5 rounded-md px-2 transition-colors hover:bg-surface-muted hover:text-foreground',
+            active && 'bg-surface-muted text-foreground',
           )}
           aria-label={t('adminReports.list.sortBy', { column: label })}
         >
@@ -94,8 +94,7 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
           <TableHead>
             <tr>
               <TableHeaderCell>{t('adminReports.columns.trackingNumber')}</TableHeaderCell>
-              <TableHeaderCell>{t('adminReports.columns.category')}</TableHeaderCell>
-              <TableHeaderCell className="min-w-56">
+              <TableHeaderCell className="min-w-64">
                 {t('adminReports.columns.description')}
               </TableHeaderCell>
               {sortable('status', t('adminReports.columns.status'))}
@@ -114,7 +113,7 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                 <TableCell className="whitespace-nowrap">
                   <Link
                     href={`${baseHref}/${report.id}`}
-                    className="font-medium text-foreground tabular-nums group-hover/row:text-accent after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring focus-visible:after:ring-inset"
+                    className="block w-fit rounded-sm font-mono text-[13px] font-medium text-foreground tabular-nums group-hover/row:text-accent after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring focus-visible:after:ring-inset"
                     aria-label={t('adminReports.list.openReport', {
                       trackingNumber: report.tracking_number,
                     })}
@@ -122,12 +121,15 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
                   >
                     {report.tracking_number}
                   </Link>
+                  <span className="mt-0.5 block max-w-44 truncate text-xs text-muted">
+                    {labels.category(report.category_id)}
+                  </span>
                 </TableCell>
-                <TableCell className="text-sm whitespace-nowrap text-foreground-secondary">
-                  {labels.category(report.category_id)}
-                </TableCell>
-                <TableCell className="max-w-xs">
-                  <span className="line-clamp-2 text-sm text-foreground-secondary">
+                <TableCell className="max-w-sm">
+                  <span
+                    className="line-clamp-2 text-sm leading-5 text-foreground-secondary"
+                    dir="auto"
+                  >
                     {report.description}
                   </span>
                 </TableCell>
@@ -174,10 +176,13 @@ export function ReportsTable({ reports, filters, labels, locale, t, baseHref }: 
           <li key={report.id}>
             <Link
               href={`${baseHref}/${report.id}`}
-              className="flex flex-col gap-2 px-4 py-3.5 transition-colors hover:bg-surface-subtle active:bg-surface-muted"
+              className="flex flex-col gap-2.5 px-4 py-4 transition-colors hover:bg-surface-subtle active:bg-surface-muted"
             >
               <span className="flex items-center justify-between gap-3">
-                <span className="font-medium text-foreground tabular-nums" dir="ltr">
+                <span
+                  className="font-mono text-[13px] font-medium text-foreground tabular-nums"
+                  dir="ltr"
+                >
                   {report.tracking_number}
                 </span>
                 <span className="flex items-center gap-2 text-xs text-muted tabular-nums">
@@ -242,17 +247,22 @@ export function ReportsPagination({
   const navClass = buttonClasses({ variant: 'secondary', size: 'sm' });
   const disabledClass = cn(navClass, 'pointer-events-none opacity-50 shadow-none');
 
+  const current = Math.min(page, Math.max(pageCount, 1));
+  const pages = pageWindow(current, Math.max(pageCount, 1));
+  const square =
+    'inline-flex size-8 items-center justify-center rounded-md text-sm font-medium tabular-nums transition-colors';
+
   return (
     <nav
       aria-label={t('adminReports.pagination.label')}
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle px-4 py-3 sm:px-5"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle px-4 py-3 sm:px-6"
     >
       <p className="text-sm text-muted tabular-nums">
         {page <= pageCount
           ? t('adminReports.pagination.summary', { from, to, total })
           : t('adminReports.list.results', { total })}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {page > 1 ? (
           <Link
             href={link(Math.min(page - 1, Math.max(pageCount, 1)))}
@@ -260,32 +270,74 @@ export function ReportsPagination({
             rel="prev"
           >
             <Icon name="chevronStart" className="size-4" />
-            {t('adminReports.pagination.previous')}
+            <span className="max-sm:sr-only">{t('adminReports.pagination.previous')}</span>
           </Link>
         ) : (
           <span className={disabledClass} aria-disabled="true">
             <Icon name="chevronStart" className="size-4" />
-            {t('adminReports.pagination.previous')}
+            <span className="max-sm:sr-only">{t('adminReports.pagination.previous')}</span>
           </span>
         )}
-        <span className="px-1 text-sm text-foreground-secondary tabular-nums">
-          {t('adminReports.pagination.page', {
-            page: Math.min(page, Math.max(pageCount, 1)),
-            pages: Math.max(pageCount, 1),
-          })}
+        <span className="sr-only">
+          {t('adminReports.pagination.page', { page: current, pages: Math.max(pageCount, 1) })}
         </span>
+        <ul className="flex items-center gap-1 max-sm:hidden">
+          {pages.map((entry, index) =>
+            entry === null ? (
+              <li key={`gap-${index}`} aria-hidden className="px-1 text-subtle">
+                …
+              </li>
+            ) : (
+              <li key={entry}>
+                {entry === current ? (
+                  <span
+                    aria-current="page"
+                    className={cn(
+                      square,
+                      'bg-surface text-foreground shadow-xs ring-1 ring-border-strong',
+                    )}
+                  >
+                    {entry}
+                  </span>
+                ) : (
+                  <Link
+                    href={link(entry)}
+                    className={cn(
+                      square,
+                      'text-muted hover:bg-surface-muted hover:text-foreground',
+                    )}
+                  >
+                    {entry}
+                  </Link>
+                )}
+              </li>
+            ),
+          )}
+        </ul>
         {page < pageCount ? (
           <Link href={link(page + 1)} className={navClass} rel="next">
-            {t('adminReports.pagination.next')}
+            <span className="max-sm:sr-only">{t('adminReports.pagination.next')}</span>
             <Icon name="chevronEnd" className="size-4" />
           </Link>
         ) : (
           <span className={disabledClass} aria-disabled="true">
-            {t('adminReports.pagination.next')}
+            <span className="max-sm:sr-only">{t('adminReports.pagination.next')}</span>
             <Icon name="chevronEnd" className="size-4" />
           </span>
         )}
       </div>
     </nav>
   );
+}
+
+/** Page numbers to show: the first, the last and the current with its neighbours; null = gap. */
+function pageWindow(current: number, count: number): (number | null)[] {
+  const wanted = new Set([1, count, current - 1, current, current + 1]);
+  const pages = [...wanted].filter((n) => n >= 1 && n <= count).sort((x, y) => x - y);
+  const result: (number | null)[] = [];
+  pages.forEach((n, index) => {
+    if (index > 0 && n - pages[index - 1]! > 1) result.push(null);
+    result.push(n);
+  });
+  return result;
 }

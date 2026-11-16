@@ -13,12 +13,12 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <section className="card p-6 shadow-sm sm:p-8">
-      <h1 className="text-xl leading-8 font-semibold tracking-tight text-foreground sm:text-2xl">
+    <section>
+      <h1 className="text-2xl leading-9 font-semibold tracking-[-0.025em] text-foreground sm:text-3xl sm:leading-10">
         {title}
       </h1>
-      {subtitle ? <p className="mt-1 text-base text-muted">{subtitle}</p> : null}
-      <div className="mt-6">{children}</div>
+      {subtitle ? <p className="mt-2 text-md leading-6 text-muted">{subtitle}</p> : null}
+      <div className="mt-8">{children}</div>
     </section>
   );
 }
@@ -29,13 +29,13 @@ export function AuthFormSkeleton() {
     <div className="flex flex-col gap-5" aria-hidden>
       <div className="space-y-2">
         <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-9 w-full rounded-sm" />
+        <Skeleton className="h-10 w-full rounded-md" />
       </div>
       <div className="space-y-2">
         <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-9 w-full rounded-sm" />
+        <Skeleton className="h-10 w-full rounded-md" />
       </div>
-      <Skeleton className="h-10 w-full rounded-sm" />
+      <Skeleton className="h-11 w-full rounded-md" />
     </div>
   );
 }

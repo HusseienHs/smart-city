@@ -30,16 +30,25 @@ interface MunicipalityContextProps {
   };
 }
 
-/** The municipality's emblem: its initial on a quiet tile. */
-function Emblem({ name, muted }: { name: string; muted?: boolean }) {
+/** The municipality's emblem: its initial on a lit gradient tile. */
+function Emblem({
+  name,
+  muted,
+  size = 'md',
+}: {
+  name: string;
+  muted?: boolean;
+  size?: 'sm' | 'md';
+}) {
   return (
     <span
       aria-hidden
       className={cn(
-        'flex size-8 shrink-0 items-center justify-center rounded-md border text-sm font-semibold',
+        'flex shrink-0 items-center justify-center font-semibold text-white',
+        size === 'md' ? 'size-10 rounded-[11px] text-md' : 'size-8 rounded-lg text-sm',
         muted
-          ? 'border-border bg-surface-muted text-muted'
-          : 'border-primary-soft-border bg-primary-soft text-accent',
+          ? 'bg-[#3a4152]'
+          : 'bg-gradient-to-br from-[#14b8a6] to-[#4f46e5] shadow-[inset_0_1px_0_rgb(255_255_255/0.3),0_4px_14px_-4px_rgb(45_212_191/0.5)]',
       )}
     >
       {Array.from(name.trim())[0] ?? '·'}
@@ -50,16 +59,34 @@ function Emblem({ name, muted }: { name: string; muted?: boolean }) {
 function Summary({
   option,
   labels,
+  tone = 'sidebar',
   className,
 }: {
   option: MunicipalityOption;
   labels: MunicipalityContextProps['labels'];
+  /** `sidebar` on the ink sidebar; `menu` inside the themed popover. */
+  tone?: 'sidebar' | 'menu';
   className?: string;
 }) {
   return (
     <span className={cn('min-w-0 flex-1 text-start leading-tight', className)}>
-      <span className="block truncate text-sm font-semibold text-foreground">{option.name}</span>
-      <span className="mt-0.5 block truncate text-2xs text-muted">
+      <span
+        className={cn(
+          'block truncate text-sm font-semibold',
+          tone === 'sidebar' ? 'text-sidebar-foreground' : 'text-foreground',
+        )}
+      >
+        {option.name}
+      </span>
+      <span
+        className={cn(
+          'mt-1 flex items-center gap-1.5 truncate text-2xs',
+          tone === 'sidebar' ? 'text-sidebar-muted' : 'text-muted',
+        )}
+      >
+        {option.suspended ? (
+          <span className="size-1.5 shrink-0 rounded-full bg-warning" aria-hidden />
+        ) : null}
         {option.role}
         {option.suspended ? ` · ${labels.suspended}` : ''}
       </span>
@@ -81,18 +108,18 @@ export function MunicipalityContext({
   const { open, toggleOpen, containerRef, toggleRef, panelId } = usePopover();
   const railHidden = rail ? 'rail:sr-only' : undefined;
   const box = cn(
-    'flex w-full items-center gap-2.5 rounded-lg border border-border bg-surface p-2 text-start shadow-xs',
-    rail &&
-      'rail:justify-center rail:border-transparent rail:bg-transparent rail:p-0 rail:shadow-none',
+    'flex w-full items-center gap-3 rounded-xl bg-sidebar-raised p-2.5 text-start ring-1 ring-sidebar-border ring-inset',
+    'shadow-[inset_0_1px_0_rgb(255_255_255/0.04)]',
+    rail && 'rail:justify-center rail:bg-transparent rail:p-0 rail:shadow-none rail:ring-0',
   );
 
   if (!current) {
     return (
       <div className={box} title={rail ? labels.platformAdmin : undefined}>
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-violet-border bg-violet-soft text-violet">
-          <Icon name="roles" className="size-4" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-gradient-to-br from-[#8b5cf6] to-[#4338ca] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.3)]">
+          <Icon name="roles" className="size-5" />
         </span>
-        <span className={cn('truncate text-sm font-semibold text-foreground', railHidden)}>
+        <span className={cn('truncate text-sm font-semibold text-sidebar-foreground', railHidden)}>
           {labels.platformAdmin}
         </span>
       </div>
@@ -127,14 +154,14 @@ export function MunicipalityContext({
         title={rail ? current.name : undefined}
         className={cn(
           box,
-          'transition-[border-color,box-shadow,background-color] duration-150 hover:border-border-strong',
-          'focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:outline-none',
-          open && 'border-border-strong',
+          'transition-[box-shadow,background-color] duration-150 hover:bg-sidebar-hover hover:ring-white/15',
+          'focus-visible:ring-2 focus-visible:ring-sidebar-accent/60 focus-visible:outline-none',
+          open && 'bg-sidebar-hover ring-white/15',
         )}
       >
         <Emblem name={current.name} muted={current.suspended} />
         <Summary option={current} labels={labels} className={railHidden} />
-        <Icon name="chevronsUpDown" className={cn('size-4 text-subtle', railHidden)} />
+        <Icon name="chevronsUpDown" className={cn('size-4 text-sidebar-muted', railHidden)} />
       </button>
       {open ? (
         <div
@@ -142,7 +169,8 @@ export function MunicipalityContext({
           className={cn(
             menuPanelClasses('stretch'),
             'mt-1.5',
-            rail && 'rail:inset-x-auto rail:start-0 rail:w-64',
+            'min-w-64',
+            rail && 'rail:inset-x-auto rail:start-0 rail:w-72',
           )}
         >
           <MenuLabel>{labels.switchMunicipality}</MenuLabel>
@@ -159,8 +187,8 @@ export function MunicipalityContext({
                       aria-current={selected ? 'true' : undefined}
                       className={cn(menuItemClasses(false), 'gap-2.5 py-1.5')}
                     >
-                      <Emblem name={option.name} muted={option.suspended} />
-                      <Summary option={option} labels={labels} />
+                      <Emblem name={option.name} muted={option.suspended} size="sm" />
+                      <Summary option={option} labels={labels} tone="menu" />
                       {selected ? <Icon name="check" className="size-4 text-accent" /> : null}
                     </button>
                   </form>

@@ -17,6 +17,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 import packageJson from '../../../package.json';
 import { Breadcrumbs } from './breadcrumbs';
+import { HeaderInvitations } from './header-invitations';
 import { LanguageSwitcher } from './language-switcher';
 import { MunicipalityContext, type MunicipalityOption } from './municipality-context';
 import { ShellFrame } from './shell-frame';
@@ -114,6 +115,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       breadcrumbs={
         <Breadcrumbs
           label={t('adminShell.breadcrumbs')}
+          home={{ href: localizedHref(locale, '/'), label: t('adminNav.overview') }}
           entries={groups.flatMap((group) =>
             group.items.map((item) => ({
               path: item.path,
@@ -126,6 +128,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
       }
       headerEnd={
         <>
+          <HeaderInvitations
+            href={userMenu.accessHref}
+            count={pendingInvitations}
+            label={t('adminAuth.invitationsTitle')}
+          />
           <LanguageSwitcher
             current={locale}
             label={t('adminShell.changeLanguage')}
@@ -134,11 +141,15 @@ export async function AppShell({ children }: { children: ReactNode }) {
               label: t(`language.${option}`),
             }))}
           />
-          <ThemeToggle labels={{ dark: t('common.darkMode'), light: t('common.lightMode') }} />
-          {/* Phones have no persistent sidebar: the account menu moves into the top bar. */}
-          <div className="ms-1 md:hidden">
-            <UserMenu placement="header" {...userMenu} />
-          </div>
+          <ThemeToggle
+            labels={{
+              dark: t('common.darkMode'),
+              light: t('common.lightMode'),
+              group: t('adminShell.theme'),
+            }}
+          />
+          <span aria-hidden className="mx-1 h-6 w-px bg-border max-sm:hidden" />
+          <UserMenu placement="header" {...userMenu} />
         </>
       }
       labels={{

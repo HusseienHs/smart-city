@@ -5,9 +5,9 @@ import { cn } from '@/lib/cn';
 import { Icon } from './icon';
 
 const CONTROL =
-  'h-9 w-full rounded-sm border bg-surface text-base text-foreground shadow-xs ' +
+  'h-10 w-full rounded-md border bg-surface text-base text-foreground shadow-xs ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ease-standard ' +
-  'placeholder:text-subtle hover:border-border-strong focus:border-primary focus:ring-3 focus:ring-focus-ring focus:outline-none ' +
+  'placeholder:text-subtle hover:border-border-strong focus:border-primary focus:ring-4 focus:ring-focus-ring focus:outline-none ' +
   'disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted disabled:shadow-none';
 
 /** Classes for a text control, exported for textareas and custom controls. */
@@ -16,7 +16,7 @@ export function controlClasses(invalid: boolean | undefined, className?: string)
     CONTROL,
     invalid
       ? 'border-danger hover:border-danger focus:border-danger focus:ring-danger/20'
-      : 'border-border-strong/80',
+      : 'border-border-strong/90',
     className,
   );
 }
@@ -40,13 +40,13 @@ export function Field({ label, hint, error, children }: FieldProps) {
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-sm font-semibold text-foreground">
         {label}
       </label>
       {children({ id, describedBy, invalid: Boolean(error) })}
       {hint && !error ? (
-        <p id={hintId} className="text-sm text-muted">
+        <p id={hintId} className="text-xs leading-relaxed text-muted">
           {hint}
         </p>
       ) : null}
@@ -70,7 +70,7 @@ export function TextInput({ invalid, className, ...props }: TextInputProps) {
   return (
     <input
       aria-invalid={invalid || undefined}
-      className={controlClasses(invalid, cn('px-3', className))}
+      className={controlClasses(invalid, cn('px-3.5', className))}
       {...props}
     />
   );
@@ -82,9 +82,9 @@ export function SearchInput({ className, ...props }: ComponentProps<'input'>) {
     <div className={cn('relative', className)}>
       <Icon
         name="search"
-        className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+        className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-subtle"
       />
-      <input type="search" className={controlClasses(false, 'ps-9 pe-3')} {...props} />
+      <input type="search" className={controlClasses(false, 'ps-10 pe-3')} {...props} />
     </div>
   );
 }
@@ -96,14 +96,14 @@ export function Select({ invalid, className, children, ...props }: SelectProps) 
     <div className={cn('relative', className)}>
       <select
         aria-invalid={invalid || undefined}
-        className={controlClasses(invalid, 'cursor-pointer appearance-none ps-3 pe-9')}
+        className={controlClasses(invalid, 'cursor-pointer appearance-none ps-3.5 pe-9')}
         {...props}
       >
         {children}
       </select>
       <Icon
-        name="chevronsUpDown"
-        className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-subtle"
+        name="chevronDown"
+        className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
       />
     </div>
   );
@@ -117,7 +117,7 @@ export function TextArea({ invalid, className, ...props }: TextAreaProps) {
       aria-invalid={invalid || undefined}
       className={controlClasses(
         invalid,
-        cn('h-auto min-h-24 px-3 py-2 leading-relaxed', className),
+        cn('h-auto min-h-28 px-3.5 py-2.5 leading-relaxed', className),
       )}
       {...props}
     />

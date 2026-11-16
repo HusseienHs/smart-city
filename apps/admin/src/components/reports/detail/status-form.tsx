@@ -196,7 +196,7 @@ export function StatusForm({
         ) : null}
 
         {target && !publicNote ? (
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-sm text-foreground-secondary transition-colors hover:bg-surface-subtle has-checked:border-primary-soft-border has-checked:bg-primary-soft has-checked:text-foreground">
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm text-foreground-secondary transition-colors hover:bg-surface-subtle has-checked:border-primary has-checked:bg-primary-soft has-checked:text-foreground">
             <input
               type="checkbox"
               name="notePublic"

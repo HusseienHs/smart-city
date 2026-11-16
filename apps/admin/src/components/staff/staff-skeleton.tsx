@@ -19,7 +19,7 @@ export function StaffPageSkeleton() {
             <Skeleton className="size-7 rounded-full" />
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-4 flex-1" />
-            <Skeleton className="h-6 w-20 rounded-sm" />
+            <Skeleton className="h-6 w-20 rounded-full" />
           </div>
         ))}
       </div>

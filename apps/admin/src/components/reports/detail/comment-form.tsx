@@ -127,7 +127,7 @@ export function CommentForm({
               key={value}
               className={cn(
                 'flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors',
-                'has-focus-visible:ring-3 has-focus-visible:ring-focus-ring',
+                'has-focus-visible:ring-4 has-focus-visible:ring-focus-ring',
                 visibility === value
                   ? value === 'public'
                     ? 'border-info-border bg-info-soft text-foreground'

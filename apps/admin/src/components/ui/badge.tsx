@@ -6,13 +6,16 @@ export type BadgeTone =
   'neutral' | 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'violet';
 
 const TONES: Record<BadgeTone, { badge: string; dot: string }> = {
-  neutral: { badge: 'border-border bg-surface-muted text-foreground-secondary', dot: 'bg-muted' },
-  primary: { badge: 'border-primary-soft-border bg-primary-soft text-accent', dot: 'bg-accent' },
-  info: { badge: 'border-info-border bg-info-soft text-info', dot: 'bg-info' },
-  success: { badge: 'border-success-border bg-success-soft text-success', dot: 'bg-success' },
-  warning: { badge: 'border-warning-border bg-warning-soft text-warning', dot: 'bg-warning' },
-  danger: { badge: 'border-danger-border bg-danger-soft text-danger', dot: 'bg-danger' },
-  violet: { badge: 'border-violet-border bg-violet-soft text-violet', dot: 'bg-violet' },
+  neutral: {
+    badge: 'bg-surface-muted text-foreground-secondary ring-border-strong/60',
+    dot: 'bg-muted',
+  },
+  primary: { badge: 'bg-primary-soft text-accent ring-primary-soft-border', dot: 'bg-accent' },
+  info: { badge: 'bg-info-soft text-info ring-info-border', dot: 'bg-info' },
+  success: { badge: 'bg-success-soft text-success ring-success-border', dot: 'bg-success' },
+  warning: { badge: 'bg-warning-soft text-warning ring-warning-border', dot: 'bg-warning' },
+  danger: { badge: 'bg-danger-soft text-danger ring-danger-border', dot: 'bg-danger' },
+  violet: { badge: 'bg-violet-soft text-violet ring-violet-border', dot: 'bg-violet' },
 };
 
 interface BadgeProps {
@@ -30,18 +33,24 @@ export function badgeDotClass(tone: BadgeTone): string {
   return TONES[tone].dot;
 }
 
+/** A pill-shaped label with a hairline ring in its tone. */
 export function Badge({ tone = 'neutral', dot, size = 'md', className, children }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-sm border font-medium whitespace-nowrap',
-        size === 'sm' ? 'h-5 px-1.5 text-2xs' : 'h-6 px-2 text-xs',
+        'inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap ring-1 ring-inset',
+        size === 'sm' ? 'h-5 px-2 text-2xs' : 'h-6 px-2.5 text-xs',
         TONES[tone].badge,
         className,
       )}
     >
       {dot ? (
-        <span className={cn('size-1.5 shrink-0 rounded-full', TONES[tone].dot)} aria-hidden />
+        <span className="relative flex size-1.5 shrink-0" aria-hidden>
+          <span
+            className={cn('absolute inset-0 rounded-full opacity-35 blur-[2px]', TONES[tone].dot)}
+          />
+          <span className={cn('relative size-1.5 rounded-full', TONES[tone].dot)} />
+        </span>
       ) : null}
       {children}
     </span>

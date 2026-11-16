@@ -33,14 +33,17 @@ export function Alert({
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       className={cn(
-        'flex animate-fade-in items-start gap-3 rounded-md border px-3.5 py-3 text-sm',
+        'relative flex animate-fade-in items-start gap-3 overflow-hidden rounded-lg border py-3 ps-4 pe-4 text-sm',
+        'before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-current',
         TONES[tone].box,
         className,
       )}
     >
-      <Icon name={TONES[tone].icon} className="mt-0.5 size-4" />
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        <Icon name={TONES[tone].icon} className="size-[18px]" />
+      </span>
       <div className="min-w-0 flex-1 text-foreground-secondary">
-        {title ? <p className="mb-0.5 font-medium text-foreground">{title}</p> : null}
+        {title ? <p className="mb-0.5 font-semibold text-foreground">{title}</p> : null}
         {children}
       </div>
     </div>

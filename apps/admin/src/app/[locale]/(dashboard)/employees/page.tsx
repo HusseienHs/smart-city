@@ -11,16 +11,8 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { controlClasses, Select } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
-import { PageHeader } from '@/components/ui/page-header';
-import { Panel } from '@/components/ui/panel';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@/components/ui/table';
+import { PageHeader, StatStrip } from '@/components/ui/page-header';
+import { IconTile, Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { cn } from '@/lib/cn';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -95,8 +87,8 @@ async function Directory({
     value: string | undefined,
     options: [string, string][],
   ) => (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={`filter-${name}`} className="text-sm font-medium text-foreground">
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <label htmlFor={`filter-${name}`} className="text-xs font-semibold text-foreground-secondary">
         {label}
       </label>
       <Select id={`filter-${name}`} name={name} defaultValue={value ?? ''}>
@@ -113,9 +105,9 @@ async function Directory({
   return (
     <>
       <PageHeader
+        eyebrow={localizedText(staff.active.municipality_name, locale)}
         title={t('adminNav.employees')}
         description={manage ? t('adminEmployees.subtitleAdmin') : t('adminEmployees.subtitleStaff')}
-        meta={<Badge tone="primary">{localizedText(staff.active.municipality_name, locale)}</Badge>}
         actions={
           manage ? (
             <ButtonLink
@@ -129,27 +121,70 @@ async function Directory({
         }
       />
 
-      <Panel
-        title={t('adminEmployees.directory')}
-        description={t('adminEmployees.results', { count: visible.length })}
-        icon="employees"
-        flush
-        className="animate-enter"
+      {/* Head count, from the directory loaded for this page. */}
+      <div className="mb-6 animate-enter">
+        <StatStrip
+          items={[
+            {
+              label: t('adminStaff.active'),
+              value: directory.filter((member) => member.isActive).length,
+            },
+            ...(showStatus
+              ? [
+                  {
+                    label: t('adminStaff.inactive'),
+                    value: directory.filter((member) => !member.isActive).length,
+                  },
+                ]
+              : []),
+            {
+              label: t('staffRole.municipality_admin'),
+              value: directory.filter(
+                (member) => member.isActive && member.role === 'municipality_admin',
+              ).length,
+            },
+            { label: t('adminNav.departments'), value: departments.length },
+          ]}
+        />
+      </div>
+
+      <section
+        aria-labelledby="staff-directory"
+        className="animate-enter overflow-hidden card [animation-delay:60ms]"
       >
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="flex items-center gap-3">
+            <IconTile icon="employees" tone="primary" />
+            <div>
+              <h2
+                id="staff-directory"
+                className="text-md font-semibold tracking-tight text-foreground"
+              >
+                {t('adminEmployees.directory')}
+              </h2>
+              <p className="text-sm text-muted">
+                {t('adminEmployees.results', { count: visible.length })}
+              </p>
+            </div>
+          </div>
+        </header>
         <form
           method="get"
           action={baseHref}
           role="search"
-          className="grid items-end gap-3 border-b border-border p-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]"
+          className="grid items-end gap-3 border-b border-border bg-surface-subtle p-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]"
         >
           <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1">
-            <label htmlFor="staff-search" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="staff-search"
+              className="text-xs font-semibold text-foreground-secondary"
+            >
               {t('adminEmployees.searchLabel')}
             </label>
             <div className="relative">
               <Icon
                 name="search"
-                className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+                className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-subtle"
               />
               <input
                 id="staff-search"
@@ -158,7 +193,7 @@ async function Directory({
                 maxLength={100}
                 defaultValue={filters.search}
                 placeholder={t('adminEmployees.searchPlaceholder')}
-                className={controlClasses(false, 'ps-9 pe-3')}
+                className={controlClasses(false, 'ps-10 pe-3')}
               />
             </div>
           </div>
@@ -179,11 +214,11 @@ async function Directory({
               ])
             : null}
           <div className="flex items-end gap-2 md:col-span-2 xl:col-span-1">
-            <Button type="submit" variant="secondary" icon="filter">
+            <Button type="submit" variant="primary" icon="filter" className="h-10">
               {t('adminEmployees.filters.apply')}
             </Button>
             {hasFilters ? (
-              <ButtonLink href={baseHref} variant="ghost">
+              <ButtonLink href={baseHref} variant="ghost" className="h-10">
                 {t('adminEmployees.filters.clear')}
               </ButtonLink>
             ) : null}
@@ -197,47 +232,37 @@ async function Directory({
             description={!hasFilters && manage ? t('adminEmployees.emptyDescription') : undefined}
           />
         ) : (
-          <Table>
-            <TableHead>
-              <tr>
-                <TableHeaderCell>{t('adminEmployees.columns.name')}</TableHeaderCell>
-                <TableHeaderCell>{t('adminEmployees.columns.role')}</TableHeaderCell>
-                <TableHeaderCell>{t('adminEmployees.columns.department')}</TableHeaderCell>
-                <TableHeaderCell>{t('adminEmployees.columns.jobTitle')}</TableHeaderCell>
-                {showStatus ? (
-                  <TableHeaderCell>{t('adminEmployees.columns.status')}</TableHeaderCell>
-                ) : null}
-                {showStatus ? (
-                  <TableHeaderCell>{t('adminEmployees.columns.since')}</TableHeaderCell>
-                ) : null}
-              </tr>
-            </TableHead>
-            <TableBody>
-              {visible.map((member) => {
-                const name = member.fullName?.trim() || t('adminEmployees.unnamed');
-                return (
-                  <TableRow
-                    key={member.employeeId}
-                    className={cn('group/row', manage && 'relative')}
-                  >
-                    <TableCell>
-                      <div
-                        className={cn(
-                          'flex min-w-0 items-center gap-3',
-                          !member.isActive && 'opacity-60',
-                        )}
-                      >
-                        <Avatar name={name} size="sm" />
+          // People as cards: who they are first, then where they sit.
+          <ul className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3 2xl:grid-cols-4">
+            {visible.map((member) => {
+              const name = member.fullName?.trim() || t('adminEmployees.unnamed');
+              return (
+                <li
+                  key={member.employeeId}
+                  className={cn(
+                    'group/card relative flex flex-col rounded-xl bg-surface p-4 ring-1 ring-border transition-[box-shadow,transform] duration-200',
+                    manage && 'hover:-translate-y-0.5 hover:shadow-md hover:ring-border-strong',
+                    !member.isActive && 'bg-surface-subtle',
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar
+                      name={name}
+                      size="lg"
+                      className={cn(!member.isActive && 'opacity-50 grayscale')}
+                    />
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="flex items-center gap-2">
                         {manage ? (
                           <Link
                             href={localizedHref(locale, `/employees/${member.employeeId}`)}
-                            className="truncate font-medium text-foreground transition-colors group-hover/row:text-accent after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring focus-visible:after:ring-inset"
+                            className="truncate font-semibold text-foreground transition-colors group-hover/card:text-accent after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus-ring"
                             aria-label={t('adminEmployees.openEmployee', { name })}
                           >
                             {name}
                           </Link>
                         ) : (
-                          <span className="truncate font-medium text-foreground">{name}</span>
+                          <span className="truncate font-semibold text-foreground">{name}</span>
                         )}
                         {member.employeeId === self ? (
                           <Badge tone="primary" size="sm">
@@ -245,35 +270,57 @@ async function Directory({
                           </Badge>
                         ) : null}
                       </div>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <Badge tone={member.role === 'municipality_admin' ? 'violet' : 'neutral'}>
-                        {roleLabel(t, member.role)}
+                      <p className="mt-0.5 truncate text-sm text-muted">{member.jobTitle ?? '—'}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      tone={member.role === 'municipality_admin' ? 'violet' : 'neutral'}
+                      size="sm"
+                    >
+                      {roleLabel(t, member.role)}
+                    </Badge>
+                    {showStatus ? (
+                      <Badge tone={member.isActive ? 'success' : 'neutral'} dot size="sm">
+                        {member.isActive ? t('adminStaff.active') : t('adminStaff.inactive')}
                       </Badge>
-                    </TableCell>
-                    <TableCell className={cn('text-sm', !member.departmentId && 'text-muted')}>
-                      {member.departmentId ? (departmentName.get(member.departmentId) ?? '—') : '—'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted">{member.jobTitle ?? '—'}</TableCell>
-                    {showStatus ? (
-                      <TableCell>
-                        <Badge tone={member.isActive ? 'success' : 'neutral'} dot>
-                          {member.isActive ? t('adminStaff.active') : t('adminStaff.inactive')}
-                        </Badge>
-                      </TableCell>
                     ) : null}
+                  </div>
+                  <dl className="mt-4 grid gap-2 border-t border-dashed border-border pt-3 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <dt className="flex items-center gap-1.5 text-muted">
+                        <Icon name="departments" className="size-3.5" />
+                        {t('adminEmployees.columns.department')}
+                      </dt>
+                      <dd
+                        className={cn(
+                          'truncate font-medium',
+                          member.departmentId ? 'text-foreground' : 'text-muted',
+                        )}
+                      >
+                        {member.departmentId
+                          ? (departmentName.get(member.departmentId) ?? '—')
+                          : '—'}
+                      </dd>
+                    </div>
                     {showStatus ? (
-                      <TableCell className="text-sm whitespace-nowrap text-muted tabular-nums">
-                        {member.createdAt ? formatDate(locale, member.createdAt) : '—'}
-                      </TableCell>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="flex items-center gap-1.5 text-muted">
+                          <Icon name="calendar" className="size-3.5" />
+                          {t('adminEmployees.columns.since')}
+                        </dt>
+                        <dd className="font-medium text-foreground tabular-nums">
+                          {member.createdAt ? formatDate(locale, member.createdAt) : '—'}
+                        </dd>
+                      </div>
                     ) : null}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                  </dl>
+                </li>
+              );
+            })}
+          </ul>
         )}
-      </Panel>
+      </section>
     </>
   );
 }

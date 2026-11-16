@@ -19,17 +19,16 @@ export function SidebarToggle({ labels }: { labels: { collapse: string; expand: 
       aria-label={label}
       title={label}
       className={cn(
-        'group flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-sm text-muted',
-        'transition-colors duration-150 hover:bg-sidebar-hover hover:text-foreground',
-        'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none',
-        'rail:mx-auto rail:size-10 rail:justify-center rail:px-0',
+        'flex size-8 shrink-0 items-center justify-center rounded-lg text-sidebar-muted',
+        'transition-colors duration-150 hover:bg-sidebar-hover hover:text-sidebar-foreground',
+        'focus-visible:ring-2 focus-visible:ring-sidebar-accent/60 focus-visible:outline-none',
+        'rail:size-11',
       )}
     >
       <Icon
         name="sidebar"
         className={cn('size-[18px] transition-transform duration-200', collapsed && 'rotate-180')}
       />
-      <span className="truncate rail:sr-only">{label}</span>
     </button>
   );
 }

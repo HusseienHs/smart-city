@@ -52,11 +52,14 @@ export function UserMenu({
 
   const avatar = (
     <span className="relative">
-      <Avatar name={name} size={inSidebar ? 'sm' : 'md'} />
+      <Avatar name={name} size="md" />
       {pendingInvitations > 0 ? (
         <span
           aria-hidden
-          className="absolute -end-0.5 -top-0.5 size-2.5 rounded-full border-2 border-sidebar bg-primary"
+          className={cn(
+            'absolute -end-0.5 -top-0.5 size-2.5 rounded-full border-2',
+            inSidebar ? 'border-sidebar bg-sidebar-accent' : 'border-background bg-primary',
+          )}
         />
       ) : null}
     </span>
@@ -74,24 +77,30 @@ export function UserMenu({
         title={rail ? name : undefined}
         className={cn(
           'flex items-center text-start transition-colors duration-150',
-          'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none',
           inSidebar
             ? cn(
-                'w-full gap-2.5 rounded-md p-1.5 hover:bg-sidebar-hover',
-                open && 'bg-sidebar-hover',
-                rail && 'rail:mx-auto rail:size-10 rail:justify-center rail:p-0',
+                'w-full gap-3 rounded-xl p-2 ring-1 ring-transparent ring-inset hover:bg-sidebar-hover hover:ring-sidebar-border',
+                'focus-visible:ring-2 focus-visible:ring-sidebar-accent/60 focus-visible:outline-none',
+                open && 'bg-sidebar-hover ring-sidebar-border',
+                rail && 'rail:mx-auto rail:size-11 rail:justify-center rail:p-0',
               )
-            : 'rounded-full p-0.5 hover:bg-surface-muted',
+            : cn(
+                'rounded-full p-0.5 ring-1 ring-border ring-inset hover:ring-border-strong',
+                'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none',
+                open && 'ring-border-strong',
+              ),
         )}
       >
         {avatar}
         {inSidebar ? (
           <>
             <span className={cn('min-w-0 flex-1 leading-tight', railHidden)}>
-              <span className="block truncate text-sm font-medium text-foreground">{name}</span>
-              <span className="mt-0.5 block truncate text-2xs text-muted">{role}</span>
+              <span className="block truncate text-sm font-semibold text-sidebar-foreground">
+                {name}
+              </span>
+              <span className="mt-0.5 block truncate text-2xs text-sidebar-muted">{role}</span>
             </span>
-            <Icon name="chevronsUpDown" className={cn('size-4 text-subtle', railHidden)} />
+            <Icon name="chevronsUpDown" className={cn('size-4 text-sidebar-muted', railHidden)} />
           </>
         ) : null}
       </button>
@@ -105,7 +114,7 @@ export function UserMenu({
             rail && 'rail:inset-x-auto rail:start-0 rail:w-72',
           )}
         >
-          <div className="flex items-center gap-3 px-2.5 pt-2 pb-2.5">
+          <div className="-mx-1.5 -mt-1.5 mb-1.5 flex items-center gap-3 rounded-t-[15px] border-b border-border bg-surface-subtle px-4 pt-4 pb-3.5">
             <Avatar name={name} size="lg" />
             <div className="min-w-0">
               <p className="truncate font-semibold text-foreground">{name}</p>
@@ -116,7 +125,7 @@ export function UserMenu({
               ) : null}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 px-2.5 pb-2.5">
+          <div className="flex flex-wrap items-center gap-1.5 px-2.5 pt-1 pb-2">
             <Badge tone="primary" size="sm">
               {role}
             </Badge>

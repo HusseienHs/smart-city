@@ -83,16 +83,14 @@ async function NewAnnouncement() {
     <>
       {back}
       <PageHeader title={t('adminNotices.form.createTitle')} />
-      <Panel className="animate-enter">
-        <AnnouncementForm
-          locale={locale}
-          strings={noticeStrings(locale)}
-          departments={choices}
-          neighborhoods={neighborhoods}
-          ownDepartmentName={ownDepartmentName}
-          canPublishOwn={canPublishAnnouncement(role, ownDepartment, ownDepartment)}
-        />
-      </Panel>
+      <AnnouncementForm
+        locale={locale}
+        strings={noticeStrings(locale)}
+        departments={choices}
+        neighborhoods={neighborhoods}
+        ownDepartmentName={ownDepartmentName}
+        canPublishOwn={canPublishAnnouncement(role, ownDepartment, ownDepartment)}
+      />
     </>
   );
 }

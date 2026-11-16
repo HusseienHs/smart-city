@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
-import { BackLink, PageHeader } from '@/components/ui/page-header';
+import { Masthead } from '@/components/ui/masthead';
+import { BackLink } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -99,14 +100,14 @@ async function DepartmentDetails({
   return (
     <>
       {back}
-      <PageHeader
+      <Masthead
         title={localizedText(department.name, locale)}
-        leading={
+        emblem={
           <span
             aria-hidden
-            className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-foreground-secondary shadow-xs"
+            className="flex size-[72px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#14b8a6] to-[#0f5f73] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.3)]"
           >
-            <Icon name="departments" className="size-6" />
+            <Icon name="departments" className="size-8" />
           </span>
         }
         meta={

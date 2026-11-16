@@ -22,14 +22,23 @@ import {
 } from '@/lib/reports/filters';
 import type { ReportLabels } from '@/lib/reports/labels';
 
-import { REPORT_PRIORITY_TONES } from './report-priority-badge';
+import { PrioritySignal } from './report-priority-badge';
 
+/** A status toggle in the segmented strip: a checkbox styled as a tab. */
+const SEGMENT =
+  'relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium ' +
+  'text-muted transition-[background-color,color,box-shadow] duration-150 select-none ' +
+  'hover:text-foreground hover:bg-surface/60 ' +
+  'has-checked:bg-surface has-checked:text-foreground has-checked:shadow-sm has-checked:ring-1 has-checked:ring-border ' +
+  'has-focus-visible:ring-2 has-focus-visible:ring-focus-ring';
+
+/** A priority toggle: a compact outlined chip. */
 const CHIP =
-  'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-sm ' +
-  'text-foreground-secondary transition-[background-color,border-color,color] duration-150 select-none ' +
+  'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border-strong/80 bg-surface px-3 text-sm font-medium ' +
+  'text-foreground-secondary shadow-xs transition-[background-color,border-color,color] duration-150 select-none ' +
   'hover:border-border-strong hover:text-foreground ' +
-  'has-checked:border-primary-soft-border has-checked:bg-primary-soft has-checked:text-accent ' +
-  'has-focus-visible:ring-3 has-focus-visible:ring-focus-ring';
+  'has-checked:border-primary has-checked:bg-primary-soft has-checked:text-accent ' +
+  'has-focus-visible:ring-4 has-focus-visible:ring-focus-ring';
 
 export interface FilterOptions {
   showDepartment: boolean;
@@ -74,12 +83,7 @@ export function ReportsFilters({
   );
 
   return (
-    <form
-      method="get"
-      action={baseHref}
-      role="search"
-      className="flex flex-col gap-3 border-b border-border p-4 sm:px-5"
-    >
+    <form method="get" action={baseHref} role="search" className="flex flex-col">
       {filters.sort !== DEFAULT_SORT ? (
         <input type="hidden" name="sort" value={filters.sort} />
       ) : null}
@@ -87,14 +91,38 @@ export function ReportsFilters({
         <input type="hidden" name="dir" value={filters.direction} />
       ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row">
+      {/* Status: a segmented strip across the top of the workspace. */}
+      <fieldset className="border-b border-border bg-surface-subtle px-3 py-2.5 sm:px-4">
+        <legend className="sr-only">{t('adminReports.columns.status')}</legend>
+        <div className="-m-1 flex scrollbar-thin gap-1 overflow-x-auto p-1">
+          {REPORT_STATUSES.map((status) => (
+            <label key={status} className={SEGMENT}>
+              <input
+                type="checkbox"
+                name="status"
+                value={status}
+                defaultChecked={filters.statuses.includes(status)}
+                className="sr-only"
+              />
+              <span
+                aria-hidden
+                className={cn('size-2 rounded-full', badgeDotClass(REPORT_STATUS_TONES[status]))}
+              />
+              {t(`reportStatus.${status}`)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {/* Search, priority and the actions. */}
+      <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
         <label className="sr-only" htmlFor="reports-search">
           {t('adminReports.list.searchLabel')}
         </label>
-        <div className="relative flex-1">
+        <div className="relative min-w-0 flex-1">
           <Icon
             name="search"
-            className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-subtle"
           />
           <input
             id="reports-search"
@@ -103,65 +131,58 @@ export function ReportsFilters({
             defaultValue={filters.search}
             maxLength={100}
             placeholder={t('adminReports.list.searchPlaceholder')}
-            className={controlClasses(false, 'ps-9 pe-3')}
+            className={controlClasses(false, 'ps-10 pe-3')}
           />
         </div>
-        <Button type="submit" variant="secondary" icon="search">
-          {t('adminReports.list.search')}
-        </Button>
+
+        <fieldset className="flex min-w-0 items-center gap-2">
+          <legend className="sr-only">{t('adminReports.columns.priority')}</legend>
+          <div className="flex scrollbar-thin gap-1.5 overflow-x-auto">
+            {REPORT_PRIORITIES.map((priority) => (
+              <label key={priority} className={CHIP}>
+                <input
+                  type="checkbox"
+                  name="priority"
+                  value={priority}
+                  defaultChecked={filters.priorities.includes(priority)}
+                  className="sr-only"
+                />
+                <PrioritySignal priority={priority} />
+                {t(`reportPriority.${priority}`)}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <Button type="submit" variant="primary" icon="filter" className="h-10">
+            {t('adminReports.list.apply')}
+          </Button>
+          {activeFilterKeys(filters).length > 0 ? (
+            <ButtonLink
+              href={`${baseHref}${filtersQuery(filters, CLEARED)}`}
+              variant="ghost"
+              className="h-10"
+            >
+              {t('adminReports.list.clear')}
+            </ButtonLink>
+          ) : null}
+        </div>
       </div>
 
-      <ChipGroup legend={t('adminReports.columns.status')}>
-        {REPORT_STATUSES.map((status) => (
-          <label key={status} className={CHIP}>
-            <input
-              type="checkbox"
-              name="status"
-              value={status}
-              defaultChecked={filters.statuses.includes(status)}
-              className="sr-only"
-            />
-            <span
-              aria-hidden
-              className={cn('size-1.5 rounded-full', badgeDotClass(REPORT_STATUS_TONES[status]))}
-            />
-            {t(`reportStatus.${status}`)}
-          </label>
-        ))}
-      </ChipGroup>
-
-      <ChipGroup legend={t('adminReports.columns.priority')}>
-        {REPORT_PRIORITIES.map((priority) => (
-          <label key={priority} className={CHIP}>
-            <input
-              type="checkbox"
-              name="priority"
-              value={priority}
-              defaultChecked={filters.priorities.includes(priority)}
-              className="sr-only"
-            />
-            <span
-              aria-hidden
-              className={cn(
-                'size-1.5 rounded-full',
-                badgeDotClass(REPORT_PRIORITY_TONES[priority]),
-              )}
-            />
-            {t(`reportPriority.${priority}`)}
-          </label>
-        ))}
-      </ChipGroup>
-
-      <details className="group/more" open={moreActive}>
-        <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-xs text-sm font-medium text-muted transition-colors select-none hover:text-foreground [&::-webkit-details-marker]:hidden">
-          <Icon name="filter" className="size-3.5" />
+      {/* The less frequent filters: a native disclosure that starts open when one is in use. */}
+      <details className="group/more border-t border-border" open={moreActive}>
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted transition-colors select-none hover:text-foreground sm:px-5 [&::-webkit-details-marker]:hidden">
+          <span className="flex size-6 items-center justify-center rounded-md bg-surface-muted ring-1 ring-border ring-inset">
+            <Icon name="settings" className="size-3.5" />
+          </span>
           {t('adminReports.list.moreFilters')}
           <Icon
             name="chevronDown"
-            className="size-3.5 transition-transform duration-150 group-open/more:rotate-180"
+            className="size-3.5 transition-transform duration-200 group-open/more:rotate-180"
           />
         </summary>
-        <div className="mt-3 grid animate-fade-in gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="grid animate-fade-in gap-4 border-t border-dashed border-border bg-surface-subtle px-4 pt-4 pb-5 sm:grid-cols-2 sm:px-5 xl:grid-cols-3 2xl:grid-cols-6">
           {options.showDepartment ? (
             <SelectField
               id="filter-department"
@@ -237,34 +258,7 @@ export function ReportsFilters({
           />
         </div>
       </details>
-
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        <Button type="submit" variant="primary" size="sm" icon="filter">
-          {t('adminReports.list.apply')}
-        </Button>
-        {activeFilterKeys(filters).length > 0 ? (
-          <ButtonLink
-            href={`${baseHref}${filtersQuery(filters, CLEARED)}`}
-            variant="ghost"
-            size="sm"
-          >
-            {t('adminReports.list.clear')}
-          </ButtonLink>
-        ) : null}
-      </div>
     </form>
-  );
-}
-
-function ChipGroup({ legend, children }: { legend: string; children: ReactNode }) {
-  return (
-    // The floated legend sits beside the chips on wider screens and keeps naming the group.
-    <fieldset>
-      <legend className="mb-1.5 text-sm font-medium text-muted sm:float-start sm:mb-0 sm:w-24 sm:pt-1">
-        {legend}
-      </legend>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
-    </fieldset>
   );
 }
 
@@ -296,8 +290,8 @@ function SelectField({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-xs font-semibold text-foreground-secondary">
         {label}
       </label>
       <Select id={id} name={name} defaultValue={value ?? ''}>
@@ -320,8 +314,8 @@ function DateField({
   value?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-xs font-semibold text-foreground-secondary">
         {label}
       </label>
       <input
@@ -380,8 +374,9 @@ export function ActiveFilters({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-surface-subtle px-4 py-2.5 sm:px-5">
-      <span className="text-sm text-muted">
+    <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-2.5 sm:px-5">
+      <span className="me-1 flex items-center gap-1.5 text-sm font-medium text-muted">
+        <Icon name="filter" className="size-3.5" />
         {t('adminReports.list.activeFilters', { count: keys.length })}
       </span>
       {keys.map((key) => {
@@ -390,14 +385,13 @@ export function ActiveFilters({
           <Link
             key={key}
             href={`${baseHref}${filtersQuery(filters, withoutFilter(filters, key))}`}
-            className="group inline-flex h-6 max-w-full items-center gap-1 rounded-sm border border-primary-soft-border bg-primary-soft ps-2 pe-1 text-xs font-medium text-accent transition-colors hover:border-accent/40"
+            className="group inline-flex h-7 max-w-full items-center gap-1.5 rounded-full bg-primary-soft ps-3 pe-1.5 text-xs font-medium text-accent ring-1 ring-primary-soft-border transition-colors ring-inset hover:ring-accent/50"
             aria-label={t('adminReports.list.removeFilter', { filter: text })}
           >
             <span className="truncate">{text}</span>
-            <Icon
-              name="close"
-              className="size-3.5 opacity-60 transition-opacity group-hover:opacity-100"
-            />
+            <span className="flex size-4 items-center justify-center rounded-full bg-accent/10 transition-colors group-hover:bg-accent/20">
+              <Icon name="close" className="size-3" />
+            </span>
           </Link>
         );
       })}

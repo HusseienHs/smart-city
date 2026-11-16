@@ -25,31 +25,49 @@ export function EmptyState({
   const compact = size === 'compact';
   return (
     <div
-      className={cn('flex flex-col items-center text-center', compact ? 'px-4 py-8' : 'px-6 py-16')}
+      className={cn(
+        'relative isolate flex flex-col items-center overflow-hidden text-center',
+        compact ? 'px-4 py-9' : 'px-6 py-20',
+      )}
     >
+      {compact ? null : (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 grid-dots opacity-80"
+        />
+      )}
       <span
         className={cn(
-          'relative mb-4 flex items-center justify-center rounded-xl border border-border bg-surface text-muted shadow-sm',
-          compact ? 'size-10' : 'size-12',
+          'relative mb-5 flex items-center justify-center rounded-2xl bg-surface text-accent',
+          'shadow-[0_0_0_1px_var(--border),0_10px_30px_-10px_var(--focus-ring)]',
+          compact ? 'size-11' : 'size-14',
         )}
       >
-        {/* A faint ring that frames the icon without color. */}
-        <span
-          aria-hidden
-          className="absolute -inset-2 rounded-[16px] border border-dashed border-border"
-        />
-        <Icon name={icon} className={compact ? 'size-[18px]' : 'size-5'} />
+        {/* Concentric rings that frame the icon. */}
+        <span aria-hidden className="absolute -inset-2.5 rounded-[22px] border border-border/80" />
+        {compact ? null : (
+          <span
+            aria-hidden
+            className="absolute -inset-5 rounded-[28px] border border-dashed border-border/70"
+          />
+        )}
+        <Icon name={icon} className={compact ? 'size-5' : 'size-6'} />
       </span>
-      <p className={cn('font-semibold text-foreground', compact ? 'text-base' : 'text-md')}>
+      <p
+        className={cn(
+          'mt-1 font-semibold tracking-tight text-foreground',
+          compact ? 'text-base' : 'text-lg',
+        )}
+      >
         {title}
       </p>
       {description ? (
-        <p className={cn('mt-1 max-w-md text-muted', compact ? 'text-sm' : 'text-base')}>
+        <p className={cn('mt-1.5 max-w-md text-muted', compact ? 'text-sm' : 'text-base')}>
           {description}
         </p>
       ) : null}
       {children ? (
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">{children}</div>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">{children}</div>
       ) : null}
     </div>
   );

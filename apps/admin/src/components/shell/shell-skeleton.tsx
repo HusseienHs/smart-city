@@ -6,17 +6,17 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export function ShellSkeleton() {
   return (
-    <div className="flex min-h-dvh" aria-busy="true">
-      <div className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 flex-col gap-3 border-e border-border bg-sidebar p-3 md:flex rail:w-(--sidebar-rail-width)">
-        <Skeleton className="size-8 rounded-md" />
-        <Skeleton className="mt-2 h-12 w-full rounded-lg" />
-        <div className="mt-3 space-y-2">
+    <div className="flex min-h-dvh bg-frame md:h-dvh md:overflow-hidden" aria-busy="true">
+      <div className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 flex-col gap-3 bg-sidebar p-4 md:flex rail:w-(--sidebar-rail-width)">
+        <div className="size-9 animate-shimmer rounded-[10px] bg-white/10" />
+        <div className="mt-3 h-14 w-full animate-shimmer rounded-xl bg-white/[0.06]" />
+        <div className="mt-4 space-y-2">
           {[0, 1, 2, 3, 4, 5].map((row) => (
-            <Skeleton key={row} className="h-7 w-full rounded-md" />
+            <div key={row} className="h-8 w-full animate-shimmer rounded-lg bg-white/[0.05]" />
           ))}
         </div>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-background md:my-(--frame-gap) md:me-(--frame-gap) md:rounded-2xl">
         <div className="h-(--header-height) border-b border-border" />
         <div className="mx-auto w-full max-w-(--content-max-width) px-4 pt-6 md:px-6 md:pt-8 xl:px-10">
           <Skeleton className="h-7 w-48" />

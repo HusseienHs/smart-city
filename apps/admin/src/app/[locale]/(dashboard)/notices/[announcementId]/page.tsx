@@ -145,29 +145,29 @@ async function AnnouncementDetails({
           <Alert tone="warning">{t('adminNotices.imageNotPublic')}</Alert>
         </div>
       ) : null}
-      <Panel className="animate-enter">
-        {editable ? (
-          <AnnouncementForm
-            locale={locale}
-            strings={noticeStrings(locale)}
-            departments={null}
-            neighborhoods={neighborhoodOptions}
-            ownDepartmentName={null}
-            canPublishOwn={false}
-            announcement={{
-              id: announcement.id,
-              title: announcement.title,
-              body: announcement.body,
-              severity: announcement.severity,
-              neighborhoodId: announcement.neighborhood_id,
-              expiresAt: announcement.expires_at,
-              departmentName,
-              published: announcement.status === 'published',
-              imageUrl,
-              hasImage: announcement.image_path !== null,
-            }}
-          />
-        ) : (
+      {editable ? (
+        <AnnouncementForm
+          locale={locale}
+          strings={noticeStrings(locale)}
+          departments={null}
+          neighborhoods={neighborhoodOptions}
+          ownDepartmentName={null}
+          canPublishOwn={false}
+          announcement={{
+            id: announcement.id,
+            title: announcement.title,
+            body: announcement.body,
+            severity: announcement.severity,
+            neighborhoodId: announcement.neighborhood_id,
+            expiresAt: announcement.expires_at,
+            departmentName,
+            published: announcement.status === 'published',
+            imageUrl,
+            hasImage: announcement.image_path !== null,
+          }}
+        />
+      ) : (
+        <Panel className="animate-enter">
           <div className="flex flex-col gap-4">
             <Alert tone="info">{t('adminNotices.detail.readOnly')}</Alert>
             <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
@@ -193,8 +193,8 @@ async function AnnouncementDetails({
               {localizedText(announcement.body, locale)}
             </p>
           </div>
-        )}
-      </Panel>
+        </Panel>
+      )}
     </>
   );
 }

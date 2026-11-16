@@ -12,7 +12,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DescriptionList } from '@/components/ui/description-list';
 import { EmptyState } from '@/components/ui/empty-state';
-import { BackLink, PageHeader } from '@/components/ui/page-header';
+import { Masthead } from '@/components/ui/masthead';
+import { BackLink } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { roleLabel } from '@/lib/auth/role-label';
 import { localizedText } from '@/lib/i18n/localized-text';
@@ -102,9 +103,9 @@ async function EmployeeDetails({
   return (
     <>
       {back}
-      <PageHeader
+      <Masthead
         title={name}
-        leading={<Avatar name={name} size="lg" className="size-12 text-md" />}
+        emblem={<Avatar name={name} size="xl" className="size-[72px] rounded-2xl text-2xl" />}
         description={member.jobTitle ?? undefined}
         meta={
           <>

@@ -34,11 +34,13 @@ export function DescriptionList({
               : 'flex flex-col gap-1',
           )}
         >
-          <dt className="flex items-center gap-1.5 text-sm text-muted">
+          <dt className="flex items-center gap-1.5 text-xs font-medium text-muted">
             {item.icon ? <Icon name={item.icon} className="size-3.5" /> : null}
             {item.label}
           </dt>
-          <dd className="min-w-0 text-base break-words text-foreground">{item.value}</dd>
+          <dd className="min-w-0 text-base font-medium break-words text-foreground">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>

@@ -14,6 +14,7 @@ import { useActionState, useEffect, useState, type ComponentProps } from 'react'
 
 import { Alert } from '@/components/ui/alert';
 import { Field, Select, TextInput } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { cn } from '@/lib/cn';
 import { saveAnnouncementAction } from '@/lib/notices/actions';
@@ -30,6 +31,9 @@ const LANGUAGES = [
 ] as const;
 
 const SUFFIX = { he: 'He', ar: 'Ar', en: 'En' } as const;
+
+/** Each language's own name (an autonym, the same in every interface language). */
+const AUTONYM = { he: 'עברית', ar: 'العربية', en: 'English' } as const;
 
 function TextArea({
   invalid,
@@ -141,7 +145,7 @@ export function AnnouncementForm({
     typed?.[name] ?? announcement?.[field][code] ?? '';
 
   return (
-    <form action={action} noValidate className="flex flex-col gap-5">
+    <form action={action} noValidate className="flex animate-enter flex-col gap-5">
       <input type="hidden" name="locale" value={locale} />
       {announcement ? <input type="hidden" name="announcementId" value={announcement.id} /> : null}
       <input type="hidden" name="expiresAt" value={toIso(expiresLocal)} />
@@ -155,279 +159,307 @@ export function AnnouncementForm({
         <Alert tone="warning">{t('adminNotices.form.publishedEditNotice')}</Alert>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {LANGUAGES.map(({ code, dir }) => {
-          const name = `title${SUFFIX[code]}`;
-          return (
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* Content: one card per language, Hebrew first (required). */}
+        <div className="flex min-w-0 flex-col gap-4">
+          {LANGUAGES.map(({ code, dir }) => {
+            const titleName = `title${SUFFIX[code]}`;
+            const bodyName = `body${SUFFIX[code]}`;
+            return (
+              <section
+                key={code}
+                aria-label={AUTONYM[code]}
+                className="overflow-hidden rounded-xl border border-border bg-surface shadow-xs"
+              >
+                <header className="flex items-center gap-3 border-b border-border bg-surface-subtle px-5 py-3">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex h-6 w-9 items-center justify-center rounded-md font-mono text-[11px] font-medium uppercase',
+                      code === 'he'
+                        ? 'bg-primary text-on-primary'
+                        : 'bg-surface-muted text-muted ring-1 ring-border ring-inset',
+                    )}
+                  >
+                    {code}
+                  </span>
+                  <span lang={code} className="text-sm font-semibold text-foreground">
+                    {AUTONYM[code]}
+                  </span>
+                  <span className="ms-auto text-xs text-muted">
+                    {code === 'he' ? t('adminNotices.form.heHint') : optional}
+                  </span>
+                </header>
+                <div className="flex flex-col gap-4 p-5">
+                  <Field
+                    label={t(`adminNotices.form.${titleName}` as never)}
+                    error={errors[titleName]}
+                  >
+                    {({ id, describedBy, invalid }) => (
+                      <TextInput
+                        id={id}
+                        name={titleName}
+                        dir={dir}
+                        lang={code}
+                        required={code === 'he'}
+                        maxLength={ANNOUNCEMENT_TITLE_MAX_LENGTH}
+                        defaultValue={textValue(titleName, 'title', code)}
+                        aria-describedby={describedBy}
+                        invalid={invalid}
+                        className="h-11 text-md font-medium"
+                      />
+                    )}
+                  </Field>
+                  <Field
+                    label={t(`adminNotices.form.${bodyName}` as never)}
+                    error={errors[bodyName]}
+                  >
+                    {({ id, describedBy, invalid }) => (
+                      <TextArea
+                        id={id}
+                        name={bodyName}
+                        dir={dir}
+                        lang={code}
+                        rows={5}
+                        required={code === 'he'}
+                        maxLength={ANNOUNCEMENT_BODY_MAX_LENGTH}
+                        defaultValue={textValue(bodyName, 'body', code)}
+                        aria-describedby={describedBy}
+                        invalid={invalid}
+                      />
+                    )}
+                  </Field>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        {/* Publishing: who sees it, how loud, for how long, and the submit. */}
+        <aside className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-surface p-5 shadow-xs xl:sticky xl:top-[calc(var(--header-height)+1.5rem)]">
+          <div className="grid gap-4">
             <Field
-              key={name}
-              label={t(`adminNotices.form.${name}` as never)}
-              hint={code === 'he' ? t('adminNotices.form.heHint') : optional}
-              error={errors[name]}
+              label={t('adminNotices.form.severity')}
+              hint={t('adminNotices.form.severityHint')}
+              error={errors.severity}
+            >
+              {({ id, describedBy, invalid }) => (
+                <Select
+                  id={id}
+                  name="severity"
+                  defaultValue={typed?.severity ?? announcement?.severity ?? 'info'}
+                  aria-describedby={describedBy}
+                  invalid={invalid}
+                >
+                  {ANNOUNCEMENT_SEVERITIES.map((severity) => (
+                    <option key={severity} value={severity}>
+                      {t(`notices.severity.${severity}`)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+
+            <Field
+              label={t('adminNotices.form.expiresAt')}
+              hint={t('adminNotices.form.expiresAtHint')}
+              error={errors.expiresAt}
             >
               {({ id, describedBy, invalid }) => (
                 <TextInput
                   id={id}
-                  name={name}
-                  dir={dir}
-                  lang={code}
-                  required={code === 'he'}
-                  maxLength={ANNOUNCEMENT_TITLE_MAX_LENGTH}
-                  defaultValue={textValue(name, 'title', code)}
+                  name="expiresAtLocal"
+                  type="datetime-local"
+                  dir="ltr"
+                  value={expiresLocal}
+                  onChange={(event) => setExpiresLocal(event.target.value)}
                   aria-describedby={describedBy}
                   invalid={invalid}
                 />
               )}
             </Field>
-          );
-        })}
-      </div>
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {LANGUAGES.map(({ code, dir }) => {
-          const name = `body${SUFFIX[code]}`;
-          return (
+          <div className="grid gap-4 border-t border-border pt-5">
+            {departments && !editing ? (
+              <Field label={t('adminNotices.form.department')} error={errors.departmentId}>
+                {({ id, describedBy, invalid }) => (
+                  <Select
+                    id={id}
+                    name="departmentId"
+                    defaultValue={typed?.departmentId ?? ''}
+                    aria-describedby={describedBy}
+                    invalid={invalid}
+                  >
+                    <option value="">{t('adminNotices.municipalityWide')}</option>
+                    {departments.map((department) => (
+                      <option key={department.id} value={department.id}>
+                        {department.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold text-foreground">
+                  {t('adminNotices.form.department')}
+                </span>
+                <p className="flex h-10 items-center gap-2 rounded-md border border-border bg-surface-muted px-3.5 text-sm text-foreground">
+                  <Icon name="departments" className="size-4 text-subtle" />
+                  {announcement
+                    ? announcement.departmentName
+                    : t('adminNotices.form.ownDepartment', {
+                        department: ownDepartmentName ?? '—',
+                      })}
+                </p>
+                {announcement ? (
+                  <p className="text-sm text-muted">{t('adminNotices.form.departmentFixed')}</p>
+                ) : null}
+              </div>
+            )}
+
             <Field
-              key={name}
-              label={t(`adminNotices.form.${name}` as never)}
-              hint={code === 'he' ? undefined : optional}
-              error={errors[name]}
+              label={t('adminNotices.form.neighborhood')}
+              hint={t('adminNotices.form.neighborhoodHint')}
+              error={errors.neighborhoodId}
             >
               {({ id, describedBy, invalid }) => (
-                <TextArea
+                <Select
                   id={id}
-                  name={name}
-                  dir={dir}
-                  lang={code}
-                  rows={6}
-                  required={code === 'he'}
-                  maxLength={ANNOUNCEMENT_BODY_MAX_LENGTH}
-                  defaultValue={textValue(name, 'body', code)}
+                  name="neighborhoodId"
+                  defaultValue={typed?.neighborhoodId ?? announcement?.neighborhoodId ?? ''}
                   aria-describedby={describedBy}
                   invalid={invalid}
-                />
+                >
+                  <option value="">{t('adminNotices.form.allNeighborhoods')}</option>
+                  {neighborhoods.map((neighborhood) => (
+                    <option key={neighborhood.id} value={neighborhood.id}>
+                      {neighborhood.name}
+                    </option>
+                  ))}
+                </Select>
               )}
             </Field>
-          );
-        })}
-      </div>
+          </div>
 
-      <div className="grid gap-4 border-t border-border pt-5 md:grid-cols-2">
-        <Field
-          label={t('adminNotices.form.severity')}
-          hint={t('adminNotices.form.severityHint')}
-          error={errors.severity}
-        >
-          {({ id, describedBy, invalid }) => (
-            <Select
-              id={id}
-              name="severity"
-              defaultValue={typed?.severity ?? announcement?.severity ?? 'info'}
-              aria-describedby={describedBy}
-              invalid={invalid}
-            >
-              {ANNOUNCEMENT_SEVERITIES.map((severity) => (
-                <option key={severity} value={severity}>
-                  {t(`notices.severity.${severity}`)}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
+          <div className="flex flex-col gap-3 border-t border-border pt-5">
+            {announcement?.hasImage && !preview ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {t('adminNotices.form.currentImage')}
+                </span>
+                {announcement.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL
+                  <img
+                    src={announcement.imageUrl}
+                    alt=""
+                    className={cn(
+                      'max-h-56 w-fit max-w-full rounded-lg border border-border object-contain shadow-xs transition-opacity',
+                      removeImage && 'opacity-40 grayscale',
+                    )}
+                  />
+                ) : null}
+                <label className="flex w-fit cursor-pointer items-center gap-2 rounded-sm text-sm text-danger">
+                  <input
+                    type="checkbox"
+                    name="removeImage"
+                    value="true"
+                    checked={removeImage}
+                    onChange={(event) => setRemoveImage(event.target.checked)}
+                    className="size-4 accent-[var(--color-primary)]"
+                  />
+                  {t('adminNotices.form.removeImage')}
+                </label>
+              </div>
+            ) : null}
 
-        <Field
-          label={t('adminNotices.form.expiresAt')}
-          hint={t('adminNotices.form.expiresAtHint')}
-          error={errors.expiresAt}
-        >
-          {({ id, describedBy, invalid }) => (
-            <TextInput
-              id={id}
-              name="expiresAtLocal"
-              type="datetime-local"
-              dir="ltr"
-              value={expiresLocal}
-              onChange={(event) => setExpiresLocal(event.target.value)}
-              aria-describedby={describedBy}
-              invalid={invalid}
-            />
-          )}
-        </Field>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {departments && !editing ? (
-          <Field label={t('adminNotices.form.department')} error={errors.departmentId}>
-            {({ id, describedBy, invalid }) => (
-              <Select
-                id={id}
-                name="departmentId"
-                defaultValue={typed?.departmentId ?? ''}
-                aria-describedby={describedBy}
-                invalid={invalid}
+            {!removeImage ? (
+              <Field
+                label={
+                  announcement?.hasImage
+                    ? t('adminNotices.form.replaceImage')
+                    : t('adminNotices.form.image')
+                }
+                hint={t('adminNotices.form.imageHint')}
+                error={imageError ?? errors.image}
               >
-                <option value="">{t('adminNotices.municipalityWide')}</option>
-                {departments.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-foreground">
-              {t('adminNotices.form.department')}
-            </span>
-            <p className="flex h-9 items-center rounded-sm border border-border bg-surface-muted px-3 text-sm text-foreground">
-              {announcement
-                ? announcement.departmentName
-                : t('adminNotices.form.ownDepartment', { department: ownDepartmentName ?? '—' })}
-            </p>
-            {announcement ? (
-              <p className="text-sm text-muted">{t('adminNotices.form.departmentFixed')}</p>
+                {({ id, describedBy, invalid }) => (
+                  <input
+                    id={id}
+                    name="image"
+                    type="file"
+                    accept={ANNOUNCEMENT_IMAGE_TYPES.join(',')}
+                    aria-describedby={describedBy}
+                    aria-invalid={invalid || undefined}
+                    className={cn(
+                      'w-full cursor-pointer rounded-lg border border-dashed border-border-strong bg-surface-subtle p-2.5 text-sm text-muted transition-colors',
+                      'hover:border-primary hover:bg-primary-soft focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:outline-none',
+                      'file:me-3 file:cursor-pointer file:rounded-md file:border file:border-border-strong file:bg-surface',
+                      'file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground file:shadow-xs',
+                      invalid && 'border-danger',
+                    )}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      const problem = file ? announcementImageProblem(file) : null;
+                      setImageError(
+                        problem === 'type'
+                          ? t('adminNotices.form.imageType')
+                          : problem === 'size'
+                            ? t('adminNotices.form.imageSize')
+                            : null,
+                      );
+                      if (problem) event.target.value = '';
+                      setPreview(file && !problem ? URL.createObjectURL(file) : null);
+                    }}
+                  />
+                )}
+              </Field>
             ) : null}
-          </div>
-        )}
-
-        <Field
-          label={t('adminNotices.form.neighborhood')}
-          hint={t('adminNotices.form.neighborhoodHint')}
-          error={errors.neighborhoodId}
-        >
-          {({ id, describedBy, invalid }) => (
-            <Select
-              id={id}
-              name="neighborhoodId"
-              defaultValue={typed?.neighborhoodId ?? announcement?.neighborhoodId ?? ''}
-              aria-describedby={describedBy}
-              invalid={invalid}
-            >
-              <option value="">{t('adminNotices.form.allNeighborhoods')}</option>
-              {neighborhoods.map((neighborhood) => (
-                <option key={neighborhood.id} value={neighborhood.id}>
-                  {neighborhood.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-border pt-5">
-        {announcement?.hasImage && !preview ? (
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-foreground">
-              {t('adminNotices.form.currentImage')}
-            </span>
-            {announcement.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
               <img
-                src={announcement.imageUrl}
+                src={preview}
                 alt=""
-                className={cn(
-                  'max-h-56 w-fit max-w-full rounded-lg border border-border object-contain shadow-xs transition-opacity',
-                  removeImage && 'opacity-40 grayscale',
-                )}
+                className="max-h-56 w-fit max-w-full animate-fade-in rounded-lg border border-border object-contain shadow-xs"
               />
             ) : null}
-            <label className="flex w-fit cursor-pointer items-center gap-2 rounded-sm text-sm text-danger">
-              <input
-                type="checkbox"
-                name="removeImage"
-                value="true"
-                checked={removeImage}
-                onChange={(event) => setRemoveImage(event.target.checked)}
-                className="size-4 accent-[var(--color-primary)]"
-              />
-              {t('adminNotices.form.removeImage')}
-            </label>
           </div>
-        ) : null}
 
-        {!removeImage ? (
-          <Field
-            label={
-              announcement?.hasImage
-                ? t('adminNotices.form.replaceImage')
-                : t('adminNotices.form.image')
-            }
-            hint={t('adminNotices.form.imageHint')}
-            error={imageError ?? errors.image}
+          {!editing ? (
+            canPublishOwn ? (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-surface-subtle p-4 transition-colors hover:border-border-strong has-checked:border-primary has-checked:bg-primary-soft">
+                <input
+                  type="checkbox"
+                  name="publish"
+                  value="true"
+                  defaultChecked={typed ? typed.publish === 'true' : true}
+                  className="mt-1 size-4 accent-[var(--color-primary)]"
+                />
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium text-foreground">
+                    {t('adminNotices.form.publishNow')}
+                  </span>
+                  <span className="text-sm text-muted">
+                    {t('adminNotices.form.publishNowHint')}
+                  </span>
+                </span>
+              </label>
+            ) : (
+              <Alert tone="info">{t('adminNotices.form.draftOnlyNotice')}</Alert>
+            )
+          ) : null}
+
+          <SubmitButton
+            variant="primary"
+            size="lg"
+            className="w-full"
+            icon={editing ? 'check' : 'send'}
+            pendingLabel={t('adminNotices.form.creating')}
           >
-            {({ id, describedBy, invalid }) => (
-              <input
-                id={id}
-                name="image"
-                type="file"
-                accept={ANNOUNCEMENT_IMAGE_TYPES.join(',')}
-                aria-describedby={describedBy}
-                aria-invalid={invalid || undefined}
-                className={cn(
-                  'w-full cursor-pointer rounded-md border border-dashed border-border-strong bg-surface-subtle p-2 text-sm text-muted transition-colors',
-                  'hover:border-primary focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:outline-none',
-                  'file:me-3 file:cursor-pointer file:rounded-sm file:border file:border-border-strong file:bg-surface',
-                  'file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground file:shadow-xs',
-                  invalid && 'border-danger',
-                )}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  const problem = file ? announcementImageProblem(file) : null;
-                  setImageError(
-                    problem === 'type'
-                      ? t('adminNotices.form.imageType')
-                      : problem === 'size'
-                        ? t('adminNotices.form.imageSize')
-                        : null,
-                  );
-                  if (problem) event.target.value = '';
-                  setPreview(file && !problem ? URL.createObjectURL(file) : null);
-                }}
-              />
-            )}
-          </Field>
-        ) : null}
-        {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
-          <img
-            src={preview}
-            alt=""
-            className="max-h-56 w-fit max-w-full animate-fade-in rounded-lg border border-border object-contain shadow-xs"
-          />
-        ) : null}
-      </div>
-
-      {!editing ? (
-        canPublishOwn ? (
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface-subtle p-4 transition-colors hover:border-border-strong has-checked:border-primary-soft-border has-checked:bg-primary-soft">
-            <input
-              type="checkbox"
-              name="publish"
-              value="true"
-              defaultChecked={typed ? typed.publish === 'true' : true}
-              className="mt-1 size-4 accent-[var(--color-primary)]"
-            />
-            <span className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">
-                {t('adminNotices.form.publishNow')}
-              </span>
-              <span className="text-sm text-muted">{t('adminNotices.form.publishNowHint')}</span>
-            </span>
-          </label>
-        ) : (
-          <Alert tone="info">{t('adminNotices.form.draftOnlyNotice')}</Alert>
-        )
-      ) : null}
-
-      <div className="-mx-5 -mb-5 flex justify-end border-t border-border bg-surface-subtle px-5 py-3.5">
-        <SubmitButton
-          variant="primary"
-          icon={editing ? 'check' : 'send'}
-          pendingLabel={t('adminNotices.form.creating')}
-        >
-          {editing ? t('adminNotices.form.save') : t('adminNotices.form.create')}
-        </SubmitButton>
+            {editing ? t('adminNotices.form.save') : t('adminNotices.form.create')}
+          </SubmitButton>
+        </aside>
       </div>
     </form>
   );

@@ -74,13 +74,15 @@ async function ReportsList({
   return (
     <>
       <PageHeader
+        eyebrow={localizedText(staff.active.municipality_name, locale)}
         title={t('adminNav.reports')}
         description={t(`adminReports.scope.${role}`)}
         meta={
-          <>
-            <Badge tone="primary">{localizedText(staff.active.municipality_name, locale)}</Badge>
-            {page ? <Badge>{t('adminReports.list.results', { total: page.total })}</Badge> : null}
-          </>
+          page ? (
+            <Badge tone="primary" dot className="tabular-nums">
+              {t('adminReports.list.results', { total: page.total })}
+            </Badge>
+          ) : null
         }
       />
 
@@ -114,53 +116,55 @@ async function ReportsList({
           t={t}
           baseHref={baseHref}
         />
-        {!page ? (
-          <EmptyState
-            icon="alert"
-            title={t('adminReports.list.loadErrorTitle')}
-            description={t('adminReports.list.loadErrorDescription')}
-          >
-            <ButtonLink
-              href={`${baseHref}${filtersQuery(filters, { page: filters.page })}`}
-              variant="primary"
-            >
-              {t('common.retry')}
-            </ButtonLink>
-          </EmptyState>
-        ) : page.items.length === 0 ? (
-          hasFilters || page.total > 0 ? (
+        <div className="border-t border-border">
+          {!page ? (
             <EmptyState
-              icon="search"
-              title={t('adminReports.list.noMatchesTitle')}
-              description={t('adminReports.list.noMatchesDescription')}
+              icon="alert"
+              title={t('adminReports.list.loadErrorTitle')}
+              description={t('adminReports.list.loadErrorDescription')}
             >
-              {page.total > 0 && filters.page > 1 ? (
-                <ButtonLink href={`${baseHref}${filtersQuery(filters)}`} variant="secondary">
-                  {t('adminReports.pagination.previous')}
-                </ButtonLink>
-              ) : (
-                <ButtonLink href={baseHref} variant="secondary">
-                  {t('adminReports.list.clear')}
-                </ButtonLink>
-              )}
+              <ButtonLink
+                href={`${baseHref}${filtersQuery(filters, { page: filters.page })}`}
+                variant="primary"
+              >
+                {t('common.retry')}
+              </ButtonLink>
             </EmptyState>
+          ) : page.items.length === 0 ? (
+            hasFilters || page.total > 0 ? (
+              <EmptyState
+                icon="search"
+                title={t('adminReports.list.noMatchesTitle')}
+                description={t('adminReports.list.noMatchesDescription')}
+              >
+                {page.total > 0 && filters.page > 1 ? (
+                  <ButtonLink href={`${baseHref}${filtersQuery(filters)}`} variant="secondary">
+                    {t('adminReports.pagination.previous')}
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink href={baseHref} variant="secondary">
+                    {t('adminReports.list.clear')}
+                  </ButtonLink>
+                )}
+              </EmptyState>
+            ) : (
+              <EmptyState
+                icon="reports"
+                title={t('adminReports.list.emptyTitle')}
+                description={t('adminReports.list.emptyDescription')}
+              />
+            )
           ) : (
-            <EmptyState
-              icon="reports"
-              title={t('adminReports.list.emptyTitle')}
-              description={t('adminReports.list.emptyDescription')}
+            <ReportsTable
+              reports={page.items}
+              filters={filters}
+              labels={labels}
+              locale={locale}
+              t={t}
+              baseHref={baseHref}
             />
-          )
-        ) : (
-          <ReportsTable
-            reports={page.items}
-            filters={filters}
-            labels={labels}
-            locale={locale}
-            t={t}
-            baseHref={baseHref}
-          />
-        )}
+          )}
+        </div>
         {page ? (
           <ReportsPagination
             filters={filters}
@@ -186,7 +190,7 @@ function ReportsListSkeleton() {
       </div>
       <div className="overflow-clip card">
         <div className="space-y-3 border-b border-border p-5">
-          <Skeleton className="h-9 w-full rounded-sm" />
+          <Skeleton className="h-10 w-full rounded-md" />
           <div className="flex flex-wrap gap-1.5">
             {Array.from({ length: 7 }, (_, i) => (
               <Skeleton key={i} className="h-7 w-20 rounded-full" />
@@ -207,8 +211,8 @@ function ReportsListSkeleton() {
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-20 max-sm:hidden" />
             <Skeleton className="h-4 flex-1" />
-            <Skeleton className="h-6 w-20 rounded-sm" />
-            <Skeleton className="h-6 w-14 rounded-sm max-sm:hidden" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-6 w-14 rounded-full max-sm:hidden" />
           </div>
         ))}
       </div>

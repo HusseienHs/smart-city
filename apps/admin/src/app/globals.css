@@ -18,12 +18,13 @@
 }
 
 /*
- * Smart City Admin — design tokens.
+ * Smart City Admin — "Civic Ink" design tokens.
  *
- * Two complete themes, designed independently (dark is not an inversion of light):
- * - Light: a cool near-white canvas, white cards with hairline borders, one cobalt accent.
- * - Dark: a blue-black canvas with layered surfaces, softened borders and desaturated,
- *   lighter semantic colors so badges stay legible without glowing.
+ * The product frame is always ink: a dark sidebar and chrome in both themes, with the
+ * working area as a rounded sheet inset into it (tablets and up). Inside the sheet:
+ * - Light: a cool grey canvas, white cards with crisp hairlines, one teal civic accent.
+ * - Dark: a blue-black canvas with layered surfaces and a luminous teal accent that
+ *   carries dark text, so filled controls read like lit glass rather than neon.
  *
  * Components never use raw colors: only the semantic tokens below, exposed to Tailwind
  * through @theme. The theme is chosen by `data-theme` on <html> (set before paint by the
@@ -35,126 +36,156 @@
 :root {
   color-scheme: light;
 
-  /* Surfaces: canvas → card → inset/hover */
-  --background: #f8f9fb;
+  /* The ink frame: the sidebar and the chrome around the sheet. */
+  --frame: #0a0e19;
+  --sidebar: #0a0e19;
+  --sidebar-raised: rgb(255 255 255 / 0.045);
+  --sidebar-hover: rgb(255 255 255 / 0.06);
+  --sidebar-active: rgb(255 255 255 / 0.1);
+  --sidebar-border: rgb(255 255 255 / 0.08);
+  --sidebar-foreground: #eef1f7;
+  --sidebar-secondary: #b7bfd0;
+  --sidebar-muted: #8089a0;
+  --sidebar-subtle: #576079;
+  --sidebar-accent: #3ee6c8;
+
+  /* Surfaces inside the sheet: canvas → card → inset/hover */
+  --background: #f3f4f6;
   --surface: #ffffff;
-  --surface-subtle: #fafbfc;
-  --surface-muted: #f2f4f7;
+  --surface-subtle: #f9fafb;
+  --surface-muted: #eff1f4;
   --surface-raised: #ffffff;
-  --sidebar: #f3f4f7;
-  --sidebar-hover: #e8eaef;
-  --overlay: rgb(15 18 28 / 0.4);
-  --border: #e5e7ec;
-  --border-strong: #d2d6de;
+  --overlay: rgb(8 12 24 / 0.5);
+  --border: #e3e6eb;
+  --border-strong: #cdd2da;
 
   /* Text */
-  --foreground: #0d1220;
-  --foreground-secondary: #384152;
-  --muted: #687082;
-  --subtle: #9aa1b0;
+  --foreground: #0a1020;
+  --foreground-secondary: #323b4e;
+  --muted: #646d80;
+  --subtle: #9aa2b2;
 
-  /* Accent: cobalt. `primary` fills (buttons, selection); `accent` is the text/icon color. */
-  --primary: #3156d3;
-  --primary-hover: #2849ba;
-  --primary-pressed: #213ea0;
-  --primary-soft: #eef2fd;
-  --primary-soft-border: #d0dbfa;
+  /* Accent: civic teal. `primary` fills (buttons, selection); `accent` is the text/icon color. */
+  --primary: #0b7a6e;
+  --primary-hover: #096a60;
+  --primary-pressed: #075a51;
+  --primary-soft: #e7f5f2;
+  --primary-soft-border: #b9e2da;
   --on-primary: #ffffff;
-  --accent: #2f52c9;
-  --focus-ring: rgb(49 86 211 / 0.28);
+  --accent: #087266;
+  --focus-ring: rgb(11 122 110 / 0.28);
+  /* A second hue for gradients and illustrations only. */
+  --brand-2: #4f5bd5;
 
   /* Semantic: text color, soft fill, soft border, solid fill (for buttons and dots) */
-  --success: #157a3c;
-  --success-soft: #eefaf2;
-  --success-border: #c3ead0;
-  --warning: #a8530a;
-  --warning-soft: #fff7e9;
-  --warning-border: #f8dcab;
-  --danger: #b42318;
+  --success: #14783a;
+  --success-soft: #ecf9f0;
+  --success-border: #bfe6cc;
+  --warning: #a24f06;
+  --warning-soft: #fff6e6;
+  --warning-border: #f6d9a6;
+  --danger: #b4231a;
   --danger-hover: #912018;
-  --danger-solid: #c4321f;
-  --danger-soft: #fef3f2;
-  --danger-border: #f9cdc8;
-  --info: #0b6aa2;
-  --info-soft: #eff8ff;
-  --info-border: #c2e2f8;
-  --violet: #6a2fd0;
-  --violet-soft: #f5f2ff;
-  --violet-border: #ddd3fc;
+  --danger-solid: #d23a2a;
+  --danger-soft: #fef2f1;
+  --danger-border: #f8cbc5;
+  --info: #0a64a8;
+  --info-soft: #edf6fe;
+  --info-border: #bfdcf5;
+  --violet: #6534cc;
+  --violet-soft: #f4f0ff;
+  --violet-border: #dbd0fb;
 
   /* Elevation */
-  --elevation-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
-  --elevation-sm: 0 1px 2px 0 rgb(16 24 40 / 0.05), 0 1px 3px 0 rgb(16 24 40 / 0.04);
-  --elevation-md: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
-  --elevation-lg: 0 20px 40px -12px rgb(16 24 40 / 0.18), 0 6px 12px -4px rgb(16 24 40 / 0.06);
+  --elevation-xs: 0 1px 2px 0 rgb(10 16 32 / 0.05);
+  --elevation-sm: 0 1px 3px 0 rgb(10 16 32 / 0.06), 0 1px 2px -1px rgb(10 16 32 / 0.05);
+  --elevation-md: 0 8px 20px -6px rgb(10 16 32 / 0.12), 0 2px 6px -2px rgb(10 16 32 / 0.06);
+  --elevation-lg: 0 24px 56px -16px rgb(10 16 32 / 0.28), 0 8px 16px -8px rgb(10 16 32 / 0.1);
 
   /* Layout */
-  --sidebar-width: 256px;
-  --sidebar-rail-width: 64px;
-  --header-height: 56px;
-  --content-max-width: 1360px;
+  --sidebar-width: 268px;
+  --sidebar-rail-width: 72px;
+  --header-height: 60px;
+  --frame-gap: 8px;
+  --content-max-width: 1400px;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --background: #0b0d12;
-  --surface: #12151c;
-  --surface-subtle: #151922;
-  --surface-muted: #1b2029;
-  --surface-raised: #181c25;
-  --sidebar: #0e1117;
-  --sidebar-hover: #181c24;
-  --overlay: rgb(0 0 0 / 0.6);
-  --border: #232935;
-  --border-strong: #303746;
+  --frame: #05070d;
+  --sidebar: #05070d;
+  --sidebar-raised: rgb(255 255 255 / 0.04);
+  --sidebar-hover: rgb(255 255 255 / 0.05);
+  --sidebar-active: rgb(255 255 255 / 0.085);
+  --sidebar-border: rgb(255 255 255 / 0.07);
 
-  --foreground: #eceef3;
-  --foreground-secondary: #c4c9d4;
-  --muted: #8d95a6;
-  --subtle: #636b7c;
+  --background: #0b0e16;
+  --surface: #10141e;
+  --surface-subtle: #131824;
+  --surface-muted: #1a2030;
+  --surface-raised: #161b28;
+  --overlay: rgb(0 0 0 / 0.66);
+  --border: #212839;
+  --border-strong: #2f374b;
 
-  --primary: #4b6bed;
-  --primary-hover: #5b79f0;
-  --primary-pressed: #4161e0;
-  --primary-soft: rgb(91 121 240 / 0.13);
-  --primary-soft-border: rgb(91 121 240 / 0.3);
-  --on-primary: #ffffff;
-  --accent: #8fa4ff;
-  --focus-ring: rgb(120 145 255 / 0.35);
+  --foreground: #edf0f6;
+  --foreground-secondary: #c3c9d6;
+  --muted: #8b93a7;
+  --subtle: #5f677c;
 
-  --success: #5ad48a;
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --primary-pressed: #20bfaa;
+  --primary-soft: rgb(45 212 191 / 0.11);
+  --primary-soft-border: rgb(45 212 191 / 0.28);
+  --on-primary: #04241f;
+  --accent: #5eead4;
+  --focus-ring: rgb(45 212 191 / 0.32);
+  --brand-2: #7c87ff;
+
+  --success: #5fd68f;
   --success-soft: rgb(52 199 112 / 0.12);
   --success-border: rgb(52 199 112 / 0.28);
-  --warning: #f2b54c;
+  --warning: #f5b955;
   --warning-soft: rgb(240 168 50 / 0.12);
   --warning-border: rgb(240 168 50 / 0.28);
-  --danger: #f4807a;
-  --danger-hover: #f79a94;
-  --danger-solid: #d9392b;
+  --danger: #f7867e;
+  --danger-hover: #f99f99;
+  --danger-solid: #e0443a;
   --danger-soft: rgb(240 90 80 / 0.12);
   --danger-border: rgb(240 90 80 / 0.3);
-  --info: #5cc0f2;
+  --info: #66c4f5;
   --info-soft: rgb(56 170 230 / 0.12);
   --info-border: rgb(56 170 230 / 0.28);
-  --violet: #b49cff;
+  --violet: #b9a3ff;
   --violet-soft: rgb(150 120 255 / 0.13);
   --violet-border: rgb(150 120 255 / 0.3);
 
-  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --elevation-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35), 0 1px 3px 0 rgb(0 0 0 / 0.2);
-  --elevation-md: 0 6px 16px -4px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --elevation-lg: 0 24px 48px -12px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --elevation-md: 0 10px 24px -8px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --elevation-lg: 0 28px 64px -16px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.05);
 }
 
 @theme inline {
+  --color-frame: var(--frame);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-raised: var(--sidebar-raised);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-secondary: var(--sidebar-secondary);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-subtle: var(--sidebar-subtle);
+  --color-sidebar-accent: var(--sidebar-accent);
+
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-muted: var(--surface-muted);
   --color-surface-raised: var(--surface-raised);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-hover: var(--sidebar-hover);
   --color-overlay: var(--overlay);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
@@ -172,6 +203,7 @@
   --color-on-primary: var(--on-primary);
   --color-accent: var(--accent);
   --color-focus-ring: var(--focus-ring);
+  --color-brand-2: var(--brand-2);
 
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
@@ -197,19 +229,20 @@
   --shadow-lg: var(--elevation-lg);
 
   /*
-   * IBM Plex Sans Hebrew carries Latin + Hebrew; IBM Plex Sans Arabic fills in Arabic.
-   * The families are named directly (their @font-face rules come from next/font in the root
-   * layout) rather than through next/font's variables: each variable also appends a local
-   * Arial fallback, and since Arial has Arabic glyphs, Arabic text would stop there and never
-   * reach Plex Arabic.
+   * Geist for Latin text and numbers, Heebo for Hebrew, Noto Sans Arabic for Arabic: each
+   * script gets a face drawn for it, at matching weights. The families are named directly
+   * (their @font-face rules come from next/font in the root layout) rather than through
+   * next/font's variables: each variable also appends a local Arial fallback, and since
+   * Arial has Hebrew and Arabic glyphs, text would stop there.
    */
-  --font-sans: 'IBM Plex Sans Hebrew', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist', 'Heebo', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 /*
  * Type scale (denser than Tailwind's defaults; body text is 14px).
- * 11 / 12 / 13 / 14 / 16 / 18 / 20 / 24 / 30.
- * Radii: 4 (chips) / 6 (controls) / 8 (cards) / 10 (panels) / 12 (dialogs, menus).
+ * 11 / 12 / 13 / 14 / 16 / 18 / 20 / 24 / 30 / 36.
+ * Radii: 4 / 6 / 8 (controls) / 12 (cards) / 16 (panels, dialogs) / 20 (the sheet, heroes).
  */
 @theme {
   --text-2xs: 0.6875rem;
@@ -230,26 +263,29 @@
   --text-2xl--line-height: 2rem;
   --text-3xl: 1.875rem;
   --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.625rem;
 
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --animate-popover-in: popover-in 140ms var(--ease-out-soft);
-  --animate-dialog-in: dialog-in 180ms var(--ease-out-soft);
+  --animate-popover-in: popover-in 160ms var(--ease-out-soft);
+  --animate-dialog-in: dialog-in 220ms var(--ease-out-soft);
   --animate-fade-in: fade-in 160ms var(--ease-standard);
-  --animate-enter: enter 220ms var(--ease-out-soft);
+  --animate-enter: enter 360ms var(--ease-out-soft) both;
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
 
   @keyframes popover-in {
     from {
       opacity: 0;
-      transform: translateY(-4px) scale(0.98);
+      transform: translateY(-6px) scale(0.97);
     }
     to {
       opacity: 1;
@@ -260,7 +296,7 @@
   @keyframes dialog-in {
     from {
       opacity: 0;
-      transform: translateY(6px) scale(0.98);
+      transform: translateY(12px) scale(0.96);
     }
     to {
       opacity: 1;
@@ -280,7 +316,7 @@
   @keyframes enter {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -294,7 +330,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.55;
+      opacity: 0.5;
     }
   }
 }
@@ -305,12 +341,11 @@
   }
 
   body {
-    background: var(--background);
+    background: var(--frame);
     color: var(--foreground);
     font-family: var(--font-sans);
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
-    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -330,10 +365,11 @@
     background: var(--primary-soft-border);
   }
 
-  /* Native dialogs: a soft overlay that fades in with the panel. */
+  /* Native dialogs: a blurred overlay that fades in with the panel. */
   dialog::backdrop {
     background: var(--overlay);
-    animation: fade-in 160ms var(--ease-standard);
+    backdrop-filter: blur(4px);
+    animation: fade-in 180ms var(--ease-standard);
   }
 
   /* Switching theme must not animate every color on the page. */
@@ -360,11 +396,11 @@
   scrollbar-color: var(--border-strong) transparent;
 }
 
-/* A card surface: hairline border, white (or raised dark) fill, barely-there shadow. */
+/* A card surface: crisp hairline, white (or layered dark) fill, a soft resting shadow. */
 @utility card {
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--elevation-xs);
 }
 
@@ -374,4 +410,46 @@
   background: var(--surface-raised);
   border-radius: var(--radius-xl);
   box-shadow: var(--elevation-lg);
+}
+
+/* The signature ink surface: hero banners and the sign-in showcase. Dark in both themes. */
+@utility ink-surface {
+  background-color: #0b1020;
+  background-image:
+    radial-gradient(60% 90% at 100% 0%, rgb(45 212 191 / 0.22), transparent 60%),
+    radial-gradient(55% 85% at 0% 100%, rgb(99 102 241 / 0.24), transparent 62%),
+    linear-gradient(180deg, #0e1529, #090d19);
+  color: #eef1f7;
+}
+
+/* A faint engineering grid that fades out; decorative only. */
+@utility grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 75% 20%, black 5%, transparent 70%);
+}
+
+/* The same grid on the theme canvas (empty states, placeholders). */
+@utility grid-dots {
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 72%);
+}
+
+/* Uppercase micro-labels (table heads, nav groups); Hebrew and Arabic drop the case (see base). */
+@utility eyebrow {
+  font-size: var(--text-2xs);
+  line-height: var(--text-2xs--line-height);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Hebrew and Arabic have no letter case: their micro-labels drop the caps and the tracking. */
+html:not([lang='en']) .eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--text-xs);
 }

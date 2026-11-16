@@ -93,16 +93,22 @@ export function ShellFrame({
     return () => desktop.removeEventListener('change', onChange);
   }, []);
 
+  // The sheet scrolls on its own from tablets up: a new page starts at its top.
+  const sheet = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    sheet.current?.scrollTo({ top: 0 });
+  }, [pathname]);
+
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh bg-frame md:h-dvh md:overflow-hidden">
       <a
         href="#main"
-        className="sr-only rounded-sm bg-surface px-3 py-2 text-sm font-medium text-accent shadow-md focus:not-sr-only focus:fixed focus:start-4 focus:top-3 focus:z-[60]"
+        className="sr-only rounded-md bg-surface px-3 py-2 text-sm font-medium text-accent shadow-md focus:not-sr-only focus:fixed focus:start-4 focus:top-3 focus:z-[60]"
       >
         {labels.skipToContent}
       </a>
 
-      <div className="sticky top-0 hidden h-dvh shrink-0 md:block" inert={open}>
+      <div className="sticky top-0 z-40 hidden h-dvh shrink-0 md:block" inert={open}>
         {sidebar}
       </div>
 
@@ -112,7 +118,7 @@ export function ShellFrame({
       >
         <div
           className={cn(
-            'absolute inset-0 bg-overlay backdrop-blur-[2px] transition-opacity duration-200 ease-standard',
+            'absolute inset-0 bg-overlay backdrop-blur-sm transition-opacity duration-200 ease-standard',
             open ? 'opacity-100' : 'opacity-0',
           )}
           onClick={close}
@@ -125,7 +131,7 @@ export function ShellFrame({
           aria-modal="true"
           aria-label={labels.navigation}
           className={cn(
-            'absolute inset-y-0 start-0 flex border-e border-border shadow-lg transition-transform duration-250 ease-out-soft',
+            'absolute inset-y-0 start-0 flex shadow-lg transition-transform duration-300 ease-out-soft',
             open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
           )}
         >
@@ -135,43 +141,53 @@ export function ShellFrame({
             onClick={close}
             aria-label={labels.closeNavigation}
             data-autofocus
-            className={cn(
-              buttonClasses({ variant: 'ghost', size: 'sm', iconOnly: true }),
-              'absolute end-3 top-3',
-            )}
+            className="absolute end-3 top-4 flex size-8 items-center justify-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-accent/60 focus-visible:outline-none"
           >
             <Icon name="close" className="size-4" />
           </button>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col" inert={open}>
-        <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md backdrop-saturate-150 md:px-6 xl:px-8">
-          <button
-            ref={menuButton}
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label={labels.openNavigation}
-            aria-expanded={open}
-            aria-controls={DRAWER_ID}
-            className={cn(
-              buttonClasses({ variant: 'ghost', size: 'sm', iconOnly: true }),
-              '-ms-1.5 xl:hidden',
-            )}
-          >
-            <Icon name="menu" className="size-[18px]" />
-          </button>
-          <div className="min-w-0 flex-1">{breadcrumbs}</div>
-          <div className="flex shrink-0 items-center gap-1">{headerEnd}</div>
-        </header>
-
-        <main
-          id="main"
-          tabIndex={-1}
-          className="mx-auto w-full max-w-(--content-max-width) flex-1 px-4 pt-6 pb-12 focus:outline-none md:px-6 md:pt-8 xl:px-10"
+      {/* The sheet: inset into the ink frame from tablets up, edge to edge on phones. */}
+      <div
+        className="flex min-w-0 flex-1 flex-col md:py-(--frame-gap) md:pe-(--frame-gap)"
+        inert={open}
+      >
+        <div
+          ref={sheet}
+          className={cn(
+            'relative flex min-h-dvh flex-1 flex-col bg-background',
+            'md:min-h-0 md:scrollbar-thin md:overflow-y-auto md:rounded-2xl',
+            'md:shadow-[0_0_0_1px_rgb(255_255_255/0.06),0_20px_50px_-20px_rgb(0_0_0/0.6)]',
+          )}
         >
-          {children}
-        </main>
+          <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-3 border-b border-border/80 bg-background/80 px-4 backdrop-blur-xl backdrop-saturate-150 md:px-6 xl:px-8">
+            <button
+              ref={menuButton}
+              type="button"
+              onClick={() => setOpen(true)}
+              aria-label={labels.openNavigation}
+              aria-expanded={open}
+              aria-controls={DRAWER_ID}
+              className={cn(
+                buttonClasses({ variant: 'secondary', size: 'sm', iconOnly: true }),
+                'xl:hidden',
+              )}
+            >
+              <Icon name="menu" className="size-[18px]" />
+            </button>
+            <div className="min-w-0 flex-1">{breadcrumbs}</div>
+            <div className="flex shrink-0 items-center gap-1.5">{headerEnd}</div>
+          </header>
+
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-(--content-max-width) flex-1 px-4 pt-6 pb-16 focus:outline-none md:px-8 md:pt-8 xl:px-10"
+          >
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

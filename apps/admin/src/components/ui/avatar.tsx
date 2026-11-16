@@ -8,30 +8,34 @@ export function initials(name: string): string {
 }
 
 /*
- * A deterministic, quiet tint per person, so the same colleague always looks the same in
- * lists. Tints come from the semantic soft palette, which is tuned for both themes.
+ * A deterministic gradient per person, so the same colleague always looks the same in lists.
+ * The gradients are saturated and dark enough for white initials in both themes and on the
+ * ink sidebar.
  */
-const TINTS = [
-  'bg-primary-soft text-accent border-primary-soft-border',
-  'bg-violet-soft text-violet border-violet-border',
-  'bg-info-soft text-info border-info-border',
-  'bg-success-soft text-success border-success-border',
-  'bg-warning-soft text-warning border-warning-border',
+const GRADIENTS = [
+  'from-[#0d9488] to-[#0f5f73]',
+  'from-[#6366f1] to-[#3b2fa0]',
+  'from-[#0ea5e9] to-[#1d4ed8]',
+  'from-[#d97706] to-[#b43c13]',
+  'from-[#db2777] to-[#7e22ce]',
+  'from-[#16a34a] to-[#0f6b5c]',
+  'from-[#475569] to-[#1e293b]',
 ] as const;
 
-function tintFor(seed: string): string {
+function gradientFor(seed: string): string {
   let hash = 0;
   for (let index = 0; index < seed.length; index += 1) {
     hash = (hash * 31 + seed.charCodeAt(index)) | 0;
   }
-  return TINTS[Math.abs(hash) % TINTS.length]!;
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length]!;
 }
 
 const SIZES = {
-  xs: 'size-6 text-2xs',
+  xs: 'size-6 text-[10px]',
   sm: 'size-7 text-2xs',
   md: 'size-8 text-xs',
   lg: 'size-11 text-base',
+  xl: 'size-16 text-xl',
 } as const;
 
 interface AvatarProps {
@@ -40,15 +44,16 @@ interface AvatarProps {
   className?: string;
 }
 
-/** Initials in a tinted circle. Decorative: the name is always shown next to it. */
+/** Initials on a gradient disc. Decorative: the name is always shown next to it. */
 export function Avatar({ name, size = 'md', className }: AvatarProps) {
   return (
     <span
       aria-hidden
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full border font-semibold select-none',
+        'inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-semibold text-white select-none',
+        'shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_0_0_1px_rgb(0_0_0/0.06)]',
         SIZES[size],
-        tintFor(name),
+        gradientFor(name),
         className,
       )}
     >

@@ -308,6 +308,7 @@ export const ar: Messages = {
     statusWorkflowHint: 'الحالات الممكنة للبلاغ. يفرض النظام الانتقالات المسموح بها بينها.',
     modules: 'وحدات لوحة التحكم',
     modulesHint: 'ما الغرض من كل قسم في لوحة التحكم، ومتى سيصبح متاحًا.',
+    quickActions: 'إجراءات سريعة',
   },
   adminNotFound: {
     title: 'الصفحة غير موجودة',

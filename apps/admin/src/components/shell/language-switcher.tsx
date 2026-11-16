@@ -4,7 +4,6 @@ import type { Locale } from '@smart-city/shared';
 import { usePathname } from 'next/navigation';
 import type { MouseEvent } from 'react';
 
-import { buttonClasses } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { menuItemClasses, menuPanelClasses } from '@/components/ui/menu';
 import { usePopover } from '@/components/ui/use-popover';
@@ -49,20 +48,26 @@ export function LanguageSwitcher({ current, options, label }: LanguageSwitcherPr
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={`${label}: ${currentLabel}`}
-        className={cn(buttonClasses({ variant: 'ghost', size: 'sm' }), open && 'bg-surface-muted')}
+        className={cn(
+          'inline-flex h-8 items-center gap-1.5 rounded-full bg-surface ps-2 pe-2.5 text-sm font-medium text-foreground-secondary ring-1 ring-border ring-inset',
+          'transition-[box-shadow,color] duration-150 hover:text-foreground hover:ring-border-strong',
+          'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none',
+          open && 'text-foreground ring-border-strong',
+        )}
       >
-        <Icon name="language" className="size-4" />
-        <span className="max-sm:sr-only">{currentLabel}</span>
+        <Icon name="language" className="size-4 text-muted" />
+        <span className="max-sm:hidden">{currentLabel}</span>
+        <span className="font-mono text-2xs text-subtle uppercase sm:hidden">{current}</span>
         <Icon
           name="chevronDown"
           className={cn(
-            'size-3.5 opacity-60 transition-transform duration-150 max-sm:hidden',
+            'size-3.5 text-subtle transition-transform duration-150 max-sm:hidden',
             open && 'rotate-180',
           )}
         />
       </button>
       {open ? (
-        <ul id={panelId} className={cn(menuPanelClasses('end'), 'w-48')}>
+        <ul id={panelId} className={cn(menuPanelClasses('end'), 'w-52')}>
           {options.map((option) => {
             const selected = option.locale === current;
             return (
@@ -73,13 +78,20 @@ export function LanguageSwitcher({ current, options, label }: LanguageSwitcherPr
                   lang={option.locale}
                   aria-current={selected ? 'true' : undefined}
                   onClick={(event) => choose(event, option.locale)}
-                  className={cn(
-                    menuItemClasses(selected),
-                    'justify-between',
-                    selected && 'font-medium',
-                  )}
+                  className={menuItemClasses(selected)}
                 >
-                  {option.label}
+                  <span
+                    className={cn(
+                      'flex h-5 w-7 items-center justify-center rounded-sm font-mono text-[10px] uppercase ring-1 ring-inset',
+                      selected
+                        ? 'bg-primary text-on-primary ring-primary'
+                        : 'bg-surface-muted text-muted ring-border',
+                    )}
+                    aria-hidden
+                  >
+                    {option.locale}
+                  </span>
+                  <span className="flex-1">{option.label}</span>
                   {selected ? <Icon name="check" className="size-4" /> : null}
                 </a>
               </li>

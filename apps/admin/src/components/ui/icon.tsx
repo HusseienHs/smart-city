@@ -158,6 +158,15 @@ const ICONS = {
   layers: ['M12 3.5 3 8l9 4.5L21 8z', 'M3 12.5 12 17l9-4.5', 'M3 16.5 12 21l9-4.5'],
   sparkle: ['M12 3.5l1.9 5.6 5.6 1.9-5.6 1.9L12 18.5l-1.9-5.6L4.5 11l5.6-1.9z'],
   circle: ['M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z'],
+  bell: ['M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14 6 9.5z', 'M10 19a2.2 2.2 0 0 0 4 0'],
+  arrowUpEnd: ['M7 17 17 7', 'M8.5 7H17v8.5'],
+  bolt: ['M13 3 5 13.5h6L10 21l8-10.5h-6z'],
+  calendar: [
+    'M4.5 6.5a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z',
+    'M8 3.5v4',
+    'M16 3.5v4',
+    'M4.5 10h15',
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type IconName = keyof typeof ICONS;
@@ -171,6 +180,7 @@ const DIRECTIONAL: ReadonlySet<IconName> = new Set([
   'signOut',
   'sidebar',
   'send',
+  'arrowUpEnd',
 ]);
 
 interface IconProps {

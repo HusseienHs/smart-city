@@ -314,6 +314,7 @@ export const en = {
       'The statuses a report can have. The system enforces which transitions are allowed.',
     modules: 'Dashboard modules',
     modulesHint: 'What each area of the dashboard is for, and when it becomes available.',
+    quickActions: 'Quick actions',
   },
   adminNotFound: {
     title: 'Page not found',

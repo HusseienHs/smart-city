@@ -309,6 +309,7 @@ export const he: Messages = {
     statusWorkflowHint: 'הסטטוסים האפשריים של דיווח. המערכת אוכפת אילו מעברים מותרים ביניהם.',
     modules: 'מודולים במערכת',
     modulesHint: 'מה כל אזור במערכת עושה ומתי הוא יהיה זמין.',
+    quickActions: 'פעולות מהירות',
   },
   adminNotFound: {
     title: 'הדף לא נמצא',

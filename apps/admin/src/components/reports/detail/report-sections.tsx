@@ -21,12 +21,12 @@ import type { ReportLabels } from '@/lib/reports/labels';
 function Fact({ label, icon, children }: { label: string; icon: IconName; children: ReactNode }) {
   return (
     <div className="flex min-w-0 gap-3">
-      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-surface-subtle text-muted">
-        <Icon name={icon} className="size-3.5" />
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted ring-1 ring-border ring-inset">
+        <Icon name={icon} className="size-4" />
       </span>
       <div className="min-w-0">
-        <dt className="text-xs text-muted">{label}</dt>
-        <dd className="mt-0.5 text-sm break-words text-foreground">{children}</dd>
+        <dt className="text-xs font-medium text-muted">{label}</dt>
+        <dd className="mt-0.5 text-sm font-medium break-words text-foreground">{children}</dd>
       </div>
     </div>
   );
@@ -52,17 +52,15 @@ export function ReportFacts({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h3 className="mb-2 text-xs font-medium text-muted">
-          {t('adminReports.detail.description')}
-        </h3>
+        <h3 className="mb-2.5 eyebrow text-muted">{t('adminReports.detail.description')}</h3>
         <p
-          className="rounded-md border border-border bg-surface-subtle px-4 py-3 text-base leading-relaxed whitespace-pre-line text-foreground"
+          className="relative rounded-xl bg-surface-subtle py-4 ps-5 pe-4 text-md leading-7 whitespace-pre-line text-foreground ring-1 ring-border ring-inset before:absolute before:inset-y-3 before:start-0 before:w-1 before:rounded-e-full before:bg-primary"
           dir="auto"
         >
           {report.description}
         </p>
       </div>
-      <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+      <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
         <Fact icon="tag" label={t('adminReports.columns.category')}>
           {labels.category(report.category_id)}
         </Fact>
@@ -162,12 +160,12 @@ export function ReportPhotos({
     <div>
       <h3 className="mb-2.5 flex items-center gap-2 text-sm font-medium text-foreground">
         {title}
-        <span className="rounded-xs bg-surface-muted px-1.5 text-2xs leading-5 text-muted tabular-nums">
+        <span className="rounded-full bg-surface-muted px-2 text-2xs leading-5 text-muted tabular-nums">
           {attachments.length}
         </span>
       </h3>
       {attachments.length === 0 ? (
-        <p className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted">
+        <p className="flex items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-5 text-sm text-muted">
           <Icon name="image" className="size-4 text-subtle" />
           {t('adminReports.detail.noPhotos')}
         </p>
@@ -179,7 +177,7 @@ export function ReportPhotos({
             return (
               <li
                 key={attachment.id}
-                className="group overflow-hidden rounded-md border border-border bg-surface-subtle"
+                className="group overflow-hidden rounded-xl bg-surface-subtle shadow-xs ring-1 ring-border"
               >
                 {signed?.viewUrl && signed.displayable ? (
                   <a
@@ -187,7 +185,7 @@ export function ReportPhotos({
                     target="_blank"
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
-                    className="block overflow-hidden focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:outline-none focus-visible:ring-inset"
+                    className="block overflow-hidden focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:outline-none focus-visible:ring-inset"
                   >
                     {/* Signed, expiring URLs from a private bucket: not suitable for next/image. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -247,11 +245,14 @@ export function ReportHistory({
         <li key={entry.id} className="relative flex gap-3.5">
           {/* The rail that joins one step to the next. */}
           {index < history.length - 1 ? (
-            <span aria-hidden className="absolute start-[11px] top-7 -bottom-6 w-px bg-border" />
+            <span
+              aria-hidden
+              className="absolute start-[11px] top-7 -bottom-6 w-px bg-gradient-to-b from-border-strong to-border"
+            />
           ) : null}
           <span
             aria-hidden
-            className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-surface"
+            className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full bg-surface shadow-xs ring-1 ring-border-strong"
           >
             <span
               className={cn(
@@ -288,7 +289,7 @@ export function ReportHistory({
             {entry.note ? (
               <div
                 className={cn(
-                  'mt-2.5 rounded-md border px-3 py-2.5 text-sm',
+                  'mt-2.5 rounded-lg border px-3.5 py-3 text-sm',
                   entry.note_is_public
                     ? 'border-info-border bg-info-soft'
                     : 'border-border bg-surface-subtle',
@@ -329,7 +330,7 @@ export function ReportComments({
 }) {
   if (comments.length === 0) {
     return (
-      <p className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted">
+      <p className="flex items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-5 text-sm text-muted">
         <Icon name="message" className="size-4 text-subtle" />
         {t('adminReports.comments.empty')}
       </p>
@@ -346,18 +347,18 @@ export function ReportComments({
             {comment.from_reporter ? (
               <span
                 aria-hidden
-                className="flex size-7 shrink-0 items-center justify-center rounded-full border border-info-border bg-info-soft text-info"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info-soft text-info ring-1 ring-info-border ring-inset"
               >
-                <Icon name="user" className="size-3.5" />
+                <Icon name="user" className="size-4" />
               </span>
             ) : (
-              <Avatar name={author} size="sm" />
+              <Avatar name={author} size="md" />
             )}
             <div
               className={cn(
-                'min-w-0 flex-1 rounded-lg border px-3.5 py-2.5',
+                'min-w-0 flex-1 rounded-xl rounded-ss-sm border px-4 py-3 shadow-xs',
                 comment.is_internal
-                  ? 'border-warning-border bg-warning-soft/50'
+                  ? 'border-warning-border bg-warning-soft/60'
                   : 'border-border bg-surface',
               )}
             >

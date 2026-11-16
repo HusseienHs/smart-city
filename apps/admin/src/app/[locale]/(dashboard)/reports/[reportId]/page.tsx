@@ -13,7 +13,7 @@ import { Suspense } from 'react';
 import { ModuleGuard } from '@/components/module-guard';
 import { moduleMetadata } from '@/components/module-placeholder';
 import { ReportPriorityBadge } from '@/components/reports/report-priority-badge';
-import { ReportStatusBadge } from '@/components/report-status-badge';
+import { REPORT_STATUS_TONES, ReportStatusBadge } from '@/components/report-status-badge';
 import { AssignmentForm } from '@/components/reports/detail/assignment-form';
 import { CommentForm } from '@/components/reports/detail/comment-form';
 import { CompletionUpload } from '@/components/reports/detail/completion-upload';
@@ -26,13 +26,15 @@ import {
 import { ReporterContact } from '@/components/reports/detail/reporter-contact';
 import { StatusForm } from '@/components/reports/detail/status-form';
 import { Alert } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeDotClass } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { DescriptionList } from '@/components/ui/description-list';
 import { EmptyState } from '@/components/ui/empty-state';
-import { BackLink, PageHeader } from '@/components/ui/page-header';
-import { Panel } from '@/components/ui/panel';
+import { Icon } from '@/components/ui/icon';
+import { BackLink } from '@/components/ui/page-header';
+import { IconTile, Panel } from '@/components/ui/panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/cn';
 import { localizedText } from '@/lib/i18n/localized-text';
 import { localizedHref } from '@/lib/i18n/routing';
 import { getLocale, getTranslator } from '@/lib/i18n/server';
@@ -45,6 +47,7 @@ import {
   isFinishedStatus,
   statusTargets,
 } from '@/lib/reports/capabilities';
+import { formatDateTime } from '@/lib/reports/format';
 import { reportLabels } from '@/lib/reports/labels';
 import { reportStrings } from '@/lib/reports/strings';
 import { getReportsWorkspace } from '@/lib/reports/workspace';
@@ -167,21 +170,93 @@ async function ReportDetails({
 
   return (
     <>
-      <PageHeader
-        back={back}
-        title={report.tracking_number}
-        description={labels.category(report.category_id)}
-        meta={
-          <>
-            <ReportStatusBadge status={report.status} label={t(`reportStatus.${report.status}`)} />
+      <BackLink {...back} className="mb-4" />
+
+      {/* Masthead: the report's identity, state and the facts staff look for first. */}
+      <header className="relative mb-6 animate-enter overflow-hidden card">
+        <div
+          aria-hidden
+          className={cn(
+            'absolute inset-x-0 top-0 h-1',
+            badgeDotClass(REPORT_STATUS_TONES[report.status]),
+          )}
+        />
+        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4 px-5 pt-6 pb-5 sm:px-6">
+          <div className="min-w-0 flex-1 basis-96">
+            <p className="flex items-center gap-2 eyebrow text-muted">
+              <Icon name="tag" className="size-3.5" />
+              {labels.category(report.category_id)}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1
+                dir="ltr"
+                className="font-mono text-2xl leading-9 font-semibold tracking-tight text-foreground sm:text-3xl"
+              >
+                {report.tracking_number}
+              </h1>
+              <ReportStatusBadge
+                status={report.status}
+                label={t(`reportStatus.${report.status}`)}
+              />
+            </div>
+            <p
+              className="mt-3 line-clamp-2 max-w-3xl text-md leading-6 text-foreground-secondary"
+              dir="auto"
+            >
+              {report.description}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 rounded-full bg-surface-subtle px-3 py-1.5 ring-1 ring-border ring-inset">
             <ReportPriorityBadge
               priority={report.priority}
               label={t(`reportPriority.${report.priority}`)}
             />
-            <Badge>{labels.department(report.department_id)}</Badge>
-          </>
-        }
-      />
+          </div>
+        </div>
+        <dl className="grid border-t border-border bg-surface-subtle sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              icon: 'departments' as const,
+              label: t('adminReports.assignment.department'),
+              value: labels.department(report.department_id),
+            },
+            {
+              icon: 'user' as const,
+              label: t('adminReports.assignment.assignee'),
+              value: labels.person(report.assignee_id),
+            },
+            {
+              icon: 'clock' as const,
+              label: t('adminReports.detail.submittedAt'),
+              value: formatDateTime(locale, report.created_at),
+            },
+            {
+              icon: 'layers' as const,
+              label: t('adminReports.detail.statusChangedAt'),
+              value: formatDateTime(locale, report.status_changed_at),
+            },
+          ].map((fact, index) => (
+            <div
+              key={fact.label}
+              className={cn(
+                'flex items-center gap-3 px-5 py-3.5 sm:px-6',
+                index > 0 && 'border-border max-sm:border-t',
+                index % 2 === 1 && 'sm:border-s',
+                index >= 2 && 'sm:max-xl:border-t',
+                index === 2 && 'xl:border-s',
+              )}
+            >
+              <IconTile icon={fact.icon} size="sm" />
+              <div className="min-w-0">
+                <dt className="text-xs text-muted">{fact.label}</dt>
+                <dd className="truncate text-sm font-semibold text-foreground tabular-nums">
+                  {fact.value}
+                </dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </header>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <div className="flex min-w-0 animate-enter flex-col gap-6">
@@ -250,7 +325,8 @@ async function ReportDetails({
           </Panel>
         </div>
 
-        <aside className="flex min-w-0 animate-enter flex-col gap-6">
+        {/* The action column stays in view while the record scrolls (desktop). */}
+        <aside className="flex min-w-0 animate-enter flex-col gap-6 [animation-delay:80ms] xl:sticky xl:top-[calc(var(--header-height)+1.5rem)]">
           <Panel title={t('adminReports.status.title')} icon="layers">
             <div className="flex flex-col gap-3">
               {role === 'intake_dispatcher' && targets.length > 0 ? (
@@ -366,14 +442,17 @@ async function ReportDetails({
 function ReportDetailsSkeleton() {
   return (
     <div aria-busy="true">
-      <Skeleton className="mb-4 h-4 w-28" />
-      <div className="mb-7 flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-8 w-44" />
-          <Skeleton className="h-6 w-20 rounded-sm" />
-          <Skeleton className="h-6 w-16 rounded-sm" />
+      <Skeleton className="mb-4 h-7 w-32 rounded-full" />
+      <div className="mb-6 card">
+        <div className="flex flex-col gap-3 px-6 pt-6 pb-5">
+          <Skeleton className="h-3 w-24" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-52" />
+            <Skeleton className="h-6 w-24 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-2/3" />
         </div>
-        <Skeleton className="h-4 w-32" />
+        <div className="h-16 rounded-b-xl border-t border-border bg-surface-subtle" />
       </div>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <div className="flex flex-col gap-6">
@@ -395,8 +474,8 @@ function ReportDetailsSkeleton() {
                 <Skeleton className="h-5 w-28" />
               </div>
               <div className="space-y-3 p-5">
-                <Skeleton className="h-9 w-full rounded-sm" />
-                <Skeleton className="h-9 w-full rounded-sm" />
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-10 w-full rounded-md" />
               </div>
             </div>
           ))}
